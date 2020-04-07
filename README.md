@@ -5,7 +5,10 @@ Resources for a lineage naming scheme for SARS-CoV-2/hCoV-2019
 
 1. Clone this repository.
 2. ``conda env create -f environment.yml``
-3. That's it. 
+3. That's it. * caveat it's actually not it right now... 
+
+4. Download the 2.0-rc2 version of iqtree: http://www.iqtree.org/#download.
+5. Replace the downloaded iqtree executable with the one in the environment directory. 
 
 ## Run subtyping tool
 
