@@ -1,4 +1,0 @@
-
-      [console_scripts]
-      subtype = subtype.command:main
-      
