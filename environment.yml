@@ -1,4 +1,4 @@
-name: lineages
+name: lineage-test
 channels:
   - bioconda
   - conda-forge
@@ -16,3 +16,4 @@ dependencies:
     # - git+https://github.com/Cibiv/IQ-TREE.git@v2.0-rc2
     - git+https://github.com/cov-ert/clusterfunk.git@v0.0.1
     - pytools==2020.1
+    - git+https://github.com/aineniamh/lineages.git
