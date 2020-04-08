@@ -59,7 +59,7 @@ rule iqtree_with_guide_tree:
     output:
         config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile"
     shell:
-        "iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -o 'Wuhan___WH04___2020|EPI_ISL_406801|A|Wuhan|||2020-01-05' -g {input.guide_tree:q}"
+        "iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q}"
 
 rule iqtree_to_nexus:
     input:
