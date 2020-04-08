@@ -1,4 +1,4 @@
-name: lineage-test
+name: lineage-env
 channels:
   - bioconda
   - conda-forge
