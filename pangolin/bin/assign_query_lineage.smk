@@ -16,7 +16,7 @@ config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 rule all:
     input:
         expand(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile", query=config["query_sequences"]),
-        config["outdir"] + "/lineage_report.txt"
+        config["outdir"] + "/lineage_report.csv"
 
 rule expand_query_fasta:
     input:

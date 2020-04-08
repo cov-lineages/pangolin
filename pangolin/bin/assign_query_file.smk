@@ -46,7 +46,7 @@ rule process_sample:
         path = workflow.current_basedir,
         cores = workflow.cores
     output:
-        report = config["outdir"] + "/lineage_report.txt"
+        report = config["outdir"] + "/lineage_report.csv"
     run:
         query_sequences = query_sequence.fetch("query_store")
         if query_sequences != "":

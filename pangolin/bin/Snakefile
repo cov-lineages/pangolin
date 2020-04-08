@@ -31,7 +31,7 @@ rule all:
         # config["outdir"] + "/temp/representative_sequences.aln.fasta",
         # config["outdir"] + "/temp/representative_sequences.aln.fasta.treefile",
         config["outdir"] + "/temp/temp_report.txt",
-        config["outdir"] + "/lineage_report.txt"
+        config["outdir"] + "/lineage_report.csv"
 
 ##### Modules #####
 include: "assign_query_file.smk"

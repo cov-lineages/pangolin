@@ -14,9 +14,9 @@ cwd = os.getcwd()
 def main(sysargs = sys.argv[1:]):
 
     parser = argparse.ArgumentParser(prog = _program, 
-    description='lineage: run snakemake subtyping tool', 
-    usage='''lineage <query> [options]
-    lineage: lineage hCoV-2019
+    description='pangolin: Pipeline for Assigning Global Outbreak Lineages', 
+    usage='''pangolin <query> [options]
+    pangolin: pangolin hCoV-2019
     ''')
 
     parser.add_argument('query')

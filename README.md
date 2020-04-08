@@ -2,7 +2,7 @@
 Resources for a lineage naming scheme for SARS-CoV-2/hCoV-2019
 
 
-## lineage assignment tool
+## pangolin
 
 ### Requirements
 
@@ -27,7 +27,7 @@ or
 ```
 
 
-### Install lineage assignment tool
+### Install pangolin
 
 1. Clone this repository.
 2. ``conda env create -f environment.yml``
@@ -41,13 +41,13 @@ or
 >Recommendation: Replace the downloaded iqtree executable with the one in the lineage-env environment directory. 
 
 
-### Run lineage assignment tool
+### Run pangolin
 
 1. Activate the environment ``conda activate lineage-test``
 2. Run ``lineage <query>``
 Command line options:
 ```
-lineage: run hcov-2019 lineage assignment tool
+pangolin: run hcov-2019 lineage assignment tool
 
 positional arguments:
   query

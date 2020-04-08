@@ -1,4 +1,4 @@
-name: lineage-env
+name: pangolin-env
 channels:
   - bioconda
   - conda-forge

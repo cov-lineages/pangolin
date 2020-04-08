@@ -4,15 +4,15 @@ import os
 import pkg_resources
 # Note: the _program variable is set in __init__.py.
 # it determines the name of the package/final command line tool.
-from lineage import __version__, _program
+from pangolin import __version__, _program
 
-setup(name='lineage',
+setup(name='pangolin',
       version=__version__,
-      packages=['lineage'],
-      scripts=['lineage/bin/assign_query_file.smk',
-                'lineage/bin/assign_query_lineage.smk',
-                'lineage/bin/Snakefile'],
-      package_data={'lineage':['config.yaml',
+      packages=['pangolin'],
+      scripts=['pangolin/bin/assign_query_file.smk',
+                'pangolin/bin/assign_query_lineage.smk',
+                'pangolin/bin/Snakefile'],
+      package_data={'pangolin':['config.yaml',
                                 'data/*']},
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/aineniamh/lineages',
@@ -20,7 +20,7 @@ setup(name='lineage',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
       [console_scripts]
-      {program} = lineage.command:main
+      {program} = pangolin.command:main
       """.format(program = _program),
       include_package_data=True,
       keywords=[],
