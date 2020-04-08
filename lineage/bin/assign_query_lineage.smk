@@ -84,7 +84,7 @@ rule gather_reports:
     input:
         expand(config["outdir"] + "/temp/reports/{query}.csv", query=config["query_sequences"])
     output:
-        config["outdir"] + "/lineage_report.txt"
+        config["outdir"] + "/lineage_report.csv"
     run:
         fw=open(output[0],"w")
         fw.write("taxon,tax_id,lineage\n")

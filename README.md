@@ -11,18 +11,19 @@ Resources for a lineage naming scheme for SARS-CoV-2/hCoV-2019
 ```
 >England/00000000001/2020|EPI_ISL_0000001||UK|England|WHATEVERSHIRE|2020-02-27
 ```
+3. Unique GISAID_ids or sequence ids
 
 #### Missing data:
 Missing data is fine, but at a minimum the following fields are required:
 1. Either a GISAID ID in the second pipe-delimited field:
 ```
->some_virus_name|EPI_ISL_0000001|||||
+>England/00000000001/2020|EPI_ISL_0000001|||||
 ```
 or 
 
-2. if you don't have a GISAID id for your sequences, 
+2. if you don't have a GISAID id for your sequences, it will find the id in the virus name (i.e. 00000000001 in this case): 
 ```
->England/00000000001/2020|EPI_ISL_0000001||UK|England|WHATEVERSHIRE|2020-02-27
+>England/00000000001/2020||||||
 ```
 
 
