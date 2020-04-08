@@ -1,6 +1,5 @@
 query_sequence = PersistentDict("query_store")
 
-
 rule iqtree_safe_query:
     input:
         config["query_fasta"]
