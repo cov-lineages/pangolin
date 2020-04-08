@@ -24,7 +24,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-t', '--threads', action='store',type=int)
-    parser.add_argument('--unlock', action='store_true')
+    parser.add_argument('-u','--unlock', action='store_true')
     args = parser.parse_args(sysargs)
 
     # first, find the Snakefile
