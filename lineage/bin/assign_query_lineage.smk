@@ -96,7 +96,7 @@ rule gather_reports:
                     l=l.rstrip()
                     tokens = l.split(",")
                     lineage = tokens[1]
-                    # l = l.replace("___","/")
+                    taxon = taxon.replace("___","/")
                     fw.write(f"{taxon},{query},{lineage}\n")
         fw.close()
 
