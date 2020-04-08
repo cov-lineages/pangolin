@@ -24,6 +24,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-t', '--threads', action='store',type=int)
+    parser.add_argument('--unlock', action='store_true')
     args = parser.parse_args(sysargs)
 
     # first, find the Snakefile
@@ -48,13 +49,13 @@ def main(sysargs = sys.argv[1:]):
         threads = args.threads
     else:
         threads = 1
-
+    print("number of threads is", threads)
     config = {"query_fasta":query}
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=args.force,
-                                 config=config, cores=threads
+                                 config=config, unlock=args.unlock, nolock=True, cores=threads
                                  )
 
     if status: # translate "success" into shell exit code of 0
