@@ -15,7 +15,7 @@ setup(name='lineage',
       package_data={'lineage':['config.yaml',
                                 'data/*']},
       description='hcov-2019 subtyping command line tool',
-      url='',
+      url='https://github.com/aineniamh/lineages',
       author='Aine O Toole',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
