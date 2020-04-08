@@ -5,7 +5,7 @@ rule iqtree_safe_query:
     input:
         config["query_fasta"]
     output:
-        temp(config["outdir"] + "/temp/query_fasta.iqtree_friendly.fasta")
+        config["outdir"] + "/temp/query_fasta.iqtree_friendly.fasta"
     run:
         fw = open(output[0],"w")
         for record in SeqIO.parse(input[0],"fasta"):

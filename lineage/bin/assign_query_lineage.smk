@@ -24,8 +24,8 @@ rule expand_query_fasta:
     params:
         config["query_sequences"]
     output:
-        temp(config["outdir"] + '/temp/temp.txt'),
-        temp(expand(config["outdir"] + '/temp/expanded_query/{query}.fasta',query=config["query_sequences"]))
+        config["outdir"] + '/temp/temp.txt')
+        expand(config["outdir"] + '/temp/expanded_query/{query}.fasta',query=config["query_sequences"])
     run:
         shell("touch {output[0]:q}")
         for record in SeqIO.parse(input[0],"fasta"):
