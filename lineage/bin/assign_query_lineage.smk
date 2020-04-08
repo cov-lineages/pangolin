@@ -85,21 +85,20 @@ rule assign_lineage:
 rule gather_reports:
     input:
         expand(config["outdir"] + "/temp/reports/{query}.csv", query=config["query_sequences"])
-    params:
-        query = "{query}"
     output:
         config["outdir"] + "/lineage_report.txt"
     run:
-        taxon = taxon_dict.fetch(params.query)
         fw=open(output[0],"w")
         fw.write("taxon,tax_id,lineage\n")
         for lineage_report in input:
+            query = lineage_report.rstrip(".csv").split("/")[-1]
+            taxon = taxon_dict.fetch(query)
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
                     tokens = l.split(",")
                     lineage = tokens[1]
                     # l = l.replace("___","/")
-                    fw.write(taxon+',' + params.query + ',' + lineage+'\n')
+                    fw.write(f"{taxon},{query},{lineage}\n")
         fw.close()
 
