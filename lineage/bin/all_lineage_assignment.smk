@@ -114,6 +114,7 @@ rule process_sample:
     params:
         outdir= config["outdir"],
         path = workflow.current_basedir,
+        cores = workflow.cores
     output:
         report = config["outdir"] + "/lineage_report.txt"
     run:
@@ -129,7 +130,7 @@ rule process_sample:
                         "query_fasta={input.query:q} "
                         "representative_aln={input.aln:q} "
                         "guide_tree={input.guide_tree:q} "
-                        "--rerun-incomplete --cores 1")
+                        "--rerun-incomplete --cores {params.cores}")
         else:
             shell("touch {output.report}")
 
