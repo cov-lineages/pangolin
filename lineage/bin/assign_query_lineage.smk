@@ -35,13 +35,13 @@ rule expand_query_fasta:
                 taxon_dict.store(gisaid_id, record.id)
                 print(gisaid_id)
                 with open(config["outdir"] + f'/temp/expanded_query/{gisaid_id}.fasta',"w") as fw:
-                    fw.write(f">{gisaid_id}\n{record.seq}\n")
+                    fw.write(f">{gisaid_id}||\n{record.seq}\n")
             else:
                 cog_id = record.id.split("|")[0].split('___')[1]
                 print(cog_id)
                 taxon_dict.store(cog_id, record.id)
                 with open(config["outdir"] + f'/temp/expanded_query/{cog_id}.fasta',"w") as fw:
-                    fw.write(f">{cog_id}\n{record.seq}\n")
+                    fw.write(f">{cog_id}||\n{record.seq}\n")
  
 rule profile_align_new_fasta:
     input:
@@ -79,7 +79,7 @@ rule assign_lineage:
     run:
         taxon = taxon_dict.fetch(params.query)
         print(params.query, taxon)
-        shell_start = f"clusterfunk subtype  --separator '|' --index 2 --collapse_to_polytomies --taxon '{params.query}'"
+        shell_start = f"clusterfunk subtype  --separator '|' --index 2 --collapse_to_polytomies --taxon '{params.query}|||'"
         shell(shell_start + " --input {input.tree:q} --output {output:q}")
         
 rule gather_reports:
@@ -97,7 +97,9 @@ rule gather_reports:
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
+                    tokens = l.split(",")
+                    lineage = tokens[1]
                     # l = l.replace("___","/")
-                    fw.write(taxon+',' + l+'\n')
+                    fw.write(taxon+',' + params.query + ',' + lineage+'\n')
         fw.close()
 
