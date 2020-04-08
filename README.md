@@ -1,16 +1,21 @@
 # lineages
 Resources for a lineage naming scheme for SARS-CoV-2/hCoV-2019
 
-## Install subtyping tool
+## Install lineage assignment tool
 
 1. Clone this repository.
 2. ``conda env create -f environment.yml``
-3. That's it. * caveat it's actually not it right now... 
+3. That's it. *
+
+    * caveat it's actually not it right now...
 
 4. Download the 2.0-rc2 version of iqtree: http://www.iqtree.org/#download.
-5. Replace the downloaded iqtree executable with the one in the environment directory. 
+5. Make sure iqtree 2 lives in your path.
 
-## Run subtyping tool
+>Recommendation: Replace the downloaded iqtree executable with the one in the lineage-env environment directory. 
+
+
+## Run lineage assignment tool
 
 1. Activate the environment ``conda activate lineage-test``
 2. Run ``lineage <query>``
