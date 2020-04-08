@@ -79,7 +79,7 @@ rule assign_lineage:
     run:
         taxon = taxon_dict.fetch(params.query)
         print(params.query, taxon)
-        shell_start = f"clusterFunk subtype  --separator '|' --index 2 --collapse_to_polytomies --taxon '{taxon}'"
+        shell_start = f"clusterfunk subtype  --separator '|' --index 2 --collapse_to_polytomies --taxon '{taxon}'"
         shell(shell_start + " --input {input.tree:q} --output {output:q}")
         
 rule gather_reports:
