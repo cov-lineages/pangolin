@@ -8,7 +8,7 @@ dependencies:
   - iqtree
   - mafft
   - minimap2=2.17
-  - iqtree
+  # - iqtree
   - pip=19.3.1
   - python=3.6
   - snakemake-minimal=5.13
@@ -16,4 +16,4 @@ dependencies:
     # - git+https://github.com/Cibiv/IQ-TREE.git@v2.0-rc2
     - git+https://github.com/cov-ert/clusterfunk.git@v0.0.1
     - pytools==2020.1
-    - git+https://github.com/aineniamh/lineages.git
+    # - git+https://github.com/aineniamh/lineages.git
