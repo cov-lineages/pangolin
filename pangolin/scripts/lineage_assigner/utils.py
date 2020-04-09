@@ -1,8 +1,9 @@
 # return parameter if not a string
 import dendropy
 
-def parse_tree(file, format):
-    return dendropy.Tree.get(path=file, schema=format.lower(), preserve_underscores=True)
+
+def parse_tree(file, file_format):
+    return dendropy.Tree.get(path=file, schema=file_format.lower(), preserve_underscores=True)
 
 
 def write_tree(tree, file, format):
@@ -15,8 +16,8 @@ def collapse_nodes(tree, predicate):
             node.edge.collapse(adjust_collapsed_head_children_edge_lengths=True)
 
 
-def prepare_tree(options):
-    tree = parse_tree(options.input, options.format)
-    if options.collapse:
+def prepare_tree(input_file, file_format, collapse):
+    tree = parse_tree(input_file, file_format)
+    if collapse:
         collapse_nodes(tree, lambda node: node.edge.length == 0)
     return tree
