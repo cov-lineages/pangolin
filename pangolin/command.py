@@ -16,7 +16,6 @@ def main(sysargs = sys.argv[1:]):
     parser = argparse.ArgumentParser(prog = _program, 
     description='pangolin: Pipeline for Assigning Global Outbreak Lineages', 
     usage='''pangolin <query> [options]
-    pangolin: pangolin hCoV-2019
     ''')
 
     parser.add_argument('query')

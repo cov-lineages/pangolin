@@ -20,12 +20,10 @@ Phylogenetic Assignment of Named Global Outbreak LINeages
 
 
 ```
-pangolin -h
-usage: pangolin <query> [options]
-    pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
 
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
 
+usage: pangolin <query> [options]
 
 optional arguments:
   -h, --help            show this help message and exit
