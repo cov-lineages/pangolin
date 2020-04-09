@@ -1,21 +1,16 @@
 from Bio import SeqIO
 from Bio import Phylo
 
-from pytools.persistent_dict import PersistentDict
-
 if config.get("outdir"):
     config["outdir"] = config["outdir"].rstrip("/")
 else:
     config["outdir"] = "analysis"
 
-
-taxon_dict = PersistentDict("taxon")
-
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 
 rule all:
     input:
-        expand(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile", query=config["query_sequences"]),
+        expand(config["outdir"] + "/temp/expanded_query/{query}.fasta", query=config["query_sequences"]),
         config["outdir"] + "/lineage_report.csv"
 
 rule expand_query_fasta:
@@ -27,21 +22,10 @@ rule expand_query_fasta:
         expand(config["outdir"] + '/temp/expanded_query/{query}.fasta',query=config["query_sequences"])
     run:
         for record in SeqIO.parse(input[0],"fasta"):
-            gisaid_id = record.id.split("|")[1]
-            print(record.id, gisaid_id)
-            if gisaid_id != "":
-                taxon_dict.store(gisaid_id, record.id)
-                print(gisaid_id)
-                with open(config["outdir"] + f'/temp/expanded_query/{gisaid_id}.fasta',"w") as fw:
-                    fw.write(f">{gisaid_id}||\n{record.seq}\n")
-            else:
-                cog_id = record.id.split("|")[0].split('___')[1]
-                print(cog_id)
-                taxon_dict.store(cog_id, record.id)
-                with open(config["outdir"] + f'/temp/expanded_query/{cog_id}.fasta',"w") as fw:
-                    fw.write(f">{cog_id}||\n{record.seq}\n")
- 
-rule profile_align_new_fasta:
+            with open(config["outdir"] + f'/temp/expanded_query/{record.id}.fasta',"w") as fw:
+                fw.write(f">{record.id}\n{record.seq}\n")
+
+rule profile_align_query:
     input:
         aln = config["representative_aln"],
         query = config["outdir"] + '/temp/expanded_query/{query}.fasta'
@@ -52,51 +36,63 @@ rule profile_align_new_fasta:
 
 rule iqtree_with_guide_tree:
     input:
-        profile_aln = rules.profile_align_new_fasta.output,
+        profile_aln = rules.profile_align_query.output,
         guide_tree = config["guide_tree"]
     output:
         config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile"
-    shell:
-        "iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'Wuhan___WH04___2020|EPI_ISL_406801|A|Wuhan|||2020-01-05'"
+    run:
+        iqtree_check = output[0].rstrip("treefile") + "iqtree"
+        if os.path.exists(iqtree_check):
+            print("Tree exists, going to rerun", iqtree_check)
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A' -redo")
+        else:
+            print("Tree doesn't exist here", output[0])
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A'")
 
-rule iqtree_to_nexus:
+rule to_nexus:
     input:
         rules.iqtree_with_guide_tree.output
     output:
-        config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.nexus.tree"
+        config["outdir"] + "/temp/query_alignments/{query}.nexus.tree"
     run:
         Phylo.convert(input[0], 'newick', output[0], 'nexus')
 
 rule assign_lineage:
     input:
-        tree = rules.iqtree_to_nexus.output,
+        tree = rules.to_nexus.output,
     params:
         query = "{query}"
     output:
-        config["outdir"] + "/temp/reports/{query}.csv"
+        config["outdir"] + "/temp/reports/{query}.txt"
     run:
-        taxon = taxon_dict.fetch(params.query)
-        print(params.query, taxon)
-        shell_start = f"clusterfunk subtype  --separator '|' --index 2 --collapse_to_polytomies --taxon '{params.query}||'"
+        shell_start = f"clusterfunk subtype  --separator '_' --index 1 --collapse_to_polytomies --taxon '{params.query}'"
         shell(shell_start + " --input {input.tree:q} --output {output:q}")
         
 rule gather_reports:
     input:
-        expand(config["outdir"] + "/temp/reports/{query}.csv", query=config["query_sequences"])
+        reports = expand(config["outdir"] + "/temp/reports/{query}.txt", query=config["query_sequences"]),
+        key=config["key"]
     output:
         config["outdir"] + "/lineage_report.csv"
     run:
+        key_dict = {}
+        with open(input.key, "r") as f:
+            for l in f:
+                l = l.rstrip('\n')
+                taxon,key = l.split(",")
+                key_dict[key] = taxon
+
         fw=open(output[0],"w")
-        fw.write("taxon,tax_id,lineage\n")
-        for lineage_report in input:
-            query = lineage_report.rstrip(".csv").split("/")[-1]
-            taxon = taxon_dict.fetch(query)
+
+        fw.write("taxon,lineage\n")
+        for lineage_report in input.reports:
+            
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
                     tokens = l.split(",")
                     lineage = tokens[1]
-                    taxon = taxon.replace("___","/")
-                    fw.write(f"{taxon},{query},{lineage}\n")
+                    taxon = key_dict[tokens[0]]
+                    fw.write(f"{taxon},{lineage}\n")
         fw.close()
 

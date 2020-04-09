@@ -1,5 +1,3 @@
   
-lineage_metadata: 'data/lineages.header_fixed.csv'
-fasta: 'data/GISAID_2020-03-31_2685_CDS_95%.header_fixed.fasta'
-representative_aln: "data/representative_sequences.aln.iqtree_friendly.fasta"
-guide_tree: "data/representative_sequences.aln.iqtree_friendly.fasta.treefile"
+representative_aln: "data/anonymised.encrypted.aln.fasta"
+guide_tree: "data/anonymised.aln.fasta.treefile"
