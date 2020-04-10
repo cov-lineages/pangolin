@@ -1,4 +1,4 @@
-name: pangolin-env
+name: pangolin
 channels:
   - bioconda
   - conda-forge
