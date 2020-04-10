@@ -15,5 +15,5 @@ dependencies:
     - git+https://github.com/cov-ert/clusterfunk.git@v0.0.1
     - pytools==2020.1
     - dendropy>=4.4.0
-    - git+https://github.com/aineniamh/lineages.git
+    - git+https://github.com/aunderwo/lineages.git
 
