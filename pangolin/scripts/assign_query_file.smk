@@ -4,7 +4,7 @@ rule decrypt_aln:
     input:
         config["representative_aln"]
     output:
-        config["outdir"] + "/temp/anonymised.aln.fasta"
+        temp(config["outdir"] + "/temp/anonymised.aln.fasta")
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -19,8 +19,8 @@ rule pass_query_hash:
         config["query_fasta"]
     output:
         t = temp(config["outdir"] + "/temp/temp.txt"),
-        fasta = config["outdir"] + "/temp/query.fasta",
-        key = config["outdir"] + "/temp/query_key.csv"
+        fasta = temp(config["outdir"] + "/temp/query.fasta"),
+        key = temp(config["outdir"] + "/temp/query_key.csv")
     run:
         fkey = open(output.key, "w")
         ids = ''
