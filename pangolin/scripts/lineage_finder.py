@@ -1,6 +1,5 @@
 import warnings
 
-
 class LineageFinder:
     def __init__(self, tree, query_taxon):
         self.tree = tree

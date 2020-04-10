@@ -8,12 +8,20 @@ from pangolin import __version__, _program
 
 setup(name='pangolin',
       version=__version__,
-      packages=['pangolin'],
-      scripts=['pangolin/bin/assign_query_file.smk',
-                'pangolin/bin/assign_query_lineage.smk',
-                'pangolin/bin/Snakefile'],
+      packages=find_packages(),
+      scripts=['pangolin/scripts/assign_query_file.smk',
+                'pangolin/scripts/assign_query_lineage.smk',
+                'pangolin/scripts/Snakefile',
+                'pangolin/scripts/assign_lineage.py',
+                'pangolin/scripts/lineage_finder.py',
+                'pangolin/scripts/utils.py'
+                ],
       package_data={'pangolin':['config.yaml',
                                 'data/*']},
+      install_requires=[
+            "biopython>=1.70",
+            "dendropy>=4.4.0"
+        ],
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/aineniamh/lineages',
       author='Aine OToole and JT McCrone',

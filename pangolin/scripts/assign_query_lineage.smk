@@ -65,7 +65,7 @@ rule assign_lineage:
     output:
         config["outdir"] + "/temp/reports/{query}.txt"
     run:
-        shell_start = f"clusterfunk subtype  --separator '_' --index 1 --collapse_to_polytomies --taxon '{params.query}'"
+        shell_start = f"assign_lineage.py  --separator '_' --index 1 --collapse_to_polytomies --taxon '{params.query}'"
         shell(shell_start + " --input {input.tree:q} --output {output:q}")
         
 rule gather_reports:
@@ -84,15 +84,15 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage\n")
+        fw.write("taxon,lineage,bootstrap\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
                     tokens = l.split(",")
-                    lineage = tokens[1]
+                    lineage,bootstrap = tokens[1],tokens[2]
                     taxon = key_dict[tokens[0]]
-                    fw.write(f"{taxon},{lineage}\n")
+                    fw.write(f"{taxon},{lineage},{bootstrap}\n")
         fw.close()
 
