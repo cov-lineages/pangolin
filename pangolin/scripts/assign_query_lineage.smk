@@ -6,8 +6,6 @@ if config.get("outdir"):
 else:
     config["outdir"] = "analysis"
 
-config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
-
 rule all:
     input:
         config["outdir"] + "/lineage_report.csv"

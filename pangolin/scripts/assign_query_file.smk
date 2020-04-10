@@ -23,7 +23,7 @@ rule pass_query_hash:
         key = temp(config["outdir"] + "/temp/query_key.csv")
     run:
         fkey = open(output.key, "w")
-        ids = ''
+        ids = []
         c= 0
         with open(output.fasta, "w") as fw:
             for record in SeqIO.parse(input[0],"fasta"):
@@ -33,17 +33,16 @@ rule pass_query_hash:
                     lineage = record_list[2]
                     new_id = f"{c}_{lineage}"
                 else:
-                    new_id = str(c)
+                    new_id = f"{c}"
 
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
 
-                ids+=new_id + ','
+                ids.append(new_id)
             
             print(f"{c+1} hashed sequences written")
         fkey.close()
         
-        ids = ids.rstrip(',')
         query_sequence.store("query_store",ids)
         shell("touch {output.t}")
 
@@ -65,7 +64,7 @@ rule assign_lineages:
         report = config["outdir"] + "/lineage_report.csv"
     run:
         query_sequences = query_sequence.fetch("query_store")
-        num_query_seqs = len(query_sequences.split(","))
+        num_query_seqs = len(query_sequences)
         if query_sequences != "":
             print(f"Passing {num_query_seqs} into processing pipeline.")
             config["query_sequences"]= query_sequences
