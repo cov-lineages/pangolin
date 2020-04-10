@@ -64,9 +64,12 @@ rule assign_lineage:
         query = "{query}"
     output:
         config["outdir"] + "/temp/reports/{query}.txt"
-    run:
-        shell_start = f"assign_lineage.py  --separator '_' --index 1 --collapse_to_polytomies --taxon '{params.query}'"
-        shell(shell_start + " --input {input.tree:q} --output {output:q}")
+    shell:
+        """
+        assign_lineage.py  --separator '_' --index 1 \
+        --collapse_to_polytomies --taxon '{params.query}' \
+        --input {input.tree:q} --output {output:q}"
+        """
         
 rule gather_reports:
     input:
