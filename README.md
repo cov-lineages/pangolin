@@ -18,7 +18,6 @@ Phylogenetic Assignment of Named Global Outbreak LINeages
 1. Activate the environment ``conda activate pangolin-env``
 2. Run ``lineage <query>``
 
-
 ```
 
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
