@@ -7,7 +7,6 @@ dependencies:
   - biopython=1.74
   - iqtree
   - mafft
-  - minimap2=2.17
   - iqtree
   - pip=19.3.1
   - python=3.6
