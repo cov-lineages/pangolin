@@ -16,7 +16,7 @@ setup(name='pangolin',
                                 'data/*']},
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/aineniamh/lineages',
-      author='Aine O Toole',
+      author='Aine OToole and JT McCrone',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
       [console_scripts]

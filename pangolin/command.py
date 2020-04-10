@@ -15,9 +15,7 @@ def main(sysargs = sys.argv[1:]):
 
     parser = argparse.ArgumentParser(prog = _program, 
     description='pangolin: Pipeline for Assigning Global Outbreak Lineages', 
-    usage='''pangolin <query> [options]
-    pangolin: pangolin hCoV-2019
-    ''')
+    usage='''pangolin <query> [options]''')
 
     parser.add_argument('query')
     parser.add_argument('-o','--outdir', action="store")
@@ -61,7 +59,6 @@ def main(sysargs = sys.argv[1:]):
     if status: # translate "success" into shell exit code of 0
        return 0
     return 1
-
 
 if __name__ == '__main__':
     main()

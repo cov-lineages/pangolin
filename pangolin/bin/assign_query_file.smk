@@ -1,45 +1,59 @@
 query_sequence = PersistentDict("query_store")
 
-rule iqtree_safe_query:
+rule decrypt_aln:
+    input:
+        config["representative_aln"]
+    output:
+        config["outdir"] + "/temp/anonymised.aln.fasta"
+    run:
+        c = 0
+        with open(output[0],"w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                decrypted_seq = codecs.decode(str(record.seq), 'rot_13')
+                fw.write(f">{record.id}\n{decrypted_seq}\n")
+                c+=1
+        print(f"Decrypted {c} sequences")
+
+rule pass_query_hash:
     input:
         config["query_fasta"]
     output:
-        config["outdir"] + "/temp/query_fasta.iqtree_friendly.fasta"
+        t = temp(config["outdir"] + "/temp/temp.txt"),
+        fasta = config["outdir"] + "/temp/query.fasta",
+        key = config["outdir"] + "/temp/query_key.csv"
     run:
-        fw = open(output[0],"w")
-        for record in SeqIO.parse(input[0],"fasta"):
-            new_id = record.id.replace("/","___")
-            fw.write(f">{new_id}\n{record.seq}\n")
-        fw.close()
-
-rule assess_queries:
-    input:
-        rules.iqtree_safe_query.output
-    output:
-        t = temp(config["outdir"] + "/temp/temp_report.txt")
-    run:
-        fw = open(output[0],"w")
+        fkey = open(output.key, "w")
         ids = ''
-        for record in SeqIO.parse(input[0],"fasta"):
-            gisaid_id = record.id.split("|")[1]
-            if gisaid_id != "":
-                ids += gisaid_id + ","
+        c= 0
+        with open(output.fasta, "w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                c+=1
+                record_list = record.id.split('|')
+                lineage = record_list[2]
                 
-                fw.write(f"{gisaid_id},{record.id}\n")
-            else:
-                cog_id = record.id.split("|")[0].split('___')[1]
-                ids += cog_id + ","
-        fw.close()
+                new_id = f"{c}_{lineage}"
+
+                fkey.write(f"{record.id},{new_id}\n")
+                fw.write(f">{new_id}\n{record.seq}\n")
+
+                ids+=new_id + ','
+            
+            print(f"{c+1} hashed sequences written")
+        fkey.close()
+        
         ids = ids.rstrip(',')
         query_sequence.store("query_store",ids)
+        shell("touch {output.t}")
 
-rule process_sample:
+
+rule assign_lineages:
     input:
-        rules.assess_queries.output.t,
+        rules.pass_query_hash.output.t,
         config=workflow.current_basedir+"/../config.yaml",
         snakefile = workflow.current_basedir+"/assign_query_lineage.smk",
-        query = rules.iqtree_safe_query.output,
-        aln = config["representative_aln"],
+        query = rules.pass_query_hash.output.fasta,
+        key = rules.pass_query_hash.output.key,
+        aln = rules.decrypt_aln.output,
         guide_tree = config["guide_tree"]
     params:
         outdir= config["outdir"],
@@ -49,8 +63,9 @@ rule process_sample:
         report = config["outdir"] + "/lineage_report.csv"
     run:
         query_sequences = query_sequence.fetch("query_store")
+        num_query_seqs = len(query_sequences.split(","))
         if query_sequences != "":
-            print("Passing {} into processing pipeline.".format(query_sequences))
+            print(f"Passing {num_query_seqs} into processing pipeline.")
             config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
                         "--configfile {input.config:q} "
@@ -60,7 +75,8 @@ rule process_sample:
                         "query_fasta={input.query:q} "
                         "representative_aln={input.aln:q} "
                         "guide_tree={input.guide_tree:q} "
-                        " --cores {params.cores}")
+                        "key={input.key} "
+                        "--cores {params.cores}")
         else:
             shell("touch {output.report}")
 

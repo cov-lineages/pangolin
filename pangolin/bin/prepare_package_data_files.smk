@@ -1,10 +1,23 @@
+import csv
+from Bio import SeqIO
+import codecs
+
+# requires metadata and fasta file in config
+
+
+config["outdir"] = config["outdir"].rstrip("/")
+
+rule all:
+    input:
+        config["outdir"] + "/anonymised.aln.fasta.treefile",
+        config["outdir"] + "/anonymised.encrypted.aln.fasta"
 
 rule extract_representative_sequences:
     input:
-        metadata = config["lineage_metadata"],
+        metadata = config["metadata"],
         fasta = config["fasta"]
     output:
-        config["outdir"] + "/temp/representative_sequences.fasta"
+        config["outdir"] + "/representative_sequences.fasta"
     run:
         tax_dict = {}
         with open(input.metadata,newline="") as f:
@@ -12,14 +25,13 @@ rule extract_representative_sequences:
             for row in reader:
                 if row["representative"] == '1':
                     tax_dict[row["header"]] = row["lineage"]
+
         fw = open(output[0], "w")
         c = 0
         for record in SeqIO.parse(input.fasta,"fasta"):
             if record.id in tax_dict:
                 c+=1
-                
                 record_list = record.id.split('|')
-                country = record_list[0].split("/")[0]
                 record_list[2] = tax_dict[record.id]
                 new_id = '|'.join(record_list)
                 fw.write(f">{new_id}\n{record.seq}\n")
@@ -28,43 +40,59 @@ rule extract_representative_sequences:
 
 rule mafft_representative_sequences:
     input:
-        config["outdir"] + "/temp/representative_sequences.fasta"
+        rules.extract_representative_sequences.output
     output:
-        config["outdir"] + "/temp/representative_sequences.aln.fasta"
+        config["outdir"] + "/representative_sequences.aln.fasta"
     shell:
         "mafft {input[0]:q} > {output[0]:q}"
 
-rule iqtree_safe_headers:
+rule anonymise_headers:
     input:
-        config["outdir"] + "/temp/representative_sequences.aln.fasta"
+        rules.mafft_representative_sequences.output
     output:
-        config["outdir"] + "/temp/representative_sequences.aln.iqtree_friendly.fasta"
+        fasta = config["outdir"] + "/anonymised.aln.fasta",
+        key = config["outdir"] + "tax_key.csv"
     run:
-        fw = open(output[0],"w")
-        for record in SeqIO.parse(input[0],"fasta"):
-            new_id = record.id.replace("/","___")
-            fw.write(f">{new_id}\n{record.seq}\n")
-        fw.close()
+        fkey = open(output.key, "w")
+        fkey.write("taxon,key\n")
+        key_dict = {}
+        c = 0
+        with open(output.fasta, "w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                c+=1
+                record_list = record.id.split('|')
+                lineage = record_list[2]
+                new_id = ""
+                if "EPI_ISL_406801" in record.id: # this is the WH04 GISAID ID
+                    print(record.id)
+                    new_id = f"outgroup_A"
+                else:
+                    new_id = f"{c}_{lineage}"
+
+                fkey.write(f"{record.id},{new_id}\n")
+                fw.write(f">{new_id}\n{record.seq}\n")
             
+            print(f"{c+1} anonymised sequences written to {output.fasta}")
+        fkey.close()
+
+rule encrypt_fasta:
+    input:
+        rules.anonymise_headers.output.fasta
+    output:
+        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+    run:
+        c = 0
+        with open(output[0],"w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                encrypted_seq = codecs.encode(str(record.seq), 'rot_13')
+                fw.write(f">{record.id}\n{encrypted_seq}\n")
+                c+=1
+        print(f"Encrypted {c} sequences with rot13")
 
 rule iqtree_representative_sequences:
     input:
-        config["outdir"] + "/temp/representative_sequences.aln.iqtree_friendly.fasta"
+        rules.anonymise_headers.output.fasta
     output:
-        config["outdir"] + "/temp/representative_sequences.aln.iqtree_friendly.fasta.treefile"
+        config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
-        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'Wuhan___WH04___2020|EPI_ISL_406801|A|Wuhan|||2020-01-05'"
-
-rule iqtree_restore_headers:
-    input:
-        config["outdir"] + "/temp/representative_sequences.aln.iqtree_friendly.fasta.treefile"
-    output:
-        config["outdir"] + "/temp/representative_sequences.aln.fasta.treefile"
-    run:
-        fw = open(output[0],"w")
-        with open(input[0],"r") as f:
-            for l in f:
-                l = l.rstrip("\n")
-                l = l.replace("___","/")
-            fw.write(f"{l}\n")
-        fw.close()
+        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_A'"

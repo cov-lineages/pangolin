@@ -2,22 +2,16 @@ configfile: workflow.current_basedir + "/../config.yaml"
 
 import csv
 from Bio import SeqIO
+import codecs
 from pytools.persistent_dict import PersistentDict
 
 ##### Configuration #####
-
-# if config.get("lineage_metadata"):
-#     config["lineage_metadata"] = os.path.join(workflow.current_basedir,'..', config["lineage_metadata"])
-# if config.get("fasta"):
-#     config["fasta"] = os.path.join(workflow.current_basedir,'..', config["fasta"])
 
 if config.get("representative_aln"):
     config["representative_aln"] = os.path.join(workflow.current_basedir,'..', config["representative_aln"])
 
 if config.get("guide_tree"):
     config["guide_tree"] = os.path.join(workflow.current_basedir,'..', config["guide_tree"])
-
-
 
 if config.get("outdir"):
     config["outdir"] = config["outdir"].rstrip("/")
@@ -28,9 +22,6 @@ else:
 
 rule all:
     input:
-        # config["outdir"] + "/temp/representative_sequences.aln.fasta",
-        # config["outdir"] + "/temp/representative_sequences.aln.fasta.treefile",
-        config["outdir"] + "/temp/temp_report.txt",
         config["outdir"] + "/lineage_report.csv"
 
 ##### Modules #####
