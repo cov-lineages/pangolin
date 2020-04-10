@@ -33,7 +33,7 @@ rule pass_query_hash:
                     lineage = record_list[2]
                     new_id = f"{c}_{lineage}"
                 else:
-                    new_id = f"{c}"
+                    new_id = str(c)
 
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
