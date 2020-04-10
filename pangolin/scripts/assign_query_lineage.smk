@@ -68,7 +68,7 @@ rule assign_lineage:
         """
         assign_lineage.py  --separator '_' --index 1 \
         --collapse_to_polytomies --taxon '{params.query}' \
-        --input {input.tree:q} --output {output:q}"
+        --input {input.tree:q} --output {output:q}
         """
         
 rule gather_reports:
