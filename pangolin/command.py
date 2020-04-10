@@ -26,7 +26,7 @@ def main(sysargs = sys.argv[1:]):
     args = parser.parse_args(sysargs)
 
     # first, find the Snakefile
-    snakefile = os.path.join(thisdir, 'bin/Snakefile')
+    snakefile = os.path.join(thisdir, 'scripts/Snakefile')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
