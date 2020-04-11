@@ -24,7 +24,7 @@ rule extract_representative_sequences:
             reader = csv.DictReader(f)
             for row in reader:
                 if row["representative"] == '1':
-                    tax_dict[row["header"]] = row["lineage"]
+                    tax_dict[row["name"]] = row["lineage"]
 
         fw = open(output[0], "w")
         c = 0
