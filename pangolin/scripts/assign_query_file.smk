@@ -28,12 +28,20 @@ rule pass_query_hash:
         with open(output.fasta, "w") as fw:
             for record in SeqIO.parse(input[0],"fasta"):
                 c+=1
+<<<<<<< HEAD
                 record_list = record.id.split('|')
                 if len(record_list) >= 3:
                     lineage = record_list[2]
                     new_id = f"{c}_{lineage}"
                 else:
                     new_id = f"{c}"
+=======
+
+                # record_list = record.id.split('|')
+                # lineage = record_list[2]
+                
+                new_id = f"tax{c}tax"
+>>>>>>> 401ee2f26d6da64ec43b73f4fbbb3e0597636d48
 
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
