@@ -1,0 +1,19 @@
+name: pangolin
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - biopython=1.74
+  - iqtree
+  - mafft
+  - iqtree
+  - pip=19.3.1
+  - python=3.6
+  - snakemake-minimal=5.13
+  - pip:
+    - git+https://github.com/cov-ert/clusterfunk.git@v0.0.1
+    - pytools==2020.1
+    - dendropy>=4.4.0
+    - git+https://github.com/aineniamh/lineages.git
+
