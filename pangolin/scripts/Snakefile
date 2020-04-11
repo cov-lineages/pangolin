@@ -1,0 +1,28 @@
+configfile: workflow.current_basedir + "/../config.yaml"
+
+import csv
+from Bio import SeqIO
+import codecs
+from pytools.persistent_dict import PersistentDict
+
+##### Configuration #####
+
+if config.get("representative_aln"):
+    config["representative_aln"] = os.path.join(workflow.current_basedir,'..', config["representative_aln"])
+
+if config.get("guide_tree"):
+    config["guide_tree"] = os.path.join(workflow.current_basedir,'..', config["guide_tree"])
+
+if config.get("outdir"):
+    config["outdir"] = config["outdir"].rstrip("/")
+else:
+    config["outdir"] = "analysis"
+
+##### Target rules #####
+
+rule all:
+    input:
+        config["outdir"] + "/lineage_report.csv"
+
+##### Modules #####
+include: "assign_query_file.smk"
