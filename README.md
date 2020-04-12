@@ -4,6 +4,8 @@ Phylogenetic Assignment of Named Global Outbreak LINeages
 
 ### Requirements
 
+Pangolin runs on MacOS and Linux. The conda environment recipe may not build on Windows (I haven't tested it) but can be run using the Windows subsystem for Linux.
+
 1. Some version of conda, we use Miniconda3. Can be downloaded from [here](https://docs.conda.io/en/latest/miniconda.html)
 2. Your query fasta file
 
