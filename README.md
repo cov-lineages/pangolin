@@ -15,8 +15,8 @@ Phylogenetic Assignment of Named Global Outbreak LINeages
 
 ### Usage
 
-1. Activate the environment ``conda activate pangolin-env``
-2. Run ``lineage <query>``
+1. Activate the environment ``conda activate pangolin``
+2. Run ``pangolin <query>``
 
 ```
 
