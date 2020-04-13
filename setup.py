@@ -21,7 +21,8 @@ setup(name='pangolin',
                                 'data/*']},
       install_requires=[
             "biopython>=1.70",
-            "dendropy>=4.4.0"
+            "dendropy>=4.4.0",
+            "pytools==2020.1"
         ],
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/aineniamh/lineages',
