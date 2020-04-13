@@ -61,14 +61,13 @@ class LineageFinder:
         self.annotate_tips_from_label(index, separator)
         self.lineage_parsimony(self.root)
 
-        if self.query_node_parent.annotations.get_value("lineage") is not None:
-            label = self.query_node_parent.label if self.query_node_parent.label is not None else self.query_node_parent.annotations.get_value(
+        label = self.query_node_parent.label if self.query_node_parent.label is not None else self.query_node_parent.annotations.get_value(
                     "label")
+
+        if self.query_node_parent.annotations.get_value("lineage") is not None:
             return [self.query_node_parent.annotations.get_value("lineage"),
                     label]
         else:
-            label = self.query_node_parent.parent_node.label if self.query_node_parent.parent_node.label is not None else self.query_node_parent.parent_node.annotations.get_value(
-                    "label")
             return [self.query_node_parent.parent_node.annotations.get_value("lineage"),
                     label]
 
