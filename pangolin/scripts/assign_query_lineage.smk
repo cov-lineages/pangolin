@@ -81,7 +81,7 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage,bootstrap\n")
+        fw.write("taxon,lineage,bb\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
