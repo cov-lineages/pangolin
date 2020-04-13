@@ -42,9 +42,9 @@ Your output will be a csv file with taxon name and lineage assigned, one line co
 
 Example:
 
-| Taxon       | Lineage   |
-| ----------- |:---------:|
-| Virus1      |  B.1      |
-| Virus2      |  A.1      |
-| Virus3      |  A.3      |
-| Virus4      |  B.1.4    |
+| Taxon       | Lineage   | UFbootstrap |
+| ----------- |:---------:|:----------:|
+| Virus1      |  B.1      |  82.00     |
+| Virus2      |  A.1      |  95.00     |
+| Virus3      |  A.3      |  100.00    |
+| Virus4      |  B.1.4    |  73.00     |
