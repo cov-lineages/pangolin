@@ -14,11 +14,6 @@ if config.get("representative_aln"):
 if config.get("guide_tree"):
     config["guide_tree"] = os.path.join(workflow.current_basedir,'..', config["guide_tree"])
 
-if config.get("outdir"):
-    config["outdir"] = config["outdir"].rstrip("/")
-else:
-    config["outdir"] = "."
-
 ##### Target rules #####
 
 rule all:

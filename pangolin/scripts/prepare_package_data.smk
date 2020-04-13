@@ -4,9 +4,6 @@ import codecs
 
 # requires metadata and fasta file in config
 
-
-config["outdir"] = config["outdir"].rstrip("/")
-
 rule all:
     input:
         config["outdir"] + "/anonymised.aln.fasta.treefile",

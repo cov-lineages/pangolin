@@ -20,14 +20,14 @@ def main(sysargs = sys.argv[1:]):
     usage='''pangolin <query> [options]''')
 
     parser.add_argument('query')
-    parser.add_argument('-o','--outdir', default=".", action="store")
+    parser.add_argument('-o','--outdir', action="store")
     parser.add_argument('-n', '--dry-run', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-t', '--threads', action='store',type=int)
     parser.add_argument('-u','--unlock', action='store_true')
     args = parser.parse_args(sysargs)
 
-    # first, find the Snakefile
+    # find the Snakefile
     snakefile = os.path.join(thisdir, 'scripts/Snakefile')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
@@ -35,6 +35,7 @@ def main(sysargs = sys.argv[1:]):
     else:
         print("Found the snakefile")
 
+    # find the query fasta
     query = os.path.join(cwd, args.query)
     if not os.path.exists(query):
         sys.stderr.write('Error: cannot find query at {}\n'.format(query))
@@ -42,15 +43,23 @@ def main(sysargs = sys.argv[1:]):
     else:
 
         print(f"The query file is {query}")
+    # default output dir
+    if args.outdir:
+        outdir = args.outdir.rstrip("/")
+    else:
+        outdir = cwd.rstrip("/")
 
-    # next, make the config_string
-
+    # how many threads to pass
     if args.threads:
         threads = args.threads
     else:
         threads = 1
-    print("number of threads is", threads)
-    config = {"query_fasta":query}
+
+    print("Number of threads is", threads)
+    config = {
+            "query_fasta":query,
+            "outdir":outdir
+            }
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
