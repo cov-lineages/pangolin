@@ -14,7 +14,7 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 1. Clone this repository and ``cd pangolin``
 2. ``conda env create -f environment.yml``
 3. ``python setup.py install`` or ``pip install .``
-3. That's it
+4. That's it
 
 ### Usage
 
