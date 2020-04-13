@@ -4,7 +4,7 @@ from Bio import Phylo
 if config.get("outdir"):
     config["outdir"] = config["outdir"].rstrip("/")
 else:
-    config["outdir"] = "analysis"
+    config["outdir"] = "."
 
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 

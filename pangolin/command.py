@@ -20,7 +20,7 @@ def main(sysargs = sys.argv[1:]):
     usage='''pangolin <query> [options]''')
 
     parser.add_argument('query')
-    parser.add_argument('-o','--outdir', action="store")
+    parser.add_argument('-o','--outdir', default=".", action="store")
     parser.add_argument('-n', '--dry-run', action='store_true')
     parser.add_argument('-f', '--force', action='store_true')
     parser.add_argument('-t', '--threads', action='store',type=int)

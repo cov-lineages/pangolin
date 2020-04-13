@@ -17,7 +17,7 @@ if config.get("guide_tree"):
 if config.get("outdir"):
     config["outdir"] = config["outdir"].rstrip("/")
 else:
-    config["outdir"] = "analysis"
+    config["outdir"] = "."
 
 ##### Target rules #####
 
