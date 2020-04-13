@@ -33,7 +33,7 @@ rule iqtree_with_guide_tree:
         profile_aln = rules.profile_align_query.output,
         guide_tree = config["guide_tree"]
     output:
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile")
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.contree")
     run:
         iqtree_check = output[0].rstrip("treefile") + "iqtree"
         if os.path.exists(iqtree_check):
@@ -81,7 +81,7 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage,bb\n")
+        fw.write("taxon,lineage,UFbootstrap\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
