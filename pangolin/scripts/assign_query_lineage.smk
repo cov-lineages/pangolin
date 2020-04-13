@@ -35,7 +35,7 @@ rule iqtree_with_guide_tree:
     output:
         temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.contree")
     run:
-        iqtree_check = output[0].rstrip("treefile") + "iqtree"
+        iqtree_check = output[0].rstrip("contree") + "iqtree"
         if os.path.exists(iqtree_check):
             print("Tree exists, going to rerun", iqtree_check)
             shell("iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A' -redo")
