@@ -12,8 +12,6 @@ dependencies:
   - python=3.6
   - snakemake-minimal=5.13
   - pip:
-    - git+https://github.com/cov-ert/clusterfunk.git@v0.0.1
     - pytools==2020.1
     - dendropy>=4.4.0
-    - git+https://github.com/aineniamh/lineages.git
-
+    - git+https://github.com/hCoV-2019/pangolin.git
