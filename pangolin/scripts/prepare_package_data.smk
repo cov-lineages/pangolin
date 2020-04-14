@@ -17,12 +17,14 @@ rule extract_representative_sequences:
         config["outdir"] + "/representative_sequences.fasta"
     run:
         tax_dict = {}
-        with open(input.metadata,newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["representative"] == '1':
-                    tax_dict[row["name"]] = row["lineage"]
-
+        with open(input.metadata,"rb") as f:
+            for l in f:
+                l = l.decode("utf-8","ignore").rstrip()
+                if not l.startswith("name"):
+                    tokens = l.split(",")
+                    if tokens[-1] =="1":
+                        tax_dict[tokens[0]]= tokens[1]
+                        
         fw = open(output[0], "w")
         c = 0
         for record in SeqIO.parse(input.fasta,"fasta"):
