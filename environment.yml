@@ -1,7 +1,7 @@
 name: pangolin
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - biopython=1.74
