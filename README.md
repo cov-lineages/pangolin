@@ -48,3 +48,9 @@ Example:
 | Virus2      |  A.1      |  95     |
 | Virus3      |  A.3      |  100    |
 | Virus4      |  B.1.4    |  73     |
+
+
+### Authors
+
+Pangolin was created by Áine O'Toole and JT McCrone
+
