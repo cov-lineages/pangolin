@@ -1,8 +1,8 @@
 # pangolin
 
-Phylogenetic Assignment of Named Global Outbreak LINeages
+**P**hylogenetic **A**ssignment of **N**amed **G**lobal **O**utbreak **LIN**eages
 
-<img src="https://github.com/hCoV-2019/pangolin/blob/master/docs/logo.png">
+<img src="https://github.com/hCoV-2019/pangolin/blob/master/docs/logo.png" width="300">
 
 ### Requirements
 
