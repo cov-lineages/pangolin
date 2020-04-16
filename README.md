@@ -56,3 +56,23 @@ Example:
 
 Pangolin was created by Áine O'Toole and JT McCrone
 
+
+### References
+
+The following external software is run as part of pangolin:
+
+[iqtree](http://www.iqtree.org/#download)
+
+L.-T. Nguyen, H.A. Schmidt, A. von Haeseler, B.Q. Minh (2015) IQ-TREE: A fast and effective stochastic algorithm for estimating maximum likelihood phylogenies.. Mol. Biol. Evol., 32:268-274. https://doi.org/10.1093/molbev/msu300
+
+D.T. Hoang, O. Chernomor, A. von Haeseler, B.Q. Minh, L.S. Vinh (2018) UFBoot2: Improving the ultrafast bootstrap approximation. Mol. Biol. Evol., 35:518–522. https://doi.org/10.1093/molbev/msx281
+
+[mafft](https://mafft.cbrc.jp/alignment/software/)
+
+Katoh, Standley 2013 (Molecular Biology and Evolution 30:772-780)
+MAFFT multiple sequence alignment software version 7: improvements in performance and usability.
+(outlines version 7)
+
+[snakemake](https://snakemake.readthedocs.io/en/stable/index.html)
+
+Köster, Johannes and Rahmann, Sven. “Snakemake - A scalable bioinformatics workflow engine”. Bioinformatics 2012.
