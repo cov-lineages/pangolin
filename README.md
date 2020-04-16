@@ -2,6 +2,8 @@
 
 Phylogenetic Assignment of Named Global Outbreak LINeages
 
+<img src="https://github.com/hCoV-2019/pangolin/blob/master/docs/logo.png">
+
 ### Requirements
 
 Pangolin runs on MacOS and Linux. The conda environment recipe may not build on Windows (I haven't tested it) but can be run using the Windows subsystem for Linux.
