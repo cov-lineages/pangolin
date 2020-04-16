@@ -92,9 +92,9 @@ rule gather_reports:
                     taxon = key_dict[tokens[0]]
                     bootstrap = 0
                     if '/' in ufboot: 
-                        bootstrap = int(ufboot.split("/")[1])
+                        bootstrap = ufboot.split("/")[1].split('.')[0]
                     else:
-                        bootstrap = int(ufboot)
+                        bootstrap = ufboot.split('.')[0]
 
                     fw.write(f"{taxon},{lineage},{bootstrap}\n")
         fw.close()
