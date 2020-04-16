@@ -88,8 +88,14 @@ rule gather_reports:
                 for l in f:
                     l=l.rstrip()
                     tokens = l.split(",")
-                    lineage,bootstrap = tokens[1],tokens[2]
+                    lineage,ufboot = tokens[1],tokens[2]
                     taxon = key_dict[tokens[0]]
+                    bootstrap = 0
+                    if '/' in ufboot: 
+                        bootstrap = int(ufboot.split("/")[1])
+                    else:
+                        bootstrap = int(ufboot)
+
                     fw.write(f"{taxon},{lineage},{bootstrap}\n")
         fw.close()
 
