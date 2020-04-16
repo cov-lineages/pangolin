@@ -15,7 +15,9 @@ setup(name='pangolin',
                 'pangolin/scripts/Snakefile',
                 'pangolin/scripts/assign_lineage.py',
                 'pangolin/scripts/lineage_finder.py',
-                'pangolin/scripts/utils.py'
+                'pangolin/scripts/utils.py',
+                'pangolin/scripts/defining_snps.py',
+                'pangolin/scripts/prepare_package_data.smk'
                 ],
       package_data={'pangolin':['config.yaml',
                                 'data/*']},

@@ -7,7 +7,8 @@ import codecs
 rule all:
     input:
         config["outdir"] + "/anonymised.aln.fasta.treefile",
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        config["outdir"] + "/anonymised.encrypted.aln.fasta",
+        config["outdir"] + "/defining_snps.csv"
 
 rule extract_representative_sequences:
     input:
@@ -93,3 +94,11 @@ rule iqtree_representative_sequences:
         config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
         "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_A'"
+
+rule define_snps:
+    input:
+        rules.anonymise_headers.output.fasta
+    output:
+        config["outdir"] + "/defining_snps.csv"
+    shell:
+        "define_snps.py -a {input[0]:q} -o {output[0]:q}"
