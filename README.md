@@ -44,7 +44,7 @@ Example:
 
 | Taxon       | Lineage   | UFbootstrap |
 | ----------- |:---------:|:----------:|
-| Virus1      |  B.1      |  82.00     |
-| Virus2      |  A.1      |  95.00     |
-| Virus3      |  A.3      |  100.00    |
-| Virus4      |  B.1.4    |  73.00     |
+| Virus1      |  B.1      |  82     |
+| Virus2      |  A.1      |  95     |
+| Virus3      |  A.3      |  100    |
+| Virus4      |  B.1.4    |  73     |
