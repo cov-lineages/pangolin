@@ -54,7 +54,7 @@ Example:
 
 ### Authors
 
-Pangolin was created by Áine O'Toole and JT McCrone
+Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/)
 
 
 ### References
