@@ -54,7 +54,8 @@ Example:
 
 ### Authors
 
-Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/)
+Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/).
+It uses lineages from [Rambaut, Holmes & Pybus](http://virological.org/t/a-dynamic-nomenclature-for-sars-cov-2-to-assist-genomic-epidemiology/458).
 
 
 ### References
