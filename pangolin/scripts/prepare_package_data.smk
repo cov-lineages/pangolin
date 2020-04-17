@@ -49,7 +49,7 @@ rule anonymise_headers:
         rules.mafft_representative_sequences.output
     output:
         fasta = config["outdir"] + "/anonymised.aln.fasta",
-        key = config["outdir"] + "tax_key.csv"
+        key = config["outdir"] + "/tax_key.csv"
     run:
         fkey = open(output.key, "w")
         fkey.write("taxon,key\n")
