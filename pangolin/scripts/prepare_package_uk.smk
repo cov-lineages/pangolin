@@ -22,7 +22,7 @@ rule extract_representative_sequences:
             for row in reader:
                 if row["representative"] == '1':
                     tax_dict[row["name"]] = row["UK_cluster"]
-
+        print(f"Number of seqs in tax dict is {len(tax_dict)}")
         fw = open(output[0], "w")
         c = 0
         for record in SeqIO.parse(input.fasta,"fasta"):
@@ -61,7 +61,7 @@ rule anonymise_headers:
                 new_id = ""
                 if "WH04" in record.id: # this is the WH04 GISAID ID
                     print(record.id)
-                    new_id = f"outgroup_A"
+                    new_id = f"outgroup_NonUK"
                 else:
                     new_id = f"{c}_{lineage}"
 
@@ -91,4 +91,4 @@ rule iqtree_representative_sequences:
     output:
         config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
-        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_A'"
+        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_NonUK' -redo"
