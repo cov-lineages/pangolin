@@ -39,10 +39,10 @@ rule iqtree_with_guide_tree:
         iqtree_check = output[0].rstrip("treefile") + "iqtree"
         if os.path.exists(iqtree_check):
             print("Tree exists, going to rerun", iqtree_check)
-            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A' -redo")
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A' -redo")
         else:
             print("Tree doesn't exist here", output[0])
-            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A'")
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A'")
 
 rule to_nexus:
     input:
