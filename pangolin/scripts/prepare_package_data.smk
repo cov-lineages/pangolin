@@ -1,7 +1,7 @@
 import csv
 from Bio import SeqIO
 import codecs
-
+import collections
 # requires metadata and fasta file in config
 
 rule all:
@@ -10,9 +10,49 @@ rule all:
         config["outdir"] + "/anonymised.encrypted.aln.fasta",
         config["outdir"] + "/defining_snps.csv"
 
-rule extract_representative_sequences:
+rule assign_representative_sequences:
     input:
         metadata = config["metadata"],
+        fasta = config["fasta"]
+    output:
+        config["outdir"] + "/metadata_representatives_annotated.fasta"
+    run:
+        n_dict = {}
+        for record in SeqIO.parse(input.fasta,"fasta"):
+            num_N = str(record.seq).upper().count("N")
+            pcent_N = (num_N*100)/len(record.seq)
+            n_dict[record.id] = pcent_N
+        
+        lineage_dict = collections.defaultdict(list)
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                lineage_dict[row["lineage"]].append((row["name"], n_dict[row["name"]]))
+
+        representative_names= []
+        for lineage in lineage_dict:
+            taxa = sorted(lineage_dict[lineage], key = lambda x : x[1])
+            representative_sequences = taxa[:5]
+            for seq in representative_sequences:
+                representative_names.append(representative_sequences)
+
+        fw = open(output[0],"w")
+        with open(input.metadata,"r") as f:
+            for l in f:
+                l = l.rstrip("\n")
+                if l.startswith("name"):
+                    fw.write(f'{l},representative\n')
+                else:
+                    name = l.split(",")[0]
+                    if name in representative_names:
+                        fw.write(f'{l},1\n')
+                    else:
+                        fw.write(f'{l},0\n')
+        fw.close()
+        
+rule extract_representative_sequences:
+    input:
+        metadata = rules.assign_representative_sequences.output,
         fasta = config["fasta"]
     output:
         config["outdir"] + "/representative_sequences.fasta"
