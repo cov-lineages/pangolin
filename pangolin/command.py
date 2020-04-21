@@ -6,6 +6,7 @@ import snakemake
 import sys
 import pprint
 import json
+from Bio import SeqIO
 
 from . import _program
 
@@ -41,8 +42,15 @@ def main(sysargs = sys.argv[1:]):
         sys.stderr.write('Error: cannot find query at {}\n'.format(query))
         sys.exit(-1)
     else:
-
         print(f"The query file is {query}")
+
+    for record in SeqIO.parse(query, "fasta"):
+        num_N = str(record.seq).upper().count("N")
+        pcent_N = (num_N*100)/len(record.seq)
+        if pcent_N > 50: 
+            print(f"Error: {record.id} has an N content greater than 50%, which may lead to inaccurate assignment.\nPlease remove this sequence and try again.\nExiting.",file=sys.stderr)
+            exit(1)
+
     # default output dir
     if args.outdir:
         outdir = args.outdir.rstrip("/")
@@ -64,7 +72,7 @@ def main(sysargs = sys.argv[1:]):
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=args.force,
-                                 config=config, unlock=args.unlock, cores=threads,lock=False
+                                 config=config, unlock=args.unlock, cores=threads,lock=False,quiet=True
                                  )
 
     if status: # translate "success" into shell exit code of 0

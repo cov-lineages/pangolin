@@ -1,5 +1,6 @@
 from Bio import SeqIO
 from Bio import Phylo
+import sys
 
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 
@@ -98,12 +99,14 @@ rule gather_reports:
                         bootstrap = ufboot.split('.')[0]
                         alrt = alrt.split('.')[0]
                         print("alrt",alrt,"bootstrap",bootstrap)
-                    else:
+                    elif len(support) == 2:
                         alrt,ufboot = support
                         bootstrap = ufboot.split('.')[0]
                         alrt = alrt.split('.')[0]
                         print("alrt",alrt,"bootstrap",bootstrap)
-
+                    else:
+                        alrt=0
+                        bootstrap=0
 
                     fw.write(f"{taxon},{lineage},{alrt},{bootstrap}\n")
         fw.close()
