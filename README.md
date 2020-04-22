@@ -44,13 +44,15 @@ Your output will be a csv file with taxon name and lineage assigned, one line co
 
 Example:
 
-| Taxon       | Lineage   | UFbootstrap |
-| ----------- |:---------:|:----------:|
-| Virus1      |  B.1      |  82     |
-| Virus2      |  A.1      |  95     |
-| Virus3      |  A.3      |  100    |
-| Virus4      |  B.1.4    |  73     |
+| Taxon       | Lineage   | aLRT | UFbootstrap |
+| ----------- |:---------:|:----------:|:----------:|
+| Virus1      |  B.1      | 80      |  82    |
+| Virus2      |  A.1      |  65     | 95     |
+| Virus3      |  A.3      |  100     | 100    |
+| Virus4      |  B.1.4    |  82     | 73     |
 
+
+Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference).
 
 ### Authors
 
