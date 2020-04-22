@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import collections
 from Bio import AlignIO
@@ -55,7 +57,7 @@ def get_all_snps_in_lineages(lineage_dict):
             snp_str = ";".join(lineage_list)
 
             lineage_defining_snps[lineage] = snp_str
-            
+
             if lineage_list != []:
                 print(f"Lineage defining snps for {lineage}")
                 for i in lineage_list:
