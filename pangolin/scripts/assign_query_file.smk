@@ -18,7 +18,6 @@ rule pass_query_hash:
     input:
         config["query_fasta"]
     output:
-        t = temp(config["outdir"] + "/temp/temp.txt"),
         fasta = temp(config["outdir"] + "/temp/query.fasta"),
         key = temp(config["outdir"] + "/temp/query_key.csv")
     run:
@@ -44,12 +43,10 @@ rule pass_query_hash:
         
         ids = ids.rstrip(',')
         query_sequence.store("query_store",ids)
-        shell("touch {output.t}")
 
 
 rule assign_lineages:
     input:
-        rules.pass_query_hash.output.t,
         config=workflow.current_basedir+"/../config.yaml",
         snakefile = workflow.current_basedir+"/assign_query_lineage.smk",
         query = rules.pass_query_hash.output.fasta,
@@ -76,7 +73,7 @@ rule assign_lineages:
                         "query_fasta={input.query:q} "
                         "representative_aln={input.aln:q} "
                         "guide_tree={input.guide_tree:q} "
-                        "key={input.key} "
+                        "key={input.key:q} "
                         "--cores {params.cores}")
         else:
             shell("touch {output.report}")
