@@ -1,5 +1,6 @@
 from Bio import SeqIO
 from Bio import Phylo
+import sys
 
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 
@@ -33,15 +34,21 @@ rule iqtree_with_guide_tree:
         profile_aln = rules.profile_align_query.output,
         guide_tree = config["guide_tree"]
     output:
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile")
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.parstree"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.splits.nex"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.contree"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.log"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.ckp.gz"),
+        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.iqtree")
     run:
         iqtree_check = output[0].rstrip("treefile") + "iqtree"
         if os.path.exists(iqtree_check):
             print("Tree exists, going to rerun", iqtree_check)
-            shell("iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A' -redo")
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A' -redo")
         else:
             print("Tree doesn't exist here", output[0])
-            shell("iqtree -s {input.profile_aln:q} -bb 1000 -m HKY -g {input.guide_tree:q} -o 'outgroup_A'")
+            shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A'")
 
 rule to_nexus:
     input:
@@ -81,15 +88,32 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage,UFbootstrap\n")
+        fw.write("taxon,lineage,SH-alrt,UFbootstrap\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
                     tokens = l.split(",")
-                    lineage,bootstrap = tokens[1],tokens[2]
+                    lineage,support = tokens[1],tokens[2]
                     taxon = key_dict[tokens[0]]
-                    fw.write(f"{taxon},{lineage},{bootstrap}\n")
+                    bootstrap = ""
+                    print(support)
+                    support = support.split("/")
+                    if len(support) == 3: 
+                        old,alrt,ufboot = support
+                        bootstrap = ufboot.split('.')[0]
+                        alrt = alrt.split('.')[0]
+                        print("alrt",alrt,"bootstrap",bootstrap)
+                    elif len(support) == 2:
+                        alrt,ufboot = support
+                        bootstrap = ufboot.split('.')[0]
+                        alrt = alrt.split('.')[0]
+                        print("alrt",alrt,"bootstrap",bootstrap)
+                    else:
+                        alrt=0
+                        bootstrap=0
+
+                    fw.write(f"{taxon},{lineage},{alrt},{bootstrap}\n")
         fw.close()
 

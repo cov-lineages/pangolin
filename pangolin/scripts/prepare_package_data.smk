@@ -1,30 +1,76 @@
 import csv
 from Bio import SeqIO
 import codecs
-
+import collections
 # requires metadata and fasta file in config
 
 rule all:
     input:
         config["outdir"] + "/anonymised.aln.fasta.treefile",
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        config["outdir"] + "/anonymised.encrypted.aln.fasta",
+        config["outdir"] + "/defining_snps.csv"
+
+rule assign_representative_sequences:
+    input:
+        metadata = config["metadata"],
+        fasta = config["fasta"]
+    output:
+        annotated = config["outdir"] + "/metadata_representatives_annotated.csv"
+    run:
+        n_dict = {}
+        for record in SeqIO.parse(input.fasta,"fasta"):
+            num_N = str(record.seq).upper().count("N")
+            pcent_N = (num_N*100)/len(record.seq)
+            n_dict[record.id] = pcent_N
+
+        lineage_dict = collections.defaultdict(list)
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["name"] in n_dict:
+                    lineage_dict[row["lineage"]].append((row["name"], n_dict[row["name"]]))
+        print(lineage_dict.keys())
+        representative_names= []
+        for lineage in lineage_dict:
+            taxa = sorted(lineage_dict[lineage], key = lambda x : x[1])
+            representative_sequences = taxa[:5]
+            print(lineage, representative_sequences)
+            for taxon,n in representative_sequences:
+
+                representative_names.append(taxon)
+
+        fw = open(output[0],"w")
+        c = 0
+        with open(input.metadata,"r") as f:
+            for l in f:
+                c+=1
+                l = l.rstrip("\n")
+                if c ==1:
+                    fw.write("name,lineage,bootstrap,ambiguity,representative_old,representative\n")
+                else:
+                    name = l.split(",")[0]
+                    if name in representative_names:
+                        fw.write(f'{l},1\n')
+                    elif "WH04" in name:
+                        fw.write(f'{l},1\n')
+                    else:
+                        fw.write(f'{l},0\n')
+        fw.close()
 
 rule extract_representative_sequences:
     input:
-        metadata = config["metadata"],
+        metadata = rules.assign_representative_sequences.output.annotated,
         fasta = config["fasta"]
     output:
         config["outdir"] + "/representative_sequences.fasta"
     run:
         tax_dict = {}
-        with open(input.metadata,"rb") as f:
-            for l in f:
-                l = l.decode("utf-8","ignore").rstrip()
-                if not l.startswith("name"):
-                    tokens = l.split(",")
-                    if tokens[-1] =="1":
-                        tax_dict[tokens[0]]= tokens[1]
-                        
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["representative"] == '1':
+                    tax_dict[row["name"]] = row["lineage"]
+
         fw = open(output[0], "w")
         c = 0
         for record in SeqIO.parse(input.fasta,"fasta"):
@@ -50,7 +96,7 @@ rule anonymise_headers:
         rules.mafft_representative_sequences.output
     output:
         fasta = config["outdir"] + "/anonymised.aln.fasta",
-        key = config["outdir"] + "tax_key.csv"
+        key = config["outdir"] + "/tax_key.csv"
     run:
         fkey = open(output.key, "w")
         fkey.write("taxon,key\n")
@@ -94,4 +140,12 @@ rule iqtree_representative_sequences:
     output:
         config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
-        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_A'"
+        "iqtree -s {input[0]:q} -bb 1000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
+
+rule define_snps:
+    input:
+        rules.anonymise_headers.output.fasta
+    output:
+        config["outdir"] + "/defining_snps.csv"
+    shell:
+        "defining_snps.py -a {input[0]:q} -o {output[0]:q}"
