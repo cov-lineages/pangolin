@@ -24,18 +24,20 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 2. Run ``pangolin <query>``
 
 ```
-
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
 
-usage: pangolin <query> [options]
+positional arguments:
+  query
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTDIR, --outdir OUTDIR
-  -n, --dry-run
-  -f, --force
-  -t THREADS, --threads THREADS
-  -u, --unlock
+  -h, --help                      show this help message and exit
+  -o OUTDIR, --outdir OUTDIR      Output directory
+  -d DATA, --data DATA            Optional data directory to overwrite the default
+                                  package data. Minimally containing a fasta alignment
+                                  and guide tree
+  -n, --dry-run                   Go through the motions but don't actually run
+  -f, --force                     Overwrite all output
+  -t THREADS, --threads THREADS   Number of threads
   ```
 
 ### Output
