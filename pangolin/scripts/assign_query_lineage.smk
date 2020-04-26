@@ -47,7 +47,6 @@ rule iqtree_with_guide_tree:
             print("Tree exists, going to rerun", iqtree_check)
             shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A' -redo")
         else:
-            print("Tree doesn't exist here", output[0])
             shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A'")
 
 rule to_nexus:
