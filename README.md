@@ -1,4 +1,4 @@
-# pangolin
+# pangolin- **currently being updated, bear with us!**
 
 **P**hylogenetic **A**ssignment of **N**amed **G**lobal **O**utbreak **LIN**eages
 
@@ -59,7 +59,7 @@ Resources for interpreting the aLRT and UFbootstrap output can be found [here](h
 ### Authors
 
 Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/).
-It uses lineages from [Rambaut, Holmes & Pybus](http://virological.org/t/a-dynamic-nomenclature-for-sars-cov-2-to-assist-genomic-epidemiology/458).
+It uses lineages from [Rambaut et al.](https://www.biorxiv.org/content/10.1101/2020.04.17.046086v1).
 
 
 ### References
