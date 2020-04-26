@@ -1,4 +1,4 @@
-# pangolin- **currently being updated, bear with us!**
+# pangolin
 
 **P**hylogenetic **A**ssignment of **N**amed **G**lobal **O**utbreak **LIN**eages
 
