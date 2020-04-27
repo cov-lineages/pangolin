@@ -26,16 +26,13 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
 
     if len(sysargs)<1:
         parser.print_help()
         sys.exit(-1)
     else:
-        if sysargs[0] == "-v" or sysargs[0] == "--version":
-            print(f"pangolin: {__version__}")
-            sys.exit(-1)
-        else:
-            args = parser.parse_args(sysargs)
+        args = parser.parse_args(sysargs)
 
     # find the Snakefile
     snakefile = os.path.join(thisdir, 'scripts/Snakefile')
