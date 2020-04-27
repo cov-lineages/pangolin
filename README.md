@@ -30,14 +30,16 @@ positional arguments:
   query
 
 optional arguments:
-  -h, --help                      show this help message and exit
-  -o OUTDIR, --outdir OUTDIR      Output directory
-  -d DATA, --data DATA            Optional data directory to overwrite the default
-                                  package data. Minimally containing a fasta alignment
-                                  and guide tree
-  -n, --dry-run                   Go through the motions but don't actually run
-  -f, --force                     Overwrite all output
-  -t THREADS, --threads THREADS   Number of threads
+  -h, --help            show this help message and exit
+  -o OUTDIR, --outdir OUTDIR
+                        Output directory
+  -d DATA, --data DATA  Data directory minimally containing a fasta alignment
+                        and guide tree
+  -n, --dry-run         Go through the motions but don't actually run
+  -f, --force           Overwrite all output
+  -t THREADS, --threads THREADS
+                        Number of threads
+  -v, --version         show program's version number and exit
   ```
 
 ### Output
