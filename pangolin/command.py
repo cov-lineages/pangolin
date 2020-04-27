@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from pangolin import __version__
 import argparse
 import os.path
 import snakemake
@@ -31,7 +31,11 @@ def main(sysargs = sys.argv[1:]):
         parser.print_help()
         sys.exit(-1)
     else:
-        args = parser.parse_args(sysargs)
+        if sysargs[0] == "-v" or sysargs[0] == "--version":
+            print(f"pangolin: {__version__}")
+            sys.exit(-1)
+        else:
+            args = parser.parse_args(sysargs)
 
     # find the Snakefile
     snakefile = os.path.join(thisdir, 'scripts/Snakefile')
