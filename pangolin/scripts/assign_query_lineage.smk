@@ -14,18 +14,18 @@ rule expand_query_fasta:
     params:
         config["query_sequences"]
     output:
-        temp(expand(config["outdir"] + '/temp/expanded_query/{query}.fasta',query=config["query_sequences"]))
+        temp(expand(config["tempdir"] + '/{query}.fasta',query=config["query_sequences"]))
     run:
         for record in SeqIO.parse(input[0],"fasta"):
-            with open(config["outdir"] + f'/temp/expanded_query/{record.id}.fasta',"w") as fw:
+            with open(config["tempdir"] + f'/{record.id}.fasta',"w") as fw:
                 fw.write(f">{record.id}\n{record.seq}\n")
 
 rule profile_align_query:
     input:
         aln = config["representative_aln"],
-        query = config["outdir"] + '/temp/expanded_query/{query}.fasta'
+        query = config["tempdir"] + '/{query}.fasta'
     output:
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta")
+        temp(config["tempdir"] + "/{query}.aln.fasta")
     shell:
         "mafft-profile {input.aln:q} {input.query:q} > {output:q}"
 
@@ -34,13 +34,13 @@ rule iqtree_with_guide_tree:
         profile_aln = rules.profile_align_query.output,
         guide_tree = config["guide_tree"]
     output:
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.treefile"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.parstree"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.splits.nex"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.contree"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.log"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.ckp.gz"),
-        temp(config["outdir"] + "/temp/query_alignments/{query}.aln.fasta.iqtree")
+        temp(config["tempdir"] + "/{query}.aln.fasta.treefile"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.parstree"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.splits.nex"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.contree"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.log"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.ckp.gz"),
+        temp(config["tempdir"] + "/{query}.aln.fasta.iqtree")
     run:
         iqtree_check = output[0].rstrip("treefile") + "iqtree"
         if os.path.exists(iqtree_check):
@@ -53,7 +53,7 @@ rule to_nexus:
     input:
         rules.iqtree_with_guide_tree.output
     output:
-        temp(config["outdir"] + "/temp/query_alignments/{query}.nexus.tree")
+        temp(config["tempdir"] + "/{query}.nexus.tree")
     run:
         Phylo.convert(input[0], 'newick', output[0], 'nexus')
 
@@ -63,7 +63,7 @@ rule assign_lineage:
     params:
         query = "{query}"
     output:
-        temp(config["outdir"] + "/temp/{query}.txt")
+        temp(config["tempdir"] + "/{query}.txt")
     shell:
         """
         assign_lineage.py  --separator '_' --index 1 \
@@ -73,7 +73,7 @@ rule assign_lineage:
         
 rule gather_reports:
     input:
-        reports = expand(config["outdir"] + "/temp/{query}.txt", query=config["query_sequences"]),
+        reports = expand(config["tempdir"] + "/{query}.txt", query=config["query_sequences"]),
         key=config["key"]
     output:
         config["outdir"] + "/lineage_report.csv"

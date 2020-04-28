@@ -4,6 +4,7 @@ import argparse
 import os.path
 import snakemake
 import sys
+from tempfile import gettempdir
 import pprint
 import json
 from Bio import SeqIO
@@ -25,6 +26,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
+    parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
+    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Proportion of Ns allowable in the sequence",dest="maxambig")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
 
@@ -32,7 +35,11 @@ def main(sysargs = sys.argv[1:]):
         parser.print_help()
         sys.exit(-1)
     else:
-        args = parser.parse_args(sysargs)
+        if sysargs[0] == "-v" or sysargs[0] == "--version":
+            print(f"pangolin: {__version__}")
+            sys.exit(-1)
+        else:
+            args = parser.parse_args(sysargs)
 
     # find the Snakefile
     snakefile = os.path.join(thisdir, 'scripts/Snakefile')
@@ -50,18 +57,52 @@ def main(sysargs = sys.argv[1:]):
     else:
         print(f"The query file is {query}")
 
-    for record in SeqIO.parse(query, "fasta"):
-        num_N = str(record.seq).upper().count("N")
-        pcent_N = (num_N*100)/len(record.seq)
-        if pcent_N > 50: 
-            print(f"Error: {record.id} has an N content greater than 50%, which may lead to inaccurate assignment.\nPlease remove this sequence and try again.\nExiting.",file=sys.stderr)
-            exit(1)
-
-    # default output dir
+        # default output dir
+    outdir = ''
     if args.outdir:
         outdir = args.outdir.rstrip("/")
     else:
         outdir = cwd.rstrip("/")
+
+    tempdir = ''
+    if args.tempdir:
+        tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        if not os.path.exists(tempdir):
+            os.mkdir(tempdir)
+    else:
+        tempdir = gettempdir()
+        if not os.path.exists(tempdir):
+            os.mkdir(tempdir)
+    """ 
+    QC steps:
+    1) check no empty seqs
+    2) check N content
+    3) write a file that contains just the seqs to run
+    """
+
+    do_not_run = []
+    run = []
+    for record in SeqIO.parse(query, "fasta"):
+        if len(record) <1000:
+            do_not_run.append(record)
+            print("Empty record",record.id)
+        else:
+            num_N = str(record.seq).upper().count("N")
+            prop_N = (num_N)/len(record.seq)
+            if prop_N > args.maxambig: 
+                do_not_run.append(record)
+                print(f"{record.id} has an N content greater than {args.maxambig}, which may lead to inaccurate assignment")
+                # print(f"Error: {record.id} has an N content greater than 50%, which may lead to inaccurate assignment.\nPlease remove this sequence and try again.\nExiting.",file=sys.stderr)
+                # exit(1)
+            else:
+                run.append(record)
+
+    post_qc_query = tempdir + '/query.post_qc.fasta'
+    with open(post_qc_query,"w") as fw:
+        SeqIO.write(run, fw, "fasta")
+
+    with open(tempdir + '/query.failed_qc.fasta',"w") as fw:
+        SeqIO.write(do_not_run, fw, "fasta")
 
     # how many threads to pass
     if args.threads:
@@ -72,8 +113,9 @@ def main(sysargs = sys.argv[1:]):
     print("Number of threads is", threads)
 
     config = {
-        "query_fasta":query,
-        "outdir":outdir
+        "query_fasta":post_qc_query,
+        "outdir":outdir,
+        "tempdir":tempdir
         }
 
     if args.data:
@@ -110,6 +152,7 @@ def main(sysargs = sys.argv[1:]):
 
     if status: # translate "success" into shell exit code of 0
        return 0
+
     return 1
 
 if __name__ == '__main__':

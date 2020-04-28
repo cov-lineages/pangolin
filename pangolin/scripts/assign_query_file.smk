@@ -4,7 +4,7 @@ rule decrypt_aln:
     input:
         config["representative_aln"]
     output:
-        temp(config["outdir"] + "/temp/anonymised.aln.fasta")
+        temp(config["tempdir"] +"/anonymised.aln.fasta")
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -18,8 +18,8 @@ rule pass_query_hash:
     input:
         config["query_fasta"]
     output:
-        fasta = temp(config["outdir"] + "/temp/query.fasta"),
-        key = temp(config["outdir"] + "/temp/query_key.csv")
+        fasta = temp(config["tempdir"] + "/query.fasta"),
+        key = temp(config["tempdir"] + "/query_key.csv")
     run:
         fkey = open(output.key, "w")
         ids = ''
@@ -55,6 +55,7 @@ rule assign_lineages:
         guide_tree = config["guide_tree"]
     params:
         outdir= config["outdir"],
+        tempdir= config["tempdir"],
         path = workflow.current_basedir,
         cores = workflow.cores
     output:
@@ -70,6 +71,7 @@ rule assign_lineages:
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
+                        "tempdir={params.tempdir:q} "
                         "query_fasta={input.query:q} "
                         "representative_aln={input.aln:q} "
                         "guide_tree={input.guide_tree:q} "
