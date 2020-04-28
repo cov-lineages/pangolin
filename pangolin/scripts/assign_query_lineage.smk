@@ -76,7 +76,7 @@ rule gather_reports:
         reports = expand(config["tempdir"] + "/{query}.txt", query=config["query_sequences"]),
         key=config["key"]
     output:
-        config["outdir"] + "/lineage_report.csv"
+        config["tempdir"] + "/lineage_report.pass_qc.csv"
     run:
         key_dict = {}
         with open(input.key, "r") as f:
@@ -116,3 +116,18 @@ rule gather_reports:
                     fw.write(f"{taxon},{lineage},{alrt},{bootstrap}\n")
         fw.close()
 
+rule add_failed_seqs:
+    input:
+        qcpass= config["tempdir"] + "/lineage_report.pass_qc.csv",
+        qcfail= config["qc_fail"]
+    output:
+        config["outdir"] + "/lineage_report.csv"
+    run:
+        fw = open(output[0],"w")
+        with open(input.qcpass, "r") as f:
+            for l in f:
+                l=l.rstrip()
+                fw.write(l + '\n')
+        for record in SeqIO.parse(input.qcfail,"fasta"):
+            fw.write(f"{record.id},None,0,0\n")
+        fw.close()
