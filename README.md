@@ -57,7 +57,7 @@ Example:
 | Taxon       | Lineage   | aLRT | UFbootstrap | status | note |
 | ----------- |:---------:|:----------:|:----------:| :----------:| :----------:|
 | Virus1      |  B.1      | 80      |  82    | success    | |
-| Virus2      |  A.1      |  65     | 95     | success    | | 
+| Virus2      |  A.1      |  65     | 95     | success    | |
 | Virus3      |  A.3      |  100     | 100    | success    | |
 | Virus4      |  B.1.4    |  82     | 73     | success    | |
 | Virus5      | None      | 0       | 0       | fail    |   N_content:0.80 |
