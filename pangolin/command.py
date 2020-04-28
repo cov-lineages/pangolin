@@ -27,7 +27,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
-    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Proportion of Ns allowable in the sequence",dest="maxambig")
+    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed in order for pangolin to attempt assignment",dest="maxambig")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
 
@@ -133,7 +133,7 @@ def main(sysargs = sys.argv[1:]):
                     guide_tree = r + '/' + fn
                 elif fn.endswith(".csv"):
                     lineages_csv = r + "/" + fn
-                    
+
         print("\nData files found")
         print(f"Sequence alignment:\t{representative_aln}")
         print(f"Guide tree:\t\t{guide_tree}")
