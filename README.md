@@ -37,6 +37,12 @@ optional arguments:
                         and guide tree
   -n, --dry-run         Go through the motions but don't actually run
   -f, --force           Overwrite all output
+  --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
+                        $TMPDIR
+  --max-ambig MAXAMBIG  Maximum proportion of Ns allowed for pangolin to
+                        attempt assignment. Default: 0.5
+  --min-length MINLEN   Minimum query length allowed for pangolin to attempt
+                        assignment. Default: 10000
   -t THREADS, --threads THREADS
                         Number of threads
   -v, --version         show program's version number and exit
@@ -48,13 +54,14 @@ Your output will be a csv file with taxon name and lineage assigned, one line co
 
 Example:
 
-| Taxon       | Lineage   | aLRT | UFbootstrap |
-| ----------- |:---------:|:----------:|:----------:|
-| Virus1      |  B.1      | 80      |  82    |
-| Virus2      |  A.1      |  65     | 95     |
-| Virus3      |  A.3      |  100     | 100    |
-| Virus4      |  B.1.4    |  82     | 73     |
-
+| Taxon       | Lineage   | aLRT | UFbootstrap | status | note |
+| ----------- |:---------:|:----------:|:----------:| :----------:| :----------:|
+| Virus1      |  B.1      | 80      |  82    | success    | |
+| Virus2      |  A.1      |  65     | 95     | success    | | 
+| Virus3      |  A.3      |  100     | 100    | success    | |
+| Virus4      |  B.1.4    |  82     | 73     | success    | |
+| Virus5      | None      | 0       | 0       | fail    |   N_content:0.80 |
+| Virus6      | None      | 0       | 0       | fail    |   seq_len:0 |
 
 Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference).
 
