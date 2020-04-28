@@ -87,7 +87,7 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage,SH-alrt,UFbootstrap\n")
+        fw.write("taxon,lineage,SH-alrt,UFbootstrap,status,note\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
@@ -113,7 +113,7 @@ rule gather_reports:
                         alrt=0
                         bootstrap=0
 
-                    fw.write(f"{taxon},{lineage},{alrt},{bootstrap}\n")
+                    fw.write(f"{taxon},{lineage},{alrt},{bootstrap},success,\n")
         fw.close()
 
 rule add_failed_seqs:
@@ -129,5 +129,10 @@ rule add_failed_seqs:
                 l=l.rstrip()
                 fw.write(l + '\n')
         for record in SeqIO.parse(input.qcfail,"fasta"):
-            fw.write(f"{record.id},None,0,0\n")
+            desc_list = record.description.split(" ")
+            note = ""
+            for i in desc_list:
+                if i.startswith("fail="):
+                    note = i.lstrip("fail=")
+            fw.write(f"{record.id},None,0,0,fail,{note}\n")
         fw.close()

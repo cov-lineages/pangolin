@@ -85,12 +85,14 @@ def main(sysargs = sys.argv[1:]):
     run = []
     for record in SeqIO.parse(query, "fasta"):
         if len(record) <args.minlen:
+            record.description = record.description + f" fail=seq_len:{len(record)}"
             do_not_run.append(record)
             print(record.id, "\tsequence too short")
         else:
             num_N = str(record.seq).upper().count("N")
             prop_N = (num_N)/len(record.seq)
             if prop_N > args.maxambig: 
+                record.description = record.description + f" fail=N_content:{prop_N}"
                 do_not_run.append(record)
                 print(f"{record.id}\thas an N content of {prop_N}")
             else:
