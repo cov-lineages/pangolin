@@ -90,7 +90,7 @@ def main(sysargs = sys.argv[1:]):
             print(record.id, "\tsequence too short")
         else:
             num_N = str(record.seq).upper().count("N")
-            prop_N = (num_N)/len(record.seq)
+            prop_N = round((num_N)/len(record.seq), 2)
             if prop_N > args.maxambig: 
                 record.description = record.description + f" fail=N_content:{prop_N}"
                 do_not_run.append(record)
