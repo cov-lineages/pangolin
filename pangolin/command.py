@@ -100,8 +100,8 @@ def main(sysargs = sys.argv[1:]):
     post_qc_query = tempdir + '/query.post_qc.fasta'
     with open(post_qc_query,"w") as fw:
         SeqIO.write(run, fw, "fasta")
-
-    with open(tempdir + '/query.failed_qc.fasta',"w") as fw:
+    qc_fail = tempdir + '/query.failed_qc.fasta'
+    with open(qc_fail,"w") as fw:
         SeqIO.write(do_not_run, fw, "fasta")
 
     # how many threads to pass
@@ -115,7 +115,8 @@ def main(sysargs = sys.argv[1:]):
     config = {
         "query_fasta":post_qc_query,
         "outdir":outdir,
-        "tempdir":tempdir
+        "tempdir":tempdir,
+        "qc_fail":qc_fail
         }
 
     if args.data:
@@ -132,6 +133,7 @@ def main(sysargs = sys.argv[1:]):
                     guide_tree = r + '/' + fn
                 elif fn.endswith(".csv"):
                     lineages_csv = r + "/" + fn
+                    
         print("\nData files found")
         print(f"Sequence alignment:\t{representative_aln}")
         print(f"Guide tree:\t\t{guide_tree}")
