@@ -27,7 +27,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
-    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed in order for pangolin to attempt assignment",dest="maxambig")
+    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
+    parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
 
@@ -83,17 +84,15 @@ def main(sysargs = sys.argv[1:]):
     do_not_run = []
     run = []
     for record in SeqIO.parse(query, "fasta"):
-        if len(record) <1000:
+        if len(record) <args.minlen:
             do_not_run.append(record)
-            print("Empty record",record.id)
+            print(record.id, "\tsequence too short")
         else:
             num_N = str(record.seq).upper().count("N")
             prop_N = (num_N)/len(record.seq)
             if prop_N > args.maxambig: 
                 do_not_run.append(record)
-                print(f"{record.id} has an N content greater than {args.maxambig}, which may lead to inaccurate assignment")
-                # print(f"Error: {record.id} has an N content greater than 50%, which may lead to inaccurate assignment.\nPlease remove this sequence and try again.\nExiting.",file=sys.stderr)
-                # exit(1)
+                print(f"{record.id}\thas an N content of {prop_N}")
             else:
                 run.append(record)
 
