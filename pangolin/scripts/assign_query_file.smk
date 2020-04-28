@@ -56,6 +56,7 @@ rule assign_lineages:
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],
+        qcfail=config["qc_fail"],
         path = workflow.current_basedir,
         cores = workflow.cores
     output:
@@ -73,12 +74,12 @@ rule assign_lineages:
                         "outdir={params.outdir:q} "
                         "tempdir={params.tempdir:q} "
                         "query_fasta={input.query:q} "
+                        "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
                         "guide_tree={input.guide_tree:q} "
                         "key={input.key:q} "
                         "--cores {params.cores}")
         else:
             shell("touch {output.report}")
-
 
 
