@@ -101,8 +101,8 @@ rule gather_reports:
                     bootstrap = ""
                     print(support)
                     support = support.split("/")
-                    if len(support) == 3: 
-                        old,alrt,ufboot = support
+                    if len(support) == 4: 
+                        old_alrt,old_bs,alrt,ufboot = support
                         bootstrap = ufboot.split('.')[0]
                         alrt = alrt.split('.')[0]
                         print("alrt",alrt,"bootstrap",bootstrap)
