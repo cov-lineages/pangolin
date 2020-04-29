@@ -63,14 +63,14 @@ Your output will be a csv file with taxon name and lineage assigned, one line co
 
 Example:
 
-| Taxon       | Lineage   | aLRT | UFbootstrap | status | note |
-| ----------- |:---------:|:----------:|:----------:| :----------:| :----------:|
-| Virus1      |  B.1      | 80      |  82    | success    | |
-| Virus2      |  A.1      |  65     | 95     | success    | |
-| Virus3      |  A.3      |  100     | 100    | success    | |
-| Virus4      |  B.1.4    |  82     | 73     | success    | |
-| Virus5      | None      | 0       | 0       | fail    |   N_content:0.80 |
-| Virus6      | None      | 0       | 0       | fail    |   seq_len:0 |
+| Taxon       | Lineage   | aLRT | UFbootstrap | lineages_version |status | note |
+| ----------- |:---------:|:----------:|:----------:| :----------:|:----------:| :----------:|
+| Virus1      |  B.1      | 80      |  82    | 2020-04-27 | passed_qc    | |
+| Virus2      |  A.1      |  65     | 95     | 2020-04-27 | passed_qc    | |
+| Virus3      |  A.3      |  100     | 100    | 2020-04-27 | passed_qc    | |
+| Virus4      |  B.1.4    |  82     | 73     | 2020-04-27 | passed_qc    | |
+| Virus5      | None      | 0       | 0       | 2020-04-27 | fail    |   N_content:0.80 |
+| Virus6      | None      | 0       | 0       | 2020-04-27 | fail    |   seq_len:0 |
 
 Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference).
 
