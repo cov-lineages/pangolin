@@ -19,8 +19,6 @@ setup(name='pangolin',
                 'pangolin/scripts/defining_snps.py',
                 'pangolin/scripts/prepare_package_data.smk'
                 ],
-      package_data={'pangolin':['config.yaml',
-                                'data/*']},
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",

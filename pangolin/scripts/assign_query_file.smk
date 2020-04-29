@@ -58,7 +58,8 @@ rule assign_lineages:
         tempdir= config["tempdir"],
         qcfail=config["qc_fail"],
         path = workflow.current_basedir,
-        cores = workflow.cores
+        cores = workflow.cores,
+        version=config["lineages_version"]
     output:
         report = config["outdir"] + "/lineage_report.csv"
     run:
@@ -76,6 +77,7 @@ rule assign_lineages:
                         "query_fasta={input.query:q} "
                         "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
+                        "lineages_version={params.version} "
                         "guide_tree={input.guide_tree:q} "
                         "key={input.key:q} "
                         "--cores {params.cores}")

@@ -75,6 +75,8 @@ rule gather_reports:
     input:
         reports = expand(config["tempdir"] + "/{query}.txt", query=config["query_sequences"]),
         key=config["key"]
+    params:
+        version = config["lineages_version"]
     output:
         config["tempdir"] + "/lineage_report.pass_qc.csv"
     run:
@@ -87,7 +89,7 @@ rule gather_reports:
 
         fw=open(output[0],"w")
 
-        fw.write("taxon,lineage,SH-alrt,UFbootstrap,status,note\n")
+        fw.write("taxon,lineage,SH-alrt,UFbootstrap,lineages_version,status,note\n")
         for lineage_report in input.reports:
             
             with open(lineage_report, "r") as f:
@@ -99,8 +101,8 @@ rule gather_reports:
                     bootstrap = ""
                     print(support)
                     support = support.split("/")
-                    if len(support) == 3: 
-                        old,alrt,ufboot = support
+                    if len(support) == 4: 
+                        old_alrt,old_bs,alrt,ufboot = support
                         bootstrap = ufboot.split('.')[0]
                         alrt = alrt.split('.')[0]
                         print("alrt",alrt,"bootstrap",bootstrap)
@@ -113,13 +115,15 @@ rule gather_reports:
                         alrt=0
                         bootstrap=0
 
-                    fw.write(f"{taxon},{lineage},{alrt},{bootstrap},success,\n")
+                    fw.write(f"{taxon},{lineage},{alrt},{bootstrap},{params.version},passed_qc,\n")
         fw.close()
 
 rule add_failed_seqs:
     input:
         qcpass= config["tempdir"] + "/lineage_report.pass_qc.csv",
         qcfail= config["qc_fail"]
+    params:
+        version = config["lineages_version"]
     output:
         config["outdir"] + "/lineage_report.csv"
     run:
@@ -134,5 +138,5 @@ rule add_failed_seqs:
             for i in desc_list:
                 if i.startswith("fail="):
                     note = i.lstrip("fail=")
-            fw.write(f"{record.id},None,0,0,fail,{note}\n")
+            fw.write(f"{record.id},None,0,0,{params.version},fail,{note}\n")
         fw.close()

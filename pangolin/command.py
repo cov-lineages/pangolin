@@ -7,6 +7,8 @@ import sys
 from tempfile import gettempdir
 import pprint
 import json
+import lineages
+import setuptools
 from Bio import SeqIO
 
 from . import _program
@@ -117,35 +119,43 @@ def main(sysargs = sys.argv[1:]):
         "query_fasta":post_qc_query,
         "outdir":outdir,
         "tempdir":tempdir,
-        "qc_fail":qc_fail
+        "qc_fail":qc_fail,
+        "lineages_version":lineages.__version__
         }
 
+    # find the data
+    data_dir = ""
     if args.data:
         data_dir = os.path.join(cwd, args.data.rstrip("/"))
-        print(f"Looking in {data_dir} for data files...")
-        representative_aln = ""
-        guide_tree = ""
-        lineages_csv = ""
-        for r,d,f in os.walk(data_dir):
-            for fn in f:
-                if fn.endswith(".fasta"):
-                    representative_aln = r + '/' + fn
-                elif fn.endswith(".tree") or fn.endswith(".treefile"):
-                    guide_tree = r + '/' + fn
-                elif fn.endswith(".csv"):
-                    lineages_csv = r + "/" + fn
+    else:
+        lineages_dir = lineages.__path__[0]
+        data_dir = os.path.join(lineages_dir,"data")
 
-        print("\nData files found")
-        print(f"Sequence alignment:\t{representative_aln}")
-        print(f"Guide tree:\t\t{guide_tree}")
-        print(f"Lineages csv:\t\t{lineages_csv}")
-        if representative_aln=="" or guide_tree=="":
-            print("Didn't find appropriate files.\nTreefile must end with `.tree` or `.treefile`.\nAlignment must be in `.fasta` format.\nExiting.")
-            exit(1)
-        else:
-            config["representative_aln"]=representative_aln
-            config["guide_tree"]=guide_tree
-            config["lineages_csv"]=lineages_csv
+    print(f"Looking in {data_dir} for data files...")
+    representative_aln = ""
+    guide_tree = ""
+    lineages_csv = ""
+    for r,d,f in os.walk(data_dir):
+        for fn in f:
+            if fn.endswith(".fasta"):
+                representative_aln = r + '/' + fn
+            elif fn.endswith(".tree") or fn.endswith(".treefile"):
+                guide_tree = r + '/' + fn
+            elif fn.endswith(".csv"):
+                lineages_csv = r + "/" + fn
+
+    print("\nData files found")
+    print(f"Sequence alignment:\t{representative_aln}")
+    print(f"Guide tree:\t\t{guide_tree}")
+    print(f"Lineages csv:\t\t{lineages_csv}")
+    if representative_aln=="" or guide_tree=="":
+        print("Didn't find appropriate files.\nTreefile must end with `.tree` or `.treefile`.\nAlignment must be in `.fasta` format.\nExiting.")
+        exit(1)
+    else:
+        config["representative_aln"]=representative_aln
+        config["guide_tree"]=guide_tree
+        config["lineages_csv"]=lineages_csv
+
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
