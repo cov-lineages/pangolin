@@ -1,0 +1,24 @@
+name: publish_pypi
+
+on: 
+  release:
+    types: [published, edited]
+
+jobs:
+    build-and-publish:
+      name: Build and publish Python 🐍 distributions 📦 to PyPI
+      runs-on: ubuntu-18.04
+      steps:
+        - uses: actions/checkout@v1
+        - name: Setup Python 3.7
+          uses: actions/setup-python@v1
+          with:
+            python-version: 3.7
+        - name: Build sourcepredict
+          run: |
+            pip install wheel
+            python setup.py sdist bdist_wheel
+        - name: Publish distribution 📦 to PyPI
+          uses: pypa/gh-action-pypi-publish@master
+          with:
+            password: ${{ secrets.PYPI_TOKEN }}
