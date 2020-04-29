@@ -119,7 +119,8 @@ def main(sysargs = sys.argv[1:]):
         "query_fasta":post_qc_query,
         "outdir":outdir,
         "tempdir":tempdir,
-        "qc_fail":qc_fail
+        "qc_fail":qc_fail,
+        "lineages_version":lineages.__version__
         }
 
     # find the data
