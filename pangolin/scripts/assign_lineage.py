@@ -76,8 +76,8 @@ def main(args=None):
     args = parser.parse_args()
 
     tree = prepare_tree(args.input, args.format, args.collapse)
-    finder = LineageFinder(tree, args.taxon)
-    lineage = finder.get_lineage(args.index, args.separator)
+    finder = LineageFinder(tree, args.taxon,args.index, args.separator)
+    lineage = finder.get_lineage()
     with open(args.output, "w") as output_file:
         output_file.write("%s,%s,%s" % (args.taxon, lineage[0],lineage[1]))
 
