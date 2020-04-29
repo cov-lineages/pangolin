@@ -39,22 +39,22 @@ positional arguments:
   query
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTDIR, --outdir OUTDIR
-                        Output directory
-  -d DATA, --data DATA  Data directory minimally containing a fasta alignment
-                        and guide tree
-  -n, --dry-run         Go through the motions but don't actually run
-  -f, --force           Overwrite all output
-  --tempdir TEMPDIR     Specify where you want the temp stuff to go. Default:
-                        $TMPDIR
-  --max-ambig MAXAMBIG  Maximum proportion of Ns allowed for pangolin to
-                        attempt assignment. Default: 0.5
-  --min-length MINLEN   Minimum query length allowed for pangolin to attempt
-                        assignment. Default: 10000
-  -t THREADS, --threads THREADS
-                        Number of threads
-  -v, --version         show program's version number and exit
+  -h, --help                  show this help message and exit
+  -o OUTDIR, --outdir OUTDIR  Output directory
+  -d DATA, --data DATA        Data directory minimally containing a fasta alignment
+                              and guide tree
+  -n, --dry-run               Go through the motions but don't actually run
+  -f, --force                 Overwrite all output
+  --tempdir TEMPDIR           Specify where you want the temp stuff to go. Default:
+                              $TMPDIR
+  --max-ambig MAXAMBIG        Maximum proportion of Ns allowed for pangolin to
+                              attempt assignment. Default: 0.5
+  --min-length MINLEN         Minimum query length allowed for pangolin to attempt
+                              assignment. Default: 10000
+  -t THREADS, --threads       THREADS
+                              Number of threads
+  -v, --version               show program's version number and exit
+  -lv, --lineages-version     show lineages's version number and exit
   ```
 
 ### Output
