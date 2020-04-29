@@ -5,6 +5,7 @@ import csv
 from Bio import SeqIO
 import codecs
 from pytools.persistent_dict import PersistentDict
+import time
 
 ##### Configuration #####
 
@@ -13,6 +14,8 @@ if config.get("representative_aln"):
 
 if config.get("guide_tree"):
     config["guide_tree"] = os.path.join(workflow.current_basedir,'..', config["guide_tree"])
+
+config["timestamp"] = str(time.time()).replace(".","")
 
 ##### Target rules #####
 

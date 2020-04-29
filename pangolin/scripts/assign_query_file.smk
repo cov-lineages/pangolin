@@ -17,6 +17,8 @@ rule decrypt_aln:
 rule pass_query_hash:
     input:
         config["query_fasta"]
+    params:
+        timestamp = config["timestamp"]
     output:
         fasta = temp(config["tempdir"] + "/query.fasta"),
         key = temp(config["tempdir"] + "/query_key.csv")
@@ -31,7 +33,7 @@ rule pass_query_hash:
                 # record_list = record.id.split('|')
                 # lineage = record_list[2]
                 
-                new_id = f"tax{c}tax"
+                new_id = f"tax{params.timestamp}{c}tax"
 
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
