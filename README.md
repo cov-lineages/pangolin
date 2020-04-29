@@ -18,6 +18,15 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 3. ``python setup.py install`` or ``pip install .``
 4. That's it
 
+> Note: Even if you have previously installed ``pangolin``, as it is being worked on intensively, we recommend you check for updates before running.
+
+To update:
+
+1. ``conda activate pangolin``
+2. ``git pull``
+2. ``conda update``
+
+
 ### Usage
 
 1. Activate the environment ``conda activate pangolin``
