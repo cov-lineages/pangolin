@@ -1,4 +1,4 @@
-name: pangolin
+name: pangolin-external
 channels:
   - conda-forge
   - bioconda
@@ -14,3 +14,4 @@ dependencies:
   - pip:
     - pytools==2020.1
     - dendropy>=4.4.0
+    - git+https://github.com/hCoV-2019/lineages.git
