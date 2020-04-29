@@ -2,10 +2,13 @@
 
 import warnings
 
+
 class LineageFinder:
-    def __init__(self, tree, query_taxon):
+    def __init__(self, tree, query_taxon, index, separator):
         self.tree = tree
         self.root = tree.seed_node
+        self.index = index
+        self.separator = separator
         query_node = self.tree.find_node_with_taxon_label(query_taxon)
         if query_node is None:
             raise KeyError("Taxon %s not found in tree" % query_taxon)
@@ -57,19 +60,20 @@ class LineageFinder:
 
         return imputed_lineage
 
-    def get_lineage(self, index, separator):
-        self.annotate_tips_from_label(index, separator)
+    def get_lineage(self):
+        self.annotate_tips_from_label(self.index, self.separator)
         self.lineage_parsimony(self.root)
+        parent_lineage = self.query_node_parent.annotations.get_value("lineage")
+        grandparent_lineage = self.query_node_parent.parent_node.annotations.get_value("lineage")
+        lineage = parent_lineage if parent_lineage is not None else grandparent_lineage
 
-        label = self.query_node_parent.label if self.query_node_parent.label is not None else self.query_node_parent.annotations.get_value(
-                    "label")
 
-        if self.query_node_parent.annotations.get_value("lineage") is not None:
-            return [self.query_node_parent.annotations.get_value("lineage"),
-                    label]
-        else:
-            return [self.query_node_parent.parent_node.annotations.get_value("lineage"),
-                    label]
+        lineage_mrca = \
+        [node for node in self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") == lineage)][0]
+
+        label = lineage_mrca.label  # if lineage_mrca.label is not None else lineage_mrca.annotations.get_value("label")
+
+        return [lineage, label]
 
 
 def all_equal(lineage_list):
