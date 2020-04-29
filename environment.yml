@@ -1,4 +1,4 @@
-name: pangolin-external
+name: pangolin
 channels:
   - conda-forge
   - bioconda
