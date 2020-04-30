@@ -17,15 +17,18 @@ setup(name='pangolin',
                 'pangolin/scripts/lineage_finder.py',
                 'pangolin/scripts/utils.py',
                 'pangolin/scripts/defining_snps.py',
-                'pangolin/scripts/prepare_package_data.smk'
+                'pangolin/scripts/prepare_package_data.smk',
+                'pangolin/scripts/report_classes.py',
+                'pangolin/scripts/report_results.py'
                 ],
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
-            "pytools==2020.1"
+            "pytools==2020.1",
+            'pandas=1.0.1'
         ],
       description='hcov-2019 subtyping command line tool',
-      url='https://github.com/aineniamh/lineages',
+      url='https://github.com/hCov-2019/pangolin',
       author='Aine OToole and JT McCrone',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
