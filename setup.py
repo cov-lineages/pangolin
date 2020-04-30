@@ -17,7 +17,8 @@ setup(name='pangolin',
                 'pangolin/scripts/lineage_finder.py',
                 'pangolin/scripts/utils.py',
                 'pangolin/scripts/defining_snps.py',
-                'pangolin/scripts/prepare_package_data.smk'
+                'pangolin/scripts/prepare_package_data.smk',
+                'pangolin/config.yaml'
                 ],
       install_requires=[
             "biopython>=1.70",
