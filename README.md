@@ -29,6 +29,8 @@ pulls the latest changes from github
 re-installs pangolin
 4. ``pip install git+https://github.com/hCoV-2019/lineages.git --upgrade`` \
 updates if there is a new data release
+5. ``conda env update -f environment.yml``
+updates the conda environment (you're unlikely to need to do this, but just in case!)
 
 
 ### Usage
