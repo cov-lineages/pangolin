@@ -149,7 +149,7 @@ def main(sysargs = sys.argv[1:]):
     print(f"Sequence alignment:\t{representative_aln}")
     print(f"Guide tree:\t\t{guide_tree}")
     print(f"Lineages csv:\t\t{lineages_csv}")
-    if representative_aln=="" or guide_tree=="":
+    if representative_aln=="" or guide_tree=="" or lineages_csv=="":
         print("Didn't find appropriate files.\nTreefile must end with `.tree` or `.treefile`.\nAlignment must be in `.fasta` format.\nExiting.")
         exit(1)
     else:
