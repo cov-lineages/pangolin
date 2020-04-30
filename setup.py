@@ -16,8 +16,8 @@ setup(name='pangolin',
                 'pangolin/scripts/assign_lineage.py',
                 'pangolin/scripts/lineage_finder.py',
                 'pangolin/scripts/utils.py',
-                'pangolin/scripts/defining_snps.py',
-                'pangolin/scripts/prepare_package_data.smk'
+                'pangolin/scripts/all_snps.py',
+                'pangolin/scripts/get_masked_representatives.py'
                 ],
       install_requires=[
             "biopython>=1.70",
