@@ -53,6 +53,7 @@ optional arguments:
   -f, --force                 Overwrite all output
   --tempdir TEMPDIR           Specify where you want the temp stuff to go. Default:
                               $TMPDIR
+  --panGUIlin                 Run web-app version of pangolin
   --max-ambig MAXAMBIG        Maximum proportion of Ns allowed for pangolin to
                               attempt assignment. Default: 0.5
   --min-length MINLEN         Minimum query length allowed for pangolin to attempt
