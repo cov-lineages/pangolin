@@ -23,8 +23,12 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 To update:
 
 1. ``conda activate pangolin``
-2. ``git pull``
-2. ``conda update``
+2. ``git pull`` \
+pulls the latest changes from github
+3. ``python setup.py install`` \
+re-installs pangolin
+4. ``pip install git+https://github.com/hCoV-2019/lineages.git --upgrade`` \
+updates if there is a new data release
 
 
 ### Usage
