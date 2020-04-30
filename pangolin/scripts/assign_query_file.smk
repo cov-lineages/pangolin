@@ -49,7 +49,6 @@ rule pass_query_hash:
 
 rule assign_lineages:
     input:
-        config=workflow.current_basedir+"/../config.yaml",
         snakefile = workflow.current_basedir+"/assign_query_lineage.smk",
         query = rules.pass_query_hash.output.fasta,
         key = rules.pass_query_hash.output.key,
