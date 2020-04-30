@@ -1,4 +1,4 @@
-name: pangolin
+name: pangolin-test
 channels:
   - conda-forge
   - bioconda
@@ -12,6 +12,7 @@ dependencies:
   - python=3.6
   - snakemake-minimal=5.13
   - pip:
+    - pandas==1.0.1
     - pytools==2020.1
     - dendropy>=4.4.0
     - git+https://github.com/hCoV-2019/lineages.git
