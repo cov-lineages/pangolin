@@ -5,6 +5,11 @@ import sys
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 
 if config.get("lineages_csv"):
+    print("Going to run the global report summary")
+else:
+    config["lineages_csv"]=""
+
+if config["lineages_csv"] != "":
     rule all:
         input:
             config["outdir"] + "/lineage_report.csv",
