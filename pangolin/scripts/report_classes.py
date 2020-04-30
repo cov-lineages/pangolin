@@ -8,7 +8,7 @@ class taxon():
         self.id = record_id
         self.lineage = lineage
         
-        country = record_id.split("|")[3]
+        country = record_id.split("|")[2]
 
         self.country = country
 
@@ -76,8 +76,8 @@ class lineage():
             self.mrd = max(self.dates)
             self.oldest = min(self.dates)
             
-            self.pretty_mrd = self.mrd.strftime('%b-%d')
-            self.pretty_oldest = self.oldest.strftime('%b-%d')
+            self.pretty_mrd = self.mrd.strftime('%B-%d')
+            self.pretty_oldest = self.oldest.strftime('%B-%d')
 
             self.length = (self.mrd - self.oldest).days
             
@@ -94,11 +94,6 @@ class lineage():
             
             self.country_freqs[country] = count/total
             
-            
-#             if frequency > 0.75:
-#                 self.main_locs.append(country)
-            
-#         if self.main_locs == []:
             
         all_3 = self.loc_counts.most_common(3)
         self.main_locs = [i[0] for i in all_3]

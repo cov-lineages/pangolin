@@ -2,7 +2,7 @@ import imp
 import argparse
 from collections import defaultdict
 import pandas as pd
-
+import csv
 import report_classes as classes
 
 
@@ -21,13 +21,10 @@ background = str(args.b)
 def get_lineages_present(pangolin_output):
 
     lineages_present = set()
-    with open(pangolin_output) as f:
-        next(f)
-        for l in f:
-            
-            toks = l.strip("\n").split(",")
-            
-            lineages_present.add(toks[1])
+    with open(pangolin_output,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            lineages_present.add(row["lineage"])
 
     return lineages_present
 
@@ -38,15 +35,17 @@ def make_objects(background_data, lineages_present):
     lineages_to_taxa = defaultdict(list)
     lin_obj_dict = {}
 
-    with open(background_data) as f:
-        next(f)
-        for l in f:
+    with open(background_data,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = row["name"]
+            gisaid_id=row["GISAID ID"]
+            lin_string = row["lineage"]
+            date = row["sample date"]
+            country = row["country"]
             
-            toks = l.strip("\n").split(",")
-            
-            tax_name = toks[0]
-            lin_string = toks[1]
-            
+            tax_name = f"{name}|{gisaid_id}|{country}|{date}"
+
             if lin_string in lineages_present:
                 new_taxon = classes.taxon(tax_name, lin_string)
                 taxa.append(new_taxon)
