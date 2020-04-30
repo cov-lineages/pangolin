@@ -31,6 +31,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
+    parser.add_argument('--panGUIlin', action='store',type=int,help="Run web-app version of pangolin")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
@@ -155,6 +156,8 @@ def main(sysargs = sys.argv[1:]):
     else:
         config["representative_aln"]=representative_aln
         config["guide_tree"]=guide_tree
+        
+    if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
 
 
