@@ -142,7 +142,7 @@ def main(sysargs = sys.argv[1:]):
                 representative_aln = r + '/' + fn
             elif fn.endswith(".tree") or fn.endswith(".treefile"):
                 guide_tree = r + '/' + fn
-            elif fn.endswith(".csv"):
+            elif fn.endswith("metadata.csv"):
                 lineages_csv = r + "/" + fn
 
     print("\nData files found")
