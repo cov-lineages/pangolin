@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-configfile: workflow.current_basedir + "/../config.yaml"
 
 import csv
 from Bio import SeqIO
