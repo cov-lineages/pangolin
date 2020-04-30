@@ -14,6 +14,9 @@ if config.get("representative_aln"):
 if config.get("guide_tree"):
     config["guide_tree"] = os.path.join(workflow.current_basedir,'..', config["guide_tree"])
 
+if config.get("lineages_csv"):
+    config["lineages_csv"] = os.path.join(workflow.current_basedir,'..', config["lineages_csv"])
+
 config["pid"] = str(os.getpid())
 
 ##### Target rules #####
