@@ -57,7 +57,7 @@ rule assign_lineages:
         qcfail=config["qc_fail"],
         path = workflow.current_basedir,
         cores = workflow.cores,
-        lineages_csv=config["lineages_csv"]
+        lineages_csv=config["lineages_csv"],
         version=config["lineages_version"]
     output:
         report = config["outdir"] + "/lineage_report.csv"
