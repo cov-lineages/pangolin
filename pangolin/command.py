@@ -34,6 +34,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
 
@@ -164,11 +165,15 @@ def main(sysargs = sys.argv[1:]):
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
 
+    if args.verbose:
+        quiet_mode = False
+    else:
+        quiet_mode = True
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=args.force,force_incomplete=True,
-                                 config=config, cores=threads,lock=False,quiet=True,shadow_prefix=tempdir
+                                 config=config, cores=threads,lock=False,quiet=quiet_mode,shadow_prefix=tempdir
                                  )
 
     if status: # translate "success" into shell exit code of 0
