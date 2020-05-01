@@ -63,13 +63,20 @@ class LineageFinder:
     def get_lineage(self):
         self.annotate_tips_from_label(self.index, self.separator)
         self.lineage_parsimony(self.root)
-        parent_lineage = self.query_node_parent.annotations.get_value("lineage")
-        grandparent_lineage = self.query_node_parent.parent_node.annotations.get_value("lineage")
-        lineage = parent_lineage if parent_lineage is not None else grandparent_lineage
+        lineage = self.query_node_parent.annotations.get_value("lineage")
 
+        at_root = False
+        if lineage is None:
+            if self.query_node_parent is not self.tree.seed_node:
+                lineage = self.query_node_parent.parent_node.annotations.get_value("lineage")
+            else:
+                # the parent node is the root and and the ancestral lineage is A
+                lineage = "A"
+                at_root = True
 
         lineage_mrca = \
-        [node for node in self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") == lineage)][0]
+            [node for node in self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") == lineage)][
+                0] if not at_root else self.tree.seed_node
 
         label = lineage_mrca.label  # if lineage_mrca.label is not None else lineage_mrca.annotations.get_value("label")
 
