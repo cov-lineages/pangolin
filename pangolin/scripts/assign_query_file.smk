@@ -69,6 +69,7 @@ rule assign_lineages:
             print(f"Passing {num_query_seqs} into processing pipeline.")
             config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
+                        "{params.force}"
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
@@ -76,7 +77,6 @@ rule assign_lineages:
                         "query_fasta={input.query:q} "
                         "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
-                        "{params.force}"
                         "lineages_version={params.version} "
                         "{params.lineages_csv}"
                         "guide_tree={input.guide_tree:q} "
