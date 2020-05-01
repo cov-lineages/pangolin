@@ -15,8 +15,13 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 
 1. Clone this repository and ``cd pangolin``
 2. ``conda env create -f environment.yml``
-3. ``python setup.py install`` or ``pip install .``
-4. That's it
+3. ``conda activate pangolin``
+4. ``python setup.py install`` or ``pip install .``
+5. That's it
+
+> Note: we recommend using pangolin in the conda environment specified in the ``environment.yml`` file as per the instructions above. If you can't use conda for some reason, bear in mind the data files are now hosted in a separate repository at [``hCoV-2019/lineages``](https://github.com/hCoV-2019/lineages.git) and you will need to pip install that alongside the other dependencies for pangolin (details found in [``environment.yml``](https://github.com/hCoV-2019/pangolin/blob/master/environment.yml)). 
+
+### Updating pangolin
 
 > Note: Even if you have previously installed ``pangolin``, as it is being worked on intensively, we recommend you check for updates before running.
 
