@@ -5,6 +5,7 @@ import os.path
 import snakemake
 import sys
 from tempfile import gettempdir
+import tempfile
 import pprint
 import json
 import lineages
@@ -27,10 +28,11 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-o','--outdir', action="store",help="Output directory")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
-    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
+    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
+    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
@@ -70,7 +72,8 @@ def main(sysargs = sys.argv[1:]):
 
     tempdir = ''
     if args.tempdir:
-        tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        tempfile.tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        tempdir = tempfile.tempdir
         if not os.path.exists(tempdir):
             os.mkdir(tempdir)
     else:
@@ -124,6 +127,8 @@ def main(sysargs = sys.argv[1:]):
         "lineages_version":lineages.__version__
         }
 
+    if args.force:
+        config["force"]="forceall"
     # find the data
     data_dir = ""
     if args.data:
@@ -142,26 +147,28 @@ def main(sysargs = sys.argv[1:]):
                 representative_aln = r + '/' + fn
             elif fn.endswith(".tree") or fn.endswith(".treefile"):
                 guide_tree = r + '/' + fn
-            elif fn.endswith(".csv"):
+            elif fn.endswith(".csv") and fn.startswith("lineages"):
                 lineages_csv = r + "/" + fn
 
     print("\nData files found")
     print(f"Sequence alignment:\t{representative_aln}")
     print(f"Guide tree:\t\t{guide_tree}")
     print(f"Lineages csv:\t\t{lineages_csv}")
-    if representative_aln=="" or guide_tree=="":
+    if representative_aln=="" or guide_tree=="" or lineages_csv=="":
         print("Didn't find appropriate files.\nTreefile must end with `.tree` or `.treefile`.\nAlignment must be in `.fasta` format.\nExiting.")
         exit(1)
     else:
         config["representative_aln"]=representative_aln
         config["guide_tree"]=guide_tree
+        
+    if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
 
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=args.force,force_incomplete=True,
-                                 config=config, cores=threads,lock=False,quiet=True
+                                 config=config, cores=threads,lock=False,quiet=True,shadow_prefix=tempdir
                                  )
 
     if status: # translate "success" into shell exit code of 0

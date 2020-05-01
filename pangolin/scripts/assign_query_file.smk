@@ -30,9 +30,6 @@ rule pass_query_hash:
             for record in SeqIO.parse(input[0],"fasta"):
                 c+=1
 
-                # record_list = record.id.split('|')
-                # lineage = record_list[2]
-                
                 new_id = f"tax{params.pid}{c}tax"
 
                 fkey.write(f"{record.id},{new_id}\n")
@@ -60,6 +57,8 @@ rule assign_lineages:
         qcfail=config["qc_fail"],
         path = workflow.current_basedir,
         cores = workflow.cores,
+        force = config["force"],
+        lineages_csv=config["lineages_csv"],
         version=config["lineages_version"]
     output:
         report = config["outdir"] + "/lineage_report.csv"
@@ -70,6 +69,8 @@ rule assign_lineages:
             print(f"Passing {num_query_seqs} into processing pipeline.")
             config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
+                        "{params.force}"
+                        "--shadow-prefix {params.tempdir:q} "
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
@@ -78,6 +79,7 @@ rule assign_lineages:
                         "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
                         "lineages_version={params.version} "
+                        "{params.lineages_csv}"
                         "guide_tree={input.guide_tree:q} "
                         "key={input.key:q} "
                         "--cores {params.cores}")
