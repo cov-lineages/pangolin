@@ -166,7 +166,7 @@ def main(sysargs = sys.argv[1:]):
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
                                  dryrun=args.dry_run, forceall=args.force,force_incomplete=True,
-                                 config=config, cores=threads,lock=False,quiet=True
+                                 config=config, cores=threads,lock=False,quiet=True,shadow_prefix=tempdir
                                  )
 
     if status: # translate "success" into shell exit code of 0

@@ -70,6 +70,7 @@ rule assign_lineages:
             config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
                         "{params.force}"
+                        "--shadow-prefix {params.tempdir:q} "
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
