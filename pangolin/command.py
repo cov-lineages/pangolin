@@ -5,6 +5,7 @@ import os.path
 import snakemake
 import sys
 from tempfile import gettempdir
+import tempfile
 import pprint
 import json
 import lineages
@@ -71,7 +72,8 @@ def main(sysargs = sys.argv[1:]):
 
     tempdir = ''
     if args.tempdir:
-        tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        tempfile.tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        tempdir = tempfile.tempdir
         if not os.path.exists(tempdir):
             os.mkdir(tempdir)
     else:
