@@ -57,6 +57,7 @@ rule assign_lineages:
         qcfail=config["qc_fail"],
         path = workflow.current_basedir,
         cores = workflow.cores,
+        force = config["force"],
         lineages_csv=config["lineages_csv"],
         version=config["lineages_version"]
     output:
@@ -75,6 +76,7 @@ rule assign_lineages:
                         "query_fasta={input.query:q} "
                         "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
+                        "{params.force}"
                         "lineages_version={params.version} "
                         "{params.lineages_csv}"
                         "guide_tree={input.guide_tree:q} "

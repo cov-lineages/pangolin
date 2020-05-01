@@ -20,6 +20,11 @@ if config.get("lineages_csv"):
 else:
     config["lineages_csv"]=""
     
+if config.get("force"):
+    config["force"] = "--forceall "
+else:
+    config["force"] = ""
+    
 config["pid"] = str(os.getpid())
 
 ##### Target rules #####

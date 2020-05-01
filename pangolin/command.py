@@ -27,7 +27,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-o','--outdir', action="store",help="Output directory")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
-    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output")
+    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
@@ -125,6 +125,8 @@ def main(sysargs = sys.argv[1:]):
         "lineages_version":lineages.__version__
         }
 
+    if args.force:
+        config["force"]="forceall"
     # find the data
     data_dir = ""
     if args.data:
