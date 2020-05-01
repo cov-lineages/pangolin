@@ -1,4 +1,4 @@
-name: pangolin-test
+name: pangolin
 channels:
   - conda-forge
   - bioconda
