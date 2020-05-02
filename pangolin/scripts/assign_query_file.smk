@@ -84,6 +84,15 @@ rule assign_lineages:
                         "key={input.key:q} "
                         "--cores {params.cores}")
         else:
-            shell("touch {output.report}")
+            fw = open(output.report,"w")
+            fw.write("taxon,lineage,SH-alrt,UFbootstrap,lineages_version,status,note\n")
+            for record in SeqIO.parse(params.qcfail,"fasta"):
+                desc_list = record.description.split(" ")
+                note = ""
+                for i in desc_list:
+                    if i.startswith("fail="):
+                        note = i.lstrip("fail=")
+                fw.write(f"{record.id},None,0,0,{params.version},fail,{note}\n")
+            fw.close()
 
 
