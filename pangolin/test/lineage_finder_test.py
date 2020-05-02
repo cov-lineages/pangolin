@@ -4,7 +4,7 @@ import os
 
 from pangolin.scripts.lineage_finder import LineageFinder, all_equal, trim_to_common_ancestor, \
     get_basal_lineage
-from pangolin.scripts.utils import collapse_nodes
+
 
 this_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(this_dir, "test", 'data', 'lineage_finder')
@@ -53,7 +53,19 @@ class LineageTests(unittest.TestCase):
         finder = LineageFinder(tree, "test", 1, "|")
 
         self.assertEqual(finder.get_lineage(), ["B", "77"])
+    def test_new_root(self):
+        tree = dendropy.Tree.get_from_string("((A|A,((B|B,b1|B),(C|B.1,D|B.1)))88,test)100;", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual(finder.get_lineage(), ["A", "100"])
+    def test_off_root_child(self):
+        tree = dendropy.Tree.get_from_string("((A|A,test),((B|B,b1|B),(C|B.1,D|B.1)))77;", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual(finder.get_lineage(), ["A", "77"])
 
+    def test_off_root_child_internal(self):
+        tree = dendropy.Tree.get_from_string("(((A|A,A1|A.1),test),((B|B,b1|B),(C|B.1,D|B.1)))77;", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual(finder.get_lineage(), ["A", "77"])
 
 if __name__ == '__main__':
     unittest.main()
