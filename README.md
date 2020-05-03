@@ -91,6 +91,11 @@ Of 9,843 GISAID sequences assigned lineages by hand (taking sequence, phylogeny 
 
 Given hCoV-2019 is relatively slow evolving for an RNA virus and there is still not a huge amount of diversity, missing or ambiguous data at key residues may lead to incorrect placement within the guide tree. We have a filter in place that by default with not call a lineage for any sequence with >50% N-content, but this can be made more conservative with the command line option `--max-ambig`.
 
+### Source data
+
+``pangolin`` runs using a guide tree and alignment hosted at [``hCoV-2019/lineages``](https://github.com/hCoV-2019/lineages.git). Some of this data is sourced from GISAID, but anonymised and encrypted to fit with guidelines. Appropriate permissions have been given and acknowledgements for the teams that have worked to provide the original SARS-CoV-2 genome sequences to GISAID are also hosted in [``hCoV-2019/lineages``](https://raw.githubusercontent.com/hCoV-2019/lineages/master/gisaid_acknowledgements.tsv).
+
+
 ### Authors
 
 Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/).
