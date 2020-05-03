@@ -73,14 +73,15 @@ def main(sysargs = sys.argv[1:]):
 
     tempdir = ''
     if args.tempdir:
-        tempfile.tempdir = os.path.join(cwd, args.tempdir.rstrip("/"))
-        tempdir = tempfile.tempdir
-        if not os.path.exists(tempdir):
-            os.mkdir(tempdir)
+        to_be_dir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        if not os.path.exists(to_be_dir):
+            os.mkdir(to_be_dir)
+        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
+        tempdir = temporary_directory.name
     else:
-        tempdir = gettempdir()
-        if not os.path.exists(tempdir):
-            os.mkdir(tempdir)
+        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
+        tempdir = temporary_directory.name
+
     """ 
     QC steps:
     1) check no empty seqs
