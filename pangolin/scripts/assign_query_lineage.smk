@@ -39,7 +39,7 @@ rule profile_align_query:
     output:
         temp(config["tempdir"] + "/{query}.aln.fasta")
     shell:
-        "mafft-profile {input.aln:q} {input.query:q} > {output:q}"
+        "mafft --add {input.query:q} {input.aln:q} > {output:q}"
 
 rule iqtree_with_guide_tree:
     input:
