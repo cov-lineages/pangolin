@@ -64,7 +64,7 @@ def main(sysargs = sys.argv[1:]):
         # default output dir
     outdir = ''
     if args.outdir:
-        outdir = args.outdir.rstrip("/")
+        outdir = os.path.join(cwd, args.outdir.rstrip("/"))
     else:
         outdir = cwd.rstrip("/")
 
