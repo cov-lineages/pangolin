@@ -58,6 +58,7 @@ rule assign_lineages:
         path = workflow.current_basedir,
         cores = workflow.cores,
         force = config["force"],
+        write_tree=config["write_tree"],
         lineages_csv=config["lineages_csv"],
         version=config["lineages_version"]
     output:
@@ -74,6 +75,7 @@ rule assign_lineages:
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
+                        "write_tree={params.write_tree} "
                         "tempdir={params.tempdir:q} "
                         "query_fasta={input.query:q} "
                         "qc_fail={params.qcfail:q} "

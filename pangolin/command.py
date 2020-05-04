@@ -33,6 +33,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin")
+    parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
@@ -158,7 +159,10 @@ def main(sysargs = sys.argv[1:]):
     else:
         config["representative_aln"]=representative_aln
         config["guide_tree"]=guide_tree
-        
+
+    if args.write_tree:
+        config["write_tree"]="True"
+
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
 

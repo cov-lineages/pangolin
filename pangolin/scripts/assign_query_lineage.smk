@@ -1,6 +1,7 @@
 from Bio import SeqIO
 from Bio import Phylo
 import sys
+import os
 
 config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
 
@@ -9,15 +10,29 @@ if config.get("lineages_csv"):
 else:
     config["lineages_csv"]=""
 
+
 if config["lineages_csv"] != "":
-    rule all:
-        input:
-            config["outdir"] + "/lineage_report.csv",
-            config["outdir"] + "/global_lineage_information.csv"
+    if config["write_tree"]==True:
+        rule all:
+            input:
+                config["outdir"] + "/lineage_report.csv",
+                config["outdir"] + "/global_lineage_information.csv",
+                config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+    else: 
+        rule all:
+            input:
+                config["outdir"] + "/lineage_report.csv",
+                config["outdir"] + "/global_lineage_information.csv"
 else:
-    rule all:
-        input:
-            config["outdir"] + "/lineage_report.csv"
+    if config["write_tree"]==True:
+        rule all:
+            input:
+                config["outdir"] + "/lineage_report.csv",
+                config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+    else:
+        rule all:
+            input:
+                config["outdir"] + "/lineage_report.csv"
 
 
 rule expand_query_fasta:
@@ -60,6 +75,36 @@ rule iqtree_with_guide_tree:
             shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A' -redo")
         else:
             shell("iqtree -s {input.profile_aln:q} -bb 1000 -au -alrt 1000 -m HKY -g {input.guide_tree:q} -quiet -o 'outgroup_A'")
+
+rule write_trees:
+    input:
+        trees = expand(config["tempdir"] + "/{query}.aln.fasta.treefile", query=config["query_sequences"]),
+        key = config["key"]
+    output:
+        config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+    run:
+        key_dict = {}
+        with open(input.key, "r") as f:
+            for l in f:
+                l = l.rstrip('\n')
+                taxon,key = l.split(",")
+                key_dict[key] = taxon
+        fout = open(output[0],"w")
+        fout.write("taxon,treefile_name\n")
+        for tree in input.trees:
+            new_l = ""
+            with open(tree, "r") as f:
+                for l in f:
+                    l = l.rstrip("\n")
+                    new_l = l
+                    for key in key_dict:
+                        if key in l:
+                            new_l = new_l.replace(key, key_dict[key])
+                            taxon = key_dict[key].replace(" ","_").replace("/","_").replace("|","_")
+                            fout.write(f"{key_dict[key]},{taxon}\n")
+                            outdir = "/".join(output[0].split("/")[:-1])
+                            with open(outdir + "/" + taxon + ".tree","w") as fw:
+                                fw.write(new_l + "\n")
 
 rule to_nexus:
     input:

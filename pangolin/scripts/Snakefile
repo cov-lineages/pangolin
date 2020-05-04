@@ -19,6 +19,10 @@ if config.get("lineages_csv"):
     config["lineages_csv"]=f"lineages_csv={lineages_csv_path} "
 else:
     config["lineages_csv"]=""
+
+if not config.get("write_tree"):
+    config["write_tree"]="False"
+
     
 if config.get("force"):
     config["force"] = "--forceall "
