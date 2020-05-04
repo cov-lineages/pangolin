@@ -73,13 +73,15 @@ rule assign_lineage:
     input:
         tree = rules.to_nexus.output,
     params:
-        query = "{query}"
+        query = "{query}",
+        collapse=0.000005,
+
     output:
         temp(config["tempdir"] + "/{query}.txt")
     shell:
         """
         assign_lineage.py  --separator '_' --index 1 \
-        --collapse_to_polytomies --taxon '{params.query}' \
+        --collapse_to_polytomies {params.collapse} --taxon '{params.query}' \
         --input {input.tree:q} --output {output:q}
         """
         
