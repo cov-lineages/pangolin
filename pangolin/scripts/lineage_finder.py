@@ -15,7 +15,14 @@ class LineageFinder:
 
         self.query_node_parent = query_node.parent_node
         self.removed_query_node = self.query_node_parent.remove_child(query_node)
-        pass
+        self.at_root = False
+        self.lineage = None
+        self.label = None
+        self.run()
+
+    def run(self):
+        self.get_lineage()
+        self.get_label()
 
     def annotate_tips_from_label(self, index, separator):
         annotations = {}
@@ -65,22 +72,47 @@ class LineageFinder:
         self.lineage_parsimony(self.root)
         lineage = self.query_node_parent.annotations.get_value("lineage")
 
-        at_root = False
         if lineage is None:
             if self.query_node_parent is not self.tree.seed_node:
                 lineage = self.query_node_parent.parent_node.annotations.get_value("lineage")
             else:
                 # the parent node is the root and and the ancestral lineage is A
                 lineage = "A"
-                at_root = True
+        if lineage == "A":
+            self.at_root = True
+        self.lineage = lineage
 
-        lineage_mrca = \
-            [node for node in self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") == lineage)][
-                0] if not at_root else self.tree.seed_node
+    def get_label(self):
 
-        label = lineage_mrca.label  # if lineage_mrca.label is not None else lineage_mrca.annotations.get_value("label")
+        if self.at_root:
+            # get all non A lineages
+            nonALineage = []
+            current_arlt = 100
+            current_boot = 100
 
-        return [lineage, label]
+            for node in self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") is not None and (
+                    n.annotations.get_value("lineage") == "B" or (
+                    len(n.annotations.get_value("lineage").split(".")) == 2 and n.annotations.get_value("lineage")[
+                0] == "A"))):
+                lineage = node.annotations.get_value("lineage")
+                if lineage not in nonALineage:
+                    nonALineage.append(lineage)
+                    alrt, boot = node.label.split("/")[-2:]
+                    current_arlt -= (100 - float(alrt))
+                    current_boot -= (100 - float(boot))
+
+            self.alrt = int(current_arlt)
+            self.boot = int(current_boot)
+        else:
+            lineage_mrca = \
+                [node for node in
+                 self.tree.preorder_node_iter(lambda n: n.annotations.get_value("lineage") == self.lineage)][0]
+            label = lineage_mrca.label  # if lineage_mrca.label is not None else lineage_mrca.annotations.get_value("label")
+
+            alrt, boot = label.split("/")[-2:]
+
+            self.alrt = int(float(alrt))
+            self.boot = int(float(boot))
 
 
 def all_equal(lineage_list):
