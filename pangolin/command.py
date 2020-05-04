@@ -42,11 +42,7 @@ def main(sysargs = sys.argv[1:]):
         parser.print_help()
         sys.exit(-1)
     else:
-        if sysargs[0] == "-v" or sysargs[0] == "--version":
-            print(f"pangolin: {__version__}")
-            sys.exit(-1)
-        else:
-            args = parser.parse_args(sysargs)
+        args = parser.parse_args(sysargs)
 
     # find the Snakefile
     snakefile = os.path.join(thisdir, 'scripts/Snakefile')
