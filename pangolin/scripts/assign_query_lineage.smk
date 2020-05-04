@@ -154,26 +154,7 @@ rule gather_reports:
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
-                    tokens = l.split(",")
-                    lineage,support = tokens[1],tokens[2]
-                    taxon = key_dict[tokens[0]]
-                    bootstrap = ""
-                    print(support)
-                    support = support.split("/")
-                    if len(support) == 4: 
-                        old_alrt,old_bs,alrt,ufboot = support
-                        bootstrap = ufboot.split('.')[0]
-                        alrt = alrt.split('.')[0]
-                        print("alrt",alrt,"bootstrap",bootstrap)
-                    elif len(support) == 2:
-                        alrt,ufboot = support
-                        bootstrap = ufboot.split('.')[0]
-                        alrt = alrt.split('.')[0]
-                        print("alrt",alrt,"bootstrap",bootstrap)
-                    else:
-                        alrt=0
-                        bootstrap=0
-
+                    taxon,lineage,alrt,bootstrap = l.split(",")
                     fw.write(f"{taxon},{lineage},{alrt},{bootstrap},{params.version},passed_qc,\n")
         fw.close()
 
