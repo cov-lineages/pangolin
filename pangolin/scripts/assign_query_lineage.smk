@@ -154,7 +154,8 @@ rule gather_reports:
             with open(lineage_report, "r") as f:
                 for l in f:
                     l=l.rstrip()
-                    taxon,lineage,alrt,bootstrap = l.split(",")
+                    key,lineage,alrt,bootstrap = l.split(",")
+                    taxon = key_dict[key]
                     fw.write(f"{taxon},{lineage},{alrt},{bootstrap},{params.version},passed_qc,\n")
         fw.close()
 
