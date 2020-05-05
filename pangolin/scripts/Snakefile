@@ -35,7 +35,7 @@ config["pid"] = str(os.getpid())
 
 rule all:
     input:
-        config["outdir"] + "/lineage_report.csv"
+        config["outfile"]
 
 ##### Modules #####
 include: "assign_query_file.smk"

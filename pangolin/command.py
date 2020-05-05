@@ -25,7 +25,8 @@ def main(sysargs = sys.argv[1:]):
     usage='''pangolin <query> [options]''')
 
     parser.add_argument('query')
-    parser.add_argument('-o','--outdir', action="store",help="Output directory")
+    parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
+    parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
@@ -67,6 +68,12 @@ def main(sysargs = sys.argv[1:]):
         outdir = os.path.join(cwd, args.outdir.rstrip("/"))
     else:
         outdir = cwd.rstrip("/")
+
+    outfile = ""
+    if args.outfile:
+        outfile = os.path.join(outdir, args.outfile)
+    else:
+        outfile = os.path.join(outdir, "lineage_report.csv")
 
     tempdir = ''
     if args.tempdir:
@@ -121,6 +128,7 @@ def main(sysargs = sys.argv[1:]):
     config = {
         "query_fasta":post_qc_query,
         "outdir":outdir,
+        "outfile":outfile,
         "tempdir":tempdir,
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__

@@ -15,24 +15,24 @@ if config["lineages_csv"] != "":
     if config["write_tree"]==True:
         rule all:
             input:
-                config["outdir"] + "/lineage_report.csv",
+                config["outfile"],
                 config["outdir"] + "/global_lineage_information.csv",
                 config["outdir"] + "/pangolin_trees/tree_file_names.txt"
     else: 
         rule all:
             input:
-                config["outdir"] + "/lineage_report.csv",
+                config["outfile"],
                 config["outdir"] + "/global_lineage_information.csv"
 else:
     if config["write_tree"]==True:
         rule all:
             input:
-                config["outdir"] + "/lineage_report.csv",
+                config["outfile"],
                 config["outdir"] + "/pangolin_trees/tree_file_names.txt"
     else:
         rule all:
             input:
-                config["outdir"] + "/lineage_report.csv"
+                config["outfile"]
 
 
 rule expand_query_fasta:
@@ -166,7 +166,7 @@ rule add_failed_seqs:
     params:
         version = config["lineages_version"]
     output:
-        config["outdir"] + "/lineage_report.csv"
+        config["outfile"]
     run:
         fw = open(output[0],"w")
         with open(input.qcpass, "r") as f:
@@ -184,7 +184,7 @@ rule add_failed_seqs:
 
 rule report_results:
     input:
-        csv = config["outdir"] + "/lineage_report.csv",
+        csv = config["outfile"],
         lineages_csv = config["lineages_csv"]
     output:
         config["outdir"] + "/global_lineage_information.csv"

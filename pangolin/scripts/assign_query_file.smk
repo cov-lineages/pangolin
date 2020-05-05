@@ -62,7 +62,7 @@ rule assign_lineages:
         lineages_csv=config["lineages_csv"],
         version=config["lineages_version"]
     output:
-        report = config["outdir"] + "/lineage_report.csv"
+        report = config["outfile"]
     run:
         query_sequences = query_sequence.fetch("query_store")
         num_query_seqs = len(query_sequences.split(","))
@@ -75,6 +75,7 @@ rule assign_lineages:
                         "--config "
                         "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
+                        "outfile={output.report} "
                         "write_tree={params.write_tree} "
                         "tempdir={params.tempdir:q} "
                         "query_fasta={input.query:q} "
