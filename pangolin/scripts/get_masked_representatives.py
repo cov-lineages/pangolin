@@ -20,7 +20,6 @@ def parse_args():
     parser.add_argument("--representative-seqs-out", action="store", type=str, dest="representatives_out")
     parser.add_argument("--metadata", action="store", type=str, dest="metadata_in")
     parser.add_argument("--metadata-out", action="store", type=str, dest="metadata_out")
-    parser.add_argument("--metadata-verity", action="store", type=str, dest="metadata_verity")
     return parser.parse_args()
 
 def find_snps(ref,member):
@@ -53,15 +52,11 @@ def mask_snp(ref,member,to_mask_snp):
         col = [ref[i],member[i]]
         if len(set(col))>1:
             if not col[1].lower() in ["a","g","t","c","-"]:
-                pass
                 new_str +=col[1]
             else:
                 snp = f"{index}{col[0].upper()}{col[1].upper()}"
-                list_seq = list(member)
                 if snp == to_mask_snp:
-                    list_seq[i] = "N"
-                    new_str += "N"
-                    member = "".join(list_seq)
+                    new_str += "?"
                 else:
                     new_str += col[1]
         else:
@@ -69,6 +64,7 @@ def mask_snp(ref,member,to_mask_snp):
     return new_str
 
 def make_lineage_dict(lineage):
+    """return lineage dict lineage_dict[name]=lineage"""
     lineages = {}
     with open(lineage,"r") as f:
         for l in f:
@@ -77,6 +73,11 @@ def make_lineage_dict(lineage):
     return lineages
         
 def make_rep_dict(r):
+    """
+    --representative-seqs
+    lineage,name
+    B,WH0X/Taxon/Name
+    """
     reps = {}
     with open(r,"r") as f:
         for l in f:
@@ -85,6 +86,13 @@ def make_rep_dict(r):
     return reps
         
 def make_mask_dict(m):
+    """
+    return mask dict mask_dict[lineage]=snp
+    input:
+    --to_mask
+    lineage,snp,taxon
+    B,2897GT,WH0X/Taxon/Name
+    """
     to_mask = collections.defaultdict(list)
     with open(m,"r") as f:
         for l in f:
@@ -93,14 +101,82 @@ def make_mask_dict(m):
     return to_mask
 
 def get_reference(fasta):
+    """return reference seq record """
     reference = ""
     for record in SeqIO.parse(fasta,"fasta"):
         if "WH04" in record.id:
             reference = record
     return reference
 
-def extract_representatives_and_do_the_masking_thing():
+def make_masked_representative_fasta(alignment_file, reps, reference, fw):
+    aln = AlignIO.read(alignment_file,"fasta")
+    for record in aln:
+        if record.id != reference.id and record.id in reps:
+            snps = find_snps(reference.seq,record.seq)
+            lineage = reps[record.id]
+            snp_mask_count = 0
+            if lineage in to_mask:
+                
+                new_seq = record.seq
+                for snp in snps:
+                    if snp in to_mask[lineage]:
+                        snp_mask_count +=1
+                        new_seq = mask_snp(reference.seq, new_seq, snp)
+                    else:
+                        pass
+                
+                new_snps = find_snps(reference.seq,new_seq)
+                print(f"Num snps before masking: {len(snps)}")
+                print(f"Singleton SNPs to mask: {snp_mask_count}")
+                print(f"Num snps after masking: {len(new_snps)}")
 
+                fw.write(f">{record.id}|{lineage}\n{new_seq}\n")
+            else:
+                fw.write(f">{record.id}|{lineage}\n{record.seq}\n")
+
+def make_metadata_out(metadata,lineage_dict,reps,metadata_out_file):
+    c,cin,r = 0,0,0
+    with open(metadata,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sequence_name = row["sequence_name"]
+            covv_accession_id = row["covv_accession_id"]
+            edin_admin_0 = row["edin_admin_0"]
+            edin_travel = row["edin_travel"]
+            covv_collection_date = row["covv_collection_date"]
+            edin_epi_week = row["edin_epi_week"]
+
+            if sequence_name in lineage_dict:
+                rep = 0
+                lineage = lineage_dict[sequence_name]
+                if sequence_name in reps:
+                    rep = 1
+                    r +=1
+                new_l = f"{sequence_name},{covv_accession_id},{edin_admin_0},{edin_travel},{covv_collection_date},{edin_epi_week},{lineage},{rep}\n"
+                cin +=1
+                metadata_out_file.write(new_l)
+            else:
+                c+=1
+
+    print("Filtered out:",c)
+    print("Included in the metadata:", cin)
+    print("Number of representatives indicated:",r)
+
+def extract_representatives_and_do_the_masking_thing():
+    """
+    input:
+    --to_mask
+    lineage,snp,taxon
+    B,2897GT,WH0X/Taxon/Name
+
+    --defining-snps
+    lineage,defining_snps
+    B,2897GT;30000TA
+
+    --representative-seqs
+    lineage,name
+    B,WH0X/Taxon/Name
+    """
     args = parse_args()
 
     rep_file = os.path.join(cwd, args.representatives)
@@ -145,103 +221,32 @@ def extract_representatives_and_do_the_masking_thing():
                     covv_collection_date = row["covv_collection_date"]
                     edin_epi_week = row["edin_epi_week"]
         except:
-            sys.stderr.write('Error: unexpected headers on {}\n'.format(metadata))
+            sys.stderr.write("Error: unexpected headers in {}\n. \
+                            Expected header names:\n\
+                            sequence_name,covv_accession_id,\
+                            edin_admin0,edin_travel,covv_collection_date,\
+                            edin_epi_week\n".format(metadata))
             sys.exit(-1)
 
 
     alignment_file = os.path.join(cwd, args.a)
-    reference = ''
     if not os.path.exists(alignment_file):
         sys.stderr.write('Error: cannot find alignment file at {}\n'.format(alignment_file))
         sys.exit(-1)
     else:
-        print(f"Reading in alignment file {alignment_file}.")
-        reference = get_reference(alignment_file)
-        print(f"Using {reference.id} as reference")
+        print(f"Reading in alignment file {alignment_file}")
 
-    fw = open(args.representatives_out,"w")
-    fw.write(f">{reference.id}|A\n{reference.seq}\n")
-    for record in AlignIO.read(alignment_file,"fasta"):
-        if record.id != reference.id and record.id in reps:
-            snps = find_snps(reference.seq,record.seq)
-            lineage = reps[record.id]
-            
-            if lineage in to_mask:
-                new_seq = record.seq
-                for snp in snps:
-                    if snp in to_mask[lineage]:
-                        new_seq = mask_snp(reference.seq, new_seq, snp)
-                    else:
-                        pass
-                        
-                new_snps = find_snps(reference.seq,new_seq)
+    reference = get_reference(alignment_file)
+    print(f"Using {reference.id} as reference")
 
-                fw.write(f">{record.id}|{lineage}\n{new_seq}\n")
-                
-            else:
-                fw.write(f">{record.id}|{lineage}\n{record.seq}\n")
+    with open(args.representatives_out,"w") as fw:
+        fw.write(f">{reference.id}|A\n{reference.seq}\n")
+        make_representative_fasta(alignment_file, reps, reference, fw)
 
-    fw.close()
-
-    fm = open(args.metadata_out, "w")
-    header = f"name,GISAID ID,lineage,representative\n"
-    fm.write(header)
-    c,cin,r = 0,0,0
-    with open(metadata,newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            sequence_name = row["sequence_name"]
-            print(sequence_name)
-            covv_accession_id = row["covv_accession_id"]
-            edin_admin_0 = row["edin_admin_0"]
-            edin_travel = row["edin_travel"]
-            covv_collection_date = row["covv_collection_date"]
-            edin_epi_week = row["edin_epi_week"]
-
-            if sequence_name in lineage_dict:
-                rep = 0
-                lineage = lineage_dict[sequence_name]
-                if sequence_name in reps:
-                    rep = 1
-                    r +=1
-                new_l = f"{sequence_name},{covv_accession_id},{lineage},{rep}\n"
-                cin +=1
-                fm.write(new_l)
-            else:
-                c+=1
-    fm.close()
-    
-    fm = open(args.metadata_verity, "w")
-    header = f"name,GISAID ID,country,travel history,sample date,epiweek,lineage,representative\n"
-    fm.write(header)
-    c,cin,r = 0,0,0
-    with open(metadata,newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            sequence_name = row["sequence_name"]
-            print(sequence_name)
-            covv_accession_id = row["covv_accession_id"]
-            edin_admin_0 = row["edin_admin_0"]
-            edin_travel = row["edin_travel"]
-            covv_collection_date = row["covv_collection_date"]
-            edin_epi_week = row["edin_epi_week"]
-
-            if sequence_name in lineage_dict:
-                rep = 0
-                lineage = lineage_dict[sequence_name]
-                if sequence_name in reps:
-                    rep = 1
-                    r +=1
-                new_l = f"{sequence_name},{covv_accession_id},{edin_admin_0},{edin_travel},{covv_collection_date},{edin_epi_week},{lineage},{rep}\n"
-                cin +=1
-                fm.write(new_l)
-            else:
-                c+=1
-
-    print("Filtered out:",c)
-    print("Included in the metadata:", cin)
-    print("Number of representatives indicated:",r)
-    fm.close()
+    with open(args.metadata_out, "w") as fm:
+        header = f"name,GISAID ID,country,travel history,sample date,epiweek,lineage,representative\n"
+        fm.write(header)
+        make_metadata_out(metadata,lineage_dict,reps,fm)
 
 if __name__ == '__main__':
 
