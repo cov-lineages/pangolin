@@ -28,9 +28,9 @@ rule find_representatives:
 rule extract_representative_sequences:
     input:
         aln = config["fasta"],
-        mask = config["outdir"] + "/to_mask.csv",
-        metadata = config["metadata"],
         lineages = config["lineages"],
+        metadata = config["metadata"],
+        mask = config["outdir"] + "/to_mask.csv",
         representatives = config["outdir"] + "/representative_seqs.csv"
     output:
         representatives = config["outdir"] + "/representative_sequences.fasta",
@@ -38,10 +38,10 @@ rule extract_representative_sequences:
     shell:
         """
         get_masked_representatives.py \
+            -a {input.aln} \
+            -l {input.lineages} \
             --representatives {input.representatives} \
             --to-mask {input.mask} \
-            -l {input.lineages} \
-            -a {input.aln} \
             --metadata {input.metadata} \
             --representative-seqs-out {output.representatives} \
             --metadata-out {output.metadata} 
