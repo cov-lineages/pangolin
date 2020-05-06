@@ -320,7 +320,7 @@ def read_alignment_and_write_files():
     fw.write("lineage,name\n")
     to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,fw,defining_cut_off,represent_cut_off)
     fw.close()
-
+    print("6. Writing mask, representatives and defining snps files.")
     with open(args.mask_out,"w") as fm:
         fm.write("lineage,snp,taxon\n")
         for snp in to_mask:
