@@ -55,7 +55,7 @@ rule assign_lineages:
         key = rules.pass_query_hash.output.key,
         aln = rules.decrypt_aln.output,
         guide_tree = config["guide_tree"],
-        query_config = temp(config["tempdir"] + "/config.yaml")
+        query_config = config["tempdir"] + "/config.yaml"
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],
