@@ -15,14 +15,14 @@ rule find_representatives:
         aln = config["fasta"],
         lineages = config["lineages"]
     output:
-        snps = config["outdir"] + "/representative_seqs.csv",
+        reps = config["outdir"] + "/representative_seqs.csv",
         defining = config["outdir"] + "/defining_snps.csv",
         mask = config["outdir"] + "/to_mask.csv"
     shell:
         """all_snps.py -a {input.aln:q} -l {input.lineages:q} \
-                --all_snps {output.snps:q} \
-                --defining_snps {output.defining:q} \
-                --to_mask {output.mask:q} 
+                --representative-seqs-out {output.reps:q} \
+                --defining-snps-out {output.defining:q} \
+                --mask-out {output.mask:q} 
             """
 
 rule extract_representative_sequences:
@@ -38,12 +38,12 @@ rule extract_representative_sequences:
     shell:
         """
         get_masked_representatives.py \
-            -r {input.representatives} \
-            -m {input.mask} \
+            --representatives {input.representatives} \
+            --to-mask {input.mask} \
             -l {input.lineages} \
             -a {input.aln} \
             --metadata {input.metadata} \
-            -o {output.representatives} \
+            --representative-seqs-out {output.representatives} \
             --metadata-out {output.metadata} 
         """
 

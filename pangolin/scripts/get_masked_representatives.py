@@ -13,13 +13,14 @@ cwd = os.getcwd()
 def parse_args():
     parser = argparse.ArgumentParser(description='Extract representative seqs with masked singleton snps.')
 
-    parser.add_argument("-r", action="store", type=str, dest="r")
-    parser.add_argument("-m", action="store", type=str, dest="m")
+    parser.add_argument("--representatives", action="store", type=str, dest="representatives")
+    parser.add_argument("--to-mask", action="store", type=str, dest="to_mask")
     parser.add_argument("-l", action="store", type=str, dest="l")
     parser.add_argument("-a", action="store", type=str, dest="a")
-    parser.add_argument("-o", action="store", type=str, dest="o")
-    parser.add_argument("--metadata", action="store", type=str, dest="mi")
-    parser.add_argument("--metadata-out", action="store", type=str, dest="mo")
+    parser.add_argument("--representative-seqs-out", action="store", type=str, dest="representatives_out")
+    parser.add_argument("--metadata", action="store", type=str, dest="metadata_in")
+    parser.add_argument("--metadata-out", action="store", type=str, dest="metadata_out")
+    parser.add_argument("--metadata-verity", action="store", type=str, dest="metadata_verity")
     return parser.parse_args()
 
 def find_snps(ref,member):
@@ -102,7 +103,7 @@ def extract_representatives_and_do_the_masking_thing():
 
     args = parse_args()
 
-    rep_file = os.path.join(cwd, args.r)
+    rep_file = os.path.join(cwd, args.representatives)
     if not os.path.exists(rep_file):
         sys.stderr.write('Error: cannot find rep file at {}\n'.format(rep_file))
         sys.exit(-1)
@@ -111,7 +112,7 @@ def extract_representatives_and_do_the_masking_thing():
         reps = make_rep_dict(rep_file)
         print("Number of representative seqs:",len(reps))
 
-    mask_file = os.path.join(cwd, args.m)
+    mask_file = os.path.join(cwd, args.to_mask)
     if not os.path.exists(mask_file):
         sys.stderr.write('Error: cannot find mask file at {}\n'.format(mask_file))
         sys.exit(-1)
@@ -127,7 +128,7 @@ def extract_representatives_and_do_the_masking_thing():
         print(f"Reading in lineage file {lineage_file}.")
         lineage_dict = make_lineage_dict(lineage_file)
 
-    metadata = os.path.join(cwd, args.mi)
+    metadata = os.path.join(cwd, args.metadata_in)
     if not os.path.exists(metadata):
         sys.stderr.write('Error: cannot find metadata file at {}\n'.format(metadata))
         sys.exit(-1)
@@ -158,7 +159,7 @@ def extract_representatives_and_do_the_masking_thing():
         reference = get_reference(alignment_file)
         print(f"Using {reference.id} as reference")
 
-    fw = open(args.o,"w")
+    fw = open(args.representatives_out,"w")
     fw.write(f">{reference.id}|A\n{reference.seq}\n")
     for record in AlignIO.read(alignment_file,"fasta"):
         if record.id != reference.id and record.id in reps:
@@ -169,8 +170,6 @@ def extract_representatives_and_do_the_masking_thing():
                 new_seq = record.seq
                 for snp in snps:
                     if snp in to_mask[lineage]:
-                        
-                        
                         new_seq = mask_snp(reference.seq, new_seq, snp)
                     else:
                         pass
@@ -184,7 +183,35 @@ def extract_representatives_and_do_the_masking_thing():
 
     fw.close()
 
-    fm = open(args.mo, "w")
+    fm = open(args.metadata_out, "w")
+    header = f"name,GISAID ID,lineage,representative\n"
+    fm.write(header)
+    c,cin,r = 0,0,0
+    with open(metadata,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sequence_name = row["sequence_name"]
+            print(sequence_name)
+            covv_accession_id = row["covv_accession_id"]
+            edin_admin_0 = row["edin_admin_0"]
+            edin_travel = row["edin_travel"]
+            covv_collection_date = row["covv_collection_date"]
+            edin_epi_week = row["edin_epi_week"]
+
+            if sequence_name in lineage_dict:
+                rep = 0
+                lineage = lineage_dict[sequence_name]
+                if sequence_name in reps:
+                    rep = 1
+                    r +=1
+                new_l = f"{sequence_name},{covv_accession_id},{lineage},{rep}\n"
+                cin +=1
+                fm.write(new_l)
+            else:
+                c+=1
+    fm.close()
+    
+    fm = open(args.metadata_verity, "w")
     header = f"name,GISAID ID,country,travel history,sample date,epiweek,lineage,representative\n"
     fm.write(header)
     c,cin,r = 0,0,0
