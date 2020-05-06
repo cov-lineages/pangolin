@@ -3,8 +3,6 @@ from Bio import Phylo
 import sys
 import os
 
-config["query_sequences"]=[i for i in config["query_sequences"].split(',')]
-
 if config.get("lineages_csv"):
     print("Going to run the global report summary")
 else:
