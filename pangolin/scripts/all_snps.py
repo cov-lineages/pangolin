@@ -6,6 +6,22 @@ from Bio import AlignIO
 import os
 cwd = os.getcwd()
 
+"""
+Current output:
+--mask-out
+lineage,snp,taxon
+B,2897GT,WH0X/Taxon/Name
+
+--defining-snps-out
+lineage,defining_snps
+B,2897GT;30000TA
+
+--representative-seqs-out
+lineage,name
+B,WH0X/Taxon/Name
+"""
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Find all snps.')
 
