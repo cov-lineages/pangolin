@@ -21,11 +21,13 @@ rule pass_query_hash:
         pid = config["pid"]
     output:
         fasta = temp(config["tempdir"] + "/query.fasta"),
-        key = temp(config["tempdir"] + "/query_key.csv")
+        key = temp(config["tempdir"] + "/query_key.csv"),
+        query_config = temp(config["tempdir"] + "/config.yaml")
     run:
         fkey = open(output.key, "w")
         ids = ''
         c= 0
+        
         with open(output.fasta, "w") as fw:
             for record in SeqIO.parse(input[0],"fasta"):
                 c+=1
@@ -37,11 +39,13 @@ rule pass_query_hash:
 
                 ids+=new_id + ','
             
-            print(f"{c+1} hashed sequences written")
+            print(f"{c} hashed sequences written")
         fkey.close()
-        
         ids = ids.rstrip(',')
-        query_sequence.store("query_store",ids)
+        with open(output.query_config, "w") as fconfig:
+            fconfig.write("query_sequences: [")
+            fconfig.write(ids + "]")
+        query_sequence.store("query_store",c)
 
 
 rule assign_lineages:
@@ -50,7 +54,8 @@ rule assign_lineages:
         query = rules.pass_query_hash.output.fasta,
         key = rules.pass_query_hash.output.key,
         aln = rules.decrypt_aln.output,
-        guide_tree = config["guide_tree"]
+        guide_tree = config["guide_tree"],
+        query_config = temp(config["tempdir"] + "/config.yaml")
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],
@@ -64,16 +69,14 @@ rule assign_lineages:
     output:
         report = config["outfile"]
     run:
-        query_sequences = query_sequence.fetch("query_store")
-        num_query_seqs = len(query_sequences.split(","))
-        if query_sequences != "":
+        num_query_seqs = query_sequence.fetch("query_store")
+        if num_query_seqs != 0:
             print(f"Passing {num_query_seqs} into processing pipeline.")
-            config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
                         "{params.force}"
                         "--directory {params.tempdir:q} "
+                        "--configfile {input.query_config} "
                         "--config "
-                        "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
                         "outfile={output.report} "
                         "write_tree={params.write_tree} "
