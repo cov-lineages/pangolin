@@ -12,44 +12,52 @@ def parse_args():
     parser.add_argument("-a", action="store", type=str, dest="a")
     parser.add_argument("-l", action="store", type=str, dest="l")
 
-    parser.add_argument("--all_snps", action="store", type=str, dest="o")
-    parser.add_argument("--defining_snps", action="store", type=str, dest="d")
-    parser.add_argument("--to_mask", action="store", type=str, dest="m")
+    parser.add_argument("--representative-seqs-out", action="store", type=str, dest="representative_out")
+    parser.add_argument("--defining-snps-out", action="store", type=str, dest="defining_out")
+    parser.add_argument("--mask-out", action="store", type=str, dest="mask_out")
+    parser.add_argument("--defining-cut-off", action="store", type=float, default=90,dest="def_cutoff")
+    parser.add_argument("--represent-cut-off", action="store", type=float,default=10,dest="rep_cutoff")
     return parser.parse_args()
 
-def get_lineage_dict(alignment_file, lineage_file):
+def get_lineage_dict(alignment, lineage_file):
     """Takes in lineage annotations and an alignment file. 
     Outputs structured dict of seq records per lineage."""
-    aln = AlignIO.read(alignment_file, "fasta")
+    
     lineages_dict = {}
     lineages_records = collections.defaultdict(list)
-
+    sorted_by_n_lineages = {}
     with open(lineage_file, "r") as f:
         for l in f:
             l = l.rstrip("\n")
             tokens = l.split(",")
             lineages_dict[tokens[0]]=tokens[1]
-
-    for record in aln:
-        if record.id == "Wuhan/WH04/2020":
-            lineages_records["reference"].append(record)
-        else:
-            try:
+    not_in_csv = []
+    c= 0
+    for record in alignment:
+        if record.id != "Wuhan/WH04/2020":
+            if record.id in lineages_dict:
                 lineage = lineages_dict[record.id]
                 lineages_records[lineage].append(record)
-            except:
-                print(record.id, "found in alignment but not lineages csv file")
+                c+=1
+            else:
+                not_in_csv.append(record.id)
+    print(f"{c} sequences added to lineages_records")
+    print(f"Note: The following {len(not_in_csv)} sequences were found in alignment but not lineages csv file")
+    for seq in not_in_csv:
+        print(seq)
+    for lineage in lineages_records:
+        sorted_records = sorted(lineages_records[lineage], key = lambda x : x.annotations["pcent_N"])
+        sorted_by_n_lineages[lineage] = sorted_records
 
     print("Lineage\t\tNum sequences")
-    for lineage in sorted(lineages_records):
-        if lineage != "reference":
-            print(f"{lineage}\t\t{len(lineages_records[lineage])}")
+    for lineage in sorted(sorted_by_n_lineages):
+        print(f"{lineage}\t\t{len(sorted_by_n_lineages[lineage])}")
     
-    return lineages_records
+    return sorted_by_n_lineages
 
 def find_snps(ref,member):
     """Identifies unambiguous snps between two sequences 
-    and returns them as a list"""
+    and returns them as a list, using position in the ref seq (i.e. no gaps in ref)"""
     snps = []
     index = 0 
     for i in range(len(ref)):
@@ -65,99 +73,229 @@ def find_snps(ref,member):
                 snps.append(snp)
     return snps
 
+def get_reference(alignment,reference_id="Wuhan/WH04/2020"):
+    """get reference seq record"""
+    for record in alignment:
+        if record.id == reference_id:
+            return record
+
+def pcent_done(c, total):
+    return round((c*100)/total, 2)
+
+def add_snps_annotation(alignment, reference):
+    """add list of snps relative to ref as an annotation to the seq record"""
+    c = 0
+    total = len(alignment)
+    for record in alignment:
+        c +=1 
+        if c%500==0:
+            print(pcent_done(c, total), '%')
+
+        snps = find_snps(reference.seq, record.seq)
+        record.annotations["snps"] = snps
+        snp_string =snp_list_to_snp_string(snps)
+        record.annotations["snp_string"] = snp_string
+
+    print(total, "records annotated")
+
+def add_N_annotation(alignment):
+    """add pcent_N as an annotation to the seq record"""
+    for record in alignment:
+        pcent_N = get_N_content(record.seq)
+        record.annotations["pcent_N"] = pcent_N
+    print(len(alignment), "records annotated")
+        
 def get_N_content(seq):
+    """return the percentage N content for a given seq"""
     num_N = str(seq).upper().count("N")
     pcent_N = (num_N*100)/len(seq)
     return pcent_N
 
-def get_all_snps(alignment_file,lineage_file,outfile,defining_file,fmask):
-    fm = open(fmask,"w")
-    fd = open(defining_file,"w")
-    lineages_dict = get_lineage_dict(alignment_file, lineage_file)
-    reference = lineages_dict["reference"][0]
+def get_singleton_snps(lineage, snp_counter):
+    """Returns a list of snps that only appear 
+    once within a given lineage, will be masked"""
+    singletons = []
+    for snp in snp_counter:
+        if len(snp_counter[snp]) == 1:
+            singletons.append((lineage, snp, snp_counter[snp][0]))
+    return singletons
+
+def get_inclusion_pcent(snp,snp_counter,total_in_lineage):
+    """return the percentage of taxa within a lineage that 
+    have a given snp. E.g. if all taxa have that snp ==100, 
+    if 3 taxa out of 12 have that particular snp, will return 25 etc."""
+    num_taxa_with_snp = len(snp_counter[snp])
+    inclusion_pcent = (100*num_taxa_with_snp)/total_in_lineage
+    return inclusion_pcent
+
+def get_represented_and_defining_snps(singletons, snp_counter, lineages_dict, defining_cut_off, represent_cut_off,lineage):
+    """based on cut offs, will return a list containing snps that are present
+    at a lineage defining level and a list containing snps that are present at 
+    a should-be-represented-in-the-tree level"""
+    defining = []
+    flagged = []
+    total_in_lineage = len(lineages_dict[lineage])
+    for snp in snp_counter:
+        singleton = False
+        for s in singletons:
+            s_snp = s[1]
+            if snp == s_snp:
+                singleton = True
+
+        if not singleton:
+            inclusion_pcent = get_inclusion_pcent(snp,snp_counter,total_in_lineage)
+
+            if inclusion_pcent > defining_cut_off:
+                defining.append(snp)
+            if inclusion_pcent > represent_cut_off:
+                flagged.append(snp)
+
+    return defining, flagged
+
+def get_ids_in_list_of_records(records):
+    """return ids in a set of seq records"""
+    ids = []
+    for record in records:
+        ids.append(record.id)
+    return ids
+
+def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
+    """for each set of snps in the lineage snp dict, get the record 
+    with the lowest n content that has that snp pattern. 
+    for each snp in that set of snps, if it was flagged that it should be 
+    represented in the guide tree, but hasn't been included yet, include that record
+    and note the snps the record has contributed to the tree. 
+    return the set of records that fulfill the representation needed."""
+    represented= []
+    taxa = []
+    for snp_set in lineage_snps:
+
+        records_sorted_by_N = sorted(lineage_snps[snp_set], key = lambda x : int(x[1]))
+        lowest_N = records_sorted_by_N[0][0]
+
+        snps = snp_set.split(";")
+        
+        for snp in snps:
+            if snp in flagged and not snp in represented:
+                
+                represented.append(snp)
+
+                for record in lineages_dict[lineage]:
+                    if record.id == lowest_N:
+                        snps_in_lowest_N = record.annotations["snps"]
+                        for lowest_N_snp in snps_in_lowest_N:
+                            represented.append(snp)
+                            taxa_ids = get_ids_in_list_of_records(taxa)
+                            if record.id not in taxa_ids:
+                                taxa.append(record)
+
+    return taxa
+
+def pad_taxa_to_5(taxa, lineages_dict, lineage):
+    """if you have filled the representatives needed but dont have 
+    very many taxa, pad that list to five for the craic"""
+    pre_len = len(taxa)
+    if pre_len < 5:
+        for record in lineages_dict[lineage]:
+            if len(taxa)<5:
+                taxa_ids = get_ids_in_list_of_records(taxa)
+                if record.id not in taxa_ids:
+                    taxa.append(record)
+            else:
+                pass
+        else:
+            pass
+    print(f"\t5f. {lineage}: {pre_len} padded to {len(taxa)} representative seqs")   
+    return taxa
+     
+def snp_list_to_snp_string(snp_list):
+    """turn a snp list into a `;`-separated string of snps that are sorted by 
+    position in the genome"""
+    snp_string = ";".join(sorted(snp_list, key = lambda x : int(x[:-2])))
+    return snp_string
+
+def get_all_snps(alignment_file,lineage_file,outfile,defining_cut_off,represent_cut_off):
+    """ this is the main worker function of this script. 
+    ultimately it returns a list of singleton snps to_mask
+    and a list of lineage_defining_snps per lineage to write to a file
+
+    1. reads in the alignment
+    2. identifies the reference sequence
+    3. adds in some useful things to the seq record (n, snps, snp_string)
+
+    4. structures alignment records by lineage
+    5. for each lineage
+        - count occurences of each snp and id singletons to mask
+        - make dict keyed by unique snp combinations with all the associated records as value list
+        - get snps to be represented in the tree and potential defining snps (by % cut off args)
+        - get best taxa to represent the snps to be represented based on N content
+        - if theres too few taxa for each lineage add some more (total of 5)
+        - write representatives 
+        - get a set of snps that 100 of taxa are in
+        - if snp set is empty, pad with snps flagged as potential defining snps by the less strict cut off
+    6. return to_mask and lineage_defining_snps
+    """
+    print("1. Reading in the alignment")
+    aln = AlignIO.read(alignment_file, "fasta")
+    print("2. Getting the reference:")
+    reference = get_reference(aln)
+    print(reference.id)
+    print("3a. Annotating N content onto seq records")
+    add_N_annotation(aln)
+    print("3b. Annotating snps onto seq records")
+    add_snps_annotation(aln, reference)
+    print("4. Making lineages dict")
+    lineages_dict = get_lineage_dict(aln, lineage_file)
     
+    to_mask = []
+    lineage_defining_snps = []
+
     for lineage in sorted(lineages_dict):
-        if lineage != "reference":
-            seq_dict = {}
-            n_dict = {}
-            lineage_snps = collections.defaultdict(list)
-            member_snps = {}
-            snp_counter = collections.defaultdict(list)
+        lineage_snps = collections.defaultdict(list)
+        snp_counter = collections.defaultdict(list)
 
-            for member in lineages_dict[lineage]:
-                seq_dict[member.id] = member.seq
-                snps = find_snps(reference.seq, member.seq)
-                for i in snps:
-                    snp_counter[i].append(member.id)
+        for record in lineages_dict[lineage]:
 
-                sorted_snps = ";".join(sorted(snps, key = lambda x : int(x[:-2])))
-                member_snps[member.id]= snps
-                
-                pcent_N = get_N_content(member.seq)
-                n_dict[member.id]=pcent_N
-                lineage_snps[sorted_snps].append((member.id,pcent_N))
+            snps = record.annotations["snps"]
+            snp_string = record.annotations["snp_string"]
+            pcent_N = record.annotations["pcent_N"]
 
-            potential_lineage_defining = []
-            flagged = []
+            for i in snps:
+                snp_counter[i].append(record.id)
 
-            for snp in snp_counter:
-                if len(snp_counter[snp]) ==1:
-                    print("singleton",snp)
-                    fm.write(f"{lineage},{snp}\n")
-                inclusion_pcent = (100*len(snp_counter[snp])/len(lineages_dict[lineage]))
-                if inclusion_pcent > 90:
-                    potential_lineage_defining.append(snp)
-                if inclusion_pcent > 10:
-                    flagged.append(snp)
+            lineage_snps[snp_string].append((record.id,pcent_N))
+        print("5. Lineage",lineage)
+        print(f"\t5a. Made lineage_snps")
+        print(f"\t5b. Counted up {len(snp_counter)} snps")
+        singletons = get_singleton_snps(lineage, snp_counter)
+        print(f"\t5c. Identified {len(singletons)} singletons in {lineage}")
+        for singleton in singletons:
+            to_mask.append(singleton)
 
-            represented= {}
-            for snp_set in lineage_snps:
-                snps = snp_set.split(";")
-                
-                for snp in snps:
-                    if snp in flagged and not snp in represented:
-                        member = sorted(lineage_snps[snp_set], key = lambda x : int(x[1]))[0]
-                        represented[snp] = member[0]
-                        for i in member_snps[member[0]]:
-                            represented[i] = member[0]
+        defining,flagged = get_represented_and_defining_snps(singletons, snp_counter, lineages_dict, defining_cut_off,represent_cut_off,lineage)
+        print(f"\t5d. Identified {len(defining)} potential defining snps in {lineage}")
+        print(f"\t5e. Flagged {len(flagged)} snps to be represented in {lineage}")
+        taxa = get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged)
 
-            representative_taxa = []
-            for snp in represented:
-                representative_taxa.append(represented[snp])
-            representative_taxa=list(set(representative_taxa))
+        taxa = pad_taxa_to_5(taxa, lineages_dict, lineage)
 
-            if len(representative_taxa)<5:
-                take_best_of_rest = []
-                members = lineages_dict[lineage]
-                for member in members:
-                    if member.id not in representative_taxa:
-                        take_best_of_rest.append((member.id, n_dict[member.id]))
-                take_best_of_rest = sorted(take_best_of_rest, key = lambda x : x[1])
-                
-                for item in take_best_of_rest:
-                    if len(representative_taxa) < 5:
-                        if item[0] not in representative_taxa:
-                            representative_taxa.append(item[0])
-            
-            print(f"{lineage}: {len(representative_taxa)} representative seqs")
+        for record in taxa:
+            snp_string = record.annotations["snp_string"]
+            outfile.write(f"{lineage},{record.id}\n")
+        
+        defining_snps = list(set.intersection(*[set(x.split(";")) for x in lineage_snps]))
 
-            for i in representative_taxa:
-                snps = member_snps[i]
-                snp_string = ";".join(sorted(snps, key = lambda x : int(x[:-2])))
-                outfile.write(f"{lineage},{i},{snp_string}\n")
-            
+        if defining_snps == []:
+            for snp in defining:
+                defining_snps.append(snp)
 
-            lineage_set = list(set.intersection(*[set(x.split(";")) for x in lineage_snps]))
-            print(f"{lineage} Lineage set:",lineage_set)
-            if lineage_set == []:
-                for i in potential_lineage_defining:
-                    lineage_set.append(i)
-            lineage_str = ";".join(sorted(lineage_set, key = lambda x : int(x[:-2])))
-            fd.write(f"{lineage},{lineage_str}\n")
-    fm.close()
-    fd.close()
+        lineage_str = snp_list_to_snp_string(defining_snps)
+        print(f"{lineage} defining snps: {lineage_str}")   
+        lineage_defining_snps.append((lineage, lineage_str))
+        
+    return to_mask, lineage_defining_snps
 
-def read_alignment_and_get_snps():
+def read_alignment_and_write_files():
 
     args = parse_args()
 
@@ -174,11 +312,29 @@ def read_alignment_and_get_snps():
         sys.exit(-1)
     else:
         print(f"Reading in lineage annotations file {lineage_file}.")
+    
+    defining_cut_off = args.def_cutoff
+    represent_cut_off = args.rep_cutoff
+    
+    fw = open(args.representative_out, "w")
+    fw.write("lineage,name\n")
+    to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,fw,defining_cut_off,represent_cut_off)
+    fw.close()
 
-    with open(args.o, "w") as fw:
-        fw.write("lineage,name,snps\n")
-        get_all_snps(alignment_file,lineage_file,fw,args.d,args.m)
+    with open(args.mask_out,"w") as fm:
+        fm.write("lineage,snp,taxon\n")
+        for snp in to_mask:
+            lineage,snp,taxon = snp
+            fm.write(f"{lineage},{snp},{taxon}\n")
+
+    with open(args.defining_out,"w") as fd:
+        fd.write("lineage,defining_snps\n")
+        
+        for defining_snps in lineage_defining_snps:
+            lineage,lineage_str = defining_snps
+            fd.write(f"{lineage},{lineage_str}\n")
+
 
 if __name__ == '__main__':
 
-    read_alignment_and_get_snps()
+    read_alignment_and_write_files()
