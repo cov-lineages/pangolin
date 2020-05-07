@@ -50,10 +50,13 @@ rule extract_representative_sequences:
 rule mafft_representative_sequences:
     input:
         rules.extract_representative_sequences.output.representatives
+    threads: workflow.cores
+    params:
+        cores = workflow.cores
     output:
         config["outdir"] + "/representative_sequences.aln.fasta"
     shell:
-        "mafft {input[0]:q} > {output[0]:q}"
+        "mafft --thread {params.cores} {input[0]:q} > {output[0]:q}"
 
 rule anonymise_headers:
     input:
@@ -100,7 +103,10 @@ rule encrypt_fasta:
 rule iqtree_representative_sequences:
     input:
         rules.anonymise_headers.output.fasta
+    threads: workflow.cores
+    params:
+        cores = workflow.cores
     output:
         config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
-        "iqtree -s {input[0]:q} -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
+        "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
