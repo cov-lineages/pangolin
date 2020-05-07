@@ -108,8 +108,9 @@ def get_reference(fasta):
             reference = record
     return reference
 
-def make_masked_representative_fasta(alignment_file, reps, reference, fw):
+def make_masked_representative_fasta(alignment_file, reps, reference, fw, to_mask):
     aln = AlignIO.read(alignment_file,"fasta")
+    print("SNPs premask\t\tSNPs to mask\t\tSNPs postmask")
     for record in aln:
         if record.id != reference.id and record.id in reps:
             snps = find_snps(reference.seq,record.seq)
@@ -126,9 +127,7 @@ def make_masked_representative_fasta(alignment_file, reps, reference, fw):
                         pass
                 
                 new_snps = find_snps(reference.seq,new_seq)
-                print(f"Num snps before masking: {len(snps)}")
-                print(f"Singleton SNPs to mask: {snp_mask_count}")
-                print(f"Num snps after masking: {len(new_snps)}")
+                print(f"{len(snps)}\t\t{snp_mask_count}\t\t{len(new_snps)}")
 
                 fw.write(f">{record.id}|{lineage}\n{new_seq}\n")
             else:
@@ -140,11 +139,10 @@ def make_metadata_out(metadata,lineage_dict,reps,metadata_out_file):
         reader = csv.DictReader(f)
         for row in reader:
             sequence_name = row["sequence_name"]
-            covv_accession_id = row["covv_accession_id"]
-            edin_admin_0 = row["edin_admin_0"]
-            edin_travel = row["edin_travel"]
-            covv_collection_date = row["covv_collection_date"]
-            edin_epi_week = row["edin_epi_week"]
+            country = row["country"]
+            travel_history = row["travel_history"]
+            sample_date = row["sample_date"]
+            epi_week = row["epi_week"]
 
             if sequence_name in lineage_dict:
                 rep = 0
@@ -152,7 +150,7 @@ def make_metadata_out(metadata,lineage_dict,reps,metadata_out_file):
                 if sequence_name in reps:
                     rep = 1
                     r +=1
-                new_l = f"{sequence_name},{covv_accession_id},{edin_admin_0},{edin_travel},{covv_collection_date},{edin_epi_week},{lineage},{rep}\n"
+                new_l = f"{sequence_name},{country},{travel_history},{sample_date},{epi_week},{lineage},{rep}\n"
                 cin +=1
                 metadata_out_file.write(new_l)
             else:
@@ -215,17 +213,16 @@ def extract_representatives_and_do_the_masking_thing():
                 reader = csv.DictReader(f)
                 for row in reader:
                     sequence_name = row["sequence_name"]
-                    covv_accession_id = row["covv_accession_id"]
-                    edin_admin_0 = row["edin_admin_0"]
-                    edin_travel = row["edin_travel"]
-                    covv_collection_date = row["covv_collection_date"]
-                    edin_epi_week = row["edin_epi_week"]
+                    edin_admin_0 = row["country"]
+                    travel_history = row["travel_history"]
+                    sample_date = row["sample_date"]
+                    epi_week = row["epi_week"]
         except:
             sys.stderr.write("Error: unexpected headers in {}\n. \
                             Expected header names:\n\
-                            sequence_name,covv_accession_id,\
-                            edin_admin0,edin_travel,covv_collection_date,\
-                            edin_epi_week\n".format(metadata))
+                            sequence_name,\
+                            country,travel_history,sample_date,\
+                            epi_week\n".format(metadata))
             sys.exit(-1)
 
 
@@ -241,10 +238,10 @@ def extract_representatives_and_do_the_masking_thing():
 
     with open(args.representatives_out,"w") as fw:
         fw.write(f">{reference.id}|A\n{reference.seq}\n")
-        make_representative_fasta(alignment_file, reps, reference, fw)
+        make_masked_representative_fasta(alignment_file, reps, reference, fw, to_mask)
 
     with open(args.metadata_out, "w") as fm:
-        header = f"name,GISAID ID,country,travel history,sample date,epiweek,lineage,representative\n"
+        header = f"name,country,travel history,sample date,epiweek,lineage,representative\n"
         fm.write(header)
         make_metadata_out(metadata,lineage_dict,reps,fm)
 

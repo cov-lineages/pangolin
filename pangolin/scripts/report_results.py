@@ -39,12 +39,11 @@ def make_objects(background_data, lineages_present):
         reader = csv.DictReader(f)
         for row in reader:
             name = row["name"]
-            gisaid_id=row["GISAID ID"]
             lin_string = row["lineage"]
             date = row["sample date"]
             country = row["country"]
             
-            tax_name = f"{name}|{gisaid_id}|{country}|{date}"
+            tax_name = f"{name}|{country}|{date}"
 
             if lin_string in lineages_present:
                 new_taxon = classes.taxon(tax_name, lin_string)
