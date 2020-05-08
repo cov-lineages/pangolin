@@ -6,15 +6,15 @@ import codecs
 
 rule all:
     input:
-        config["outdir"] + "/anonymised.aln.fasta.treefile",
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile"),
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta")
 
 rule extract_representative_sequences:
     input:
         metadata = config["metadata"],
         fasta = config["fasta"]
     output:
-        config["outdir"] + "/representative_sequences.fasta"
+        os.path.join(config["outdir"] , "representative_sequences.fasta")
     run:
         tax_dict = {}
         with open(input.metadata,newline="") as f:
@@ -38,7 +38,7 @@ rule mafft_representative_sequences:
     input:
         rules.extract_representative_sequences.output
     output:
-        config["outdir"] + "/representative_sequences.aln.fasta"
+        os.path.join(config["outdir"] , "representative_sequences.aln.fasta")
     shell:
         "mafft {input[0]:q} > {output[0]:q}"
 
@@ -46,7 +46,7 @@ rule anonymise_headers:
     input:
         rules.mafft_representative_sequences.output
     output:
-        fasta = config["outdir"] + "/anonymised.aln.fasta",
+        fasta = config["outdir"] , "anonymised.aln.fasta",
         key = config["outdir"] + "tax_key.csv"
     run:
         fkey = open(output.key, "w")
@@ -75,7 +75,7 @@ rule encrypt_fasta:
     input:
         rules.anonymise_headers.output.fasta
     output:
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta")
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -89,6 +89,6 @@ rule iqtree_representative_sequences:
     input:
         rules.anonymise_headers.output.fasta
     output:
-        config["outdir"] + "/anonymised.aln.fasta.treefile"
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile")
     shell:
         "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_NonUK' -redo"

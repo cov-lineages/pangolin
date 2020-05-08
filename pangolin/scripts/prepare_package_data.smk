@@ -5,19 +5,19 @@ import collections
 
 rule all:
     input:
-        config["outdir"] + "/anonymised.aln.fasta.treefile",
-        config["outdir"] + "/anonymised.encrypted.aln.fasta",
-        config["outdir"] + "/lineages.metadata.csv",
-        defining = config["outdir"] + "/defining_snps.csv"
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile"),
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta"),
+        os.path.join(config["outdir"] , "lineages.metadata.csv"),
+        defining = os.path.join(onfig["outdir"] , "defining_snps.csv")
 
 rule find_representatives:
     input:
         aln = config["fasta"],
         lineages = config["lineages"]
     output:
-        reps = config["outdir"] + "/representative_seqs.csv",
-        defining = config["outdir"] + "/defining_snps.csv",
-        mask = config["outdir"] + "/to_mask.csv"
+        reps = os.path.join(config["outdir"] , "representative_seqs.csv"),
+        defining = os.path.join(config["outdir"] , "defining_snps.csv"),
+        mask = os.path.join(config["outdir"] , "to_mask.csv")
     shell:
         """all_snps.py -a {input.aln:q} -l {input.lineages:q} \
                 --representative-seqs-out {output.reps:q} \
@@ -30,11 +30,11 @@ rule extract_representative_sequences:
         aln = config["fasta"],
         lineages = config["lineages"],
         metadata = config["metadata"],
-        mask = config["outdir"] + "/to_mask.csv",
-        representatives = config["outdir"] + "/representative_seqs.csv"
+        mask = os.path.join(config["outdir"] , "to_mask.csv"),
+        representatives = os.path.join(config["outdir"] , "representative_seqs.csv")
     output:
-        representatives = config["outdir"] + "/representative_sequences.fasta",
-        metadata = config["outdir"] + "/lineages.metadata.csv",
+        representatives = os.path.join(config["outdir"] , "representative_sequences.fasta"),
+        metadata = os.path.join(config["outdir"] , "lineages.metadata.csv")
     shell:
         """
         get_masked_representatives.py \
@@ -54,7 +54,7 @@ rule mafft_representative_sequences:
     params:
         cores = workflow.cores
     output:
-        config["outdir"] + "/representative_sequences.aln.fasta"
+        os.path.join(config["outdir"] , "representative_sequences.aln.fasta")
     shell:
         "mafft --thread {params.cores} {input[0]:q} > {output[0]:q}"
 
@@ -62,8 +62,8 @@ rule anonymise_headers:
     input:
         rules.mafft_representative_sequences.output
     output:
-        fasta = config["outdir"] + "/anonymised.aln.fasta",
-        key = config["outdir"] + "/tax_key.csv"
+        fasta = os.path.join(config["outdir"] , "anonymised.aln.fasta"),
+        key = os.path.join(config["outdir"] , "tax_key.csv")
     run:
         fkey = open(output.key, "w")
         fkey.write("taxon,key\n")
@@ -90,7 +90,7 @@ rule encrypt_fasta:
     input:
         rules.anonymise_headers.output.fasta
     output:
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta")
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -107,6 +107,6 @@ rule iqtree_representative_sequences:
     params:
         cores = workflow.cores
     output:
-        config["outdir"] + "/anonymised.aln.fasta.treefile"
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile")
     shell:
         "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
