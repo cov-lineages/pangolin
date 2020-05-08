@@ -65,9 +65,9 @@ def main(sysargs = sys.argv[1:]):
         # default output dir
     outdir = ''
     if args.outdir:
-        outdir = os.path.join(cwd, args.outdir.rstrip("/"))
+        outdir = os.path.join(cwd, args.outdir)
     else:
-        outdir = cwd.rstrip("/")
+        outdir = cwd
 
     outfile = ""
     if args.outfile:
@@ -77,7 +77,7 @@ def main(sysargs = sys.argv[1:]):
 
     tempdir = ''
     if args.tempdir:
-        to_be_dir = os.path.join(cwd, args.tempdir.rstrip("/"))
+        to_be_dir = os.path.join(cwd, args.tempdir)
         if not os.path.exists(to_be_dir):
             os.mkdir(to_be_dir)
         temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
@@ -139,7 +139,7 @@ def main(sysargs = sys.argv[1:]):
     # find the data
     data_dir = ""
     if args.data:
-        data_dir = os.path.join(cwd, args.data.rstrip("/"))
+        data_dir = os.path.join(cwd, args.data)
     else:
         lineages_dir = lineages.__path__[0]
         data_dir = os.path.join(lineages_dir,"data")
