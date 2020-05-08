@@ -1,57 +1,69 @@
 import csv
 from Bio import SeqIO
 import codecs
-
-# requires metadata and fasta file in config
-
-
-config["outdir"] = config["outdir"].rstrip("/")
+import collections
 
 rule all:
     input:
         config["outdir"] + "/anonymised.aln.fasta.treefile",
-        config["outdir"] + "/anonymised.encrypted.aln.fasta"
+        config["outdir"] + "/anonymised.encrypted.aln.fasta",
+        config["outdir"] + "/lineages.metadata.csv",
+        defining = config["outdir"] + "/defining_snps.csv"
+
+rule find_representatives:
+    input:
+        aln = config["fasta"],
+        lineages = config["lineages"]
+    output:
+        reps = config["outdir"] + "/representative_seqs.csv",
+        defining = config["outdir"] + "/defining_snps.csv",
+        mask = config["outdir"] + "/to_mask.csv"
+    shell:
+        """all_snps.py -a {input.aln:q} -l {input.lineages:q} \
+                --representative-seqs-out {output.reps:q} \
+                --defining-snps-out {output.defining:q} \
+                --mask-out {output.mask:q} 
+            """
 
 rule extract_representative_sequences:
     input:
+        aln = config["fasta"],
+        lineages = config["lineages"],
         metadata = config["metadata"],
-        fasta = config["fasta"]
+        mask = config["outdir"] + "/to_mask.csv",
+        representatives = config["outdir"] + "/representative_seqs.csv"
     output:
-        config["outdir"] + "/representative_sequences.fasta"
-    run:
-        tax_dict = {}
-        with open(input.metadata,newline="") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["representative"] == '1':
-                    tax_dict[row["name"]] = row["lineage"]
-
-        fw = open(output[0], "w")
-        c = 0
-        for record in SeqIO.parse(input.fasta,"fasta"):
-            if record.id in tax_dict:
-                c+=1
-                record_list = record.id.split('|')
-                record_list[2] = tax_dict[record.id]
-                new_id = '|'.join(record_list)
-                fw.write(f">{new_id}\n{record.seq}\n")
-        print(f"{c} representative sequences written to {output[0]}")
-        fw.close()
+        representatives = config["outdir"] + "/representative_sequences.fasta",
+        metadata = config["outdir"] + "/lineages.metadata.csv",
+    shell:
+        """
+        get_masked_representatives.py \
+            -a {input.aln} \
+            -l {input.lineages} \
+            --representatives {input.representatives} \
+            --to-mask {input.mask} \
+            --metadata {input.metadata} \
+            --representative-seqs-out {output.representatives} \
+            --metadata-out {output.metadata} 
+        """
 
 rule mafft_representative_sequences:
     input:
-        rules.extract_representative_sequences.output
+        rules.extract_representative_sequences.output.representatives
+    threads: workflow.cores
+    params:
+        cores = workflow.cores
     output:
         config["outdir"] + "/representative_sequences.aln.fasta"
     shell:
-        "mafft {input[0]:q} > {output[0]:q}"
+        "mafft --thread {params.cores} {input[0]:q} > {output[0]:q}"
 
 rule anonymise_headers:
     input:
         rules.mafft_representative_sequences.output
     output:
         fasta = config["outdir"] + "/anonymised.aln.fasta",
-        key = config["outdir"] + "tax_key.csv"
+        key = config["outdir"] + "/tax_key.csv"
     run:
         fkey = open(output.key, "w")
         fkey.write("taxon,key\n")
@@ -60,10 +72,9 @@ rule anonymise_headers:
         with open(output.fasta, "w") as fw:
             for record in SeqIO.parse(input[0],"fasta"):
                 c+=1
-                record_list = record.id.split('|')
-                lineage = record_list[2]
+                name,lineage = record.id.split('|')
                 new_id = ""
-                if "EPI_ISL_406801" in record.id: # this is the WH04 GISAID ID
+                if "WH04" in record.id: # this is the WH04 GISAID ID
                     print(record.id)
                     new_id = f"outgroup_A"
                 else:
@@ -92,7 +103,10 @@ rule encrypt_fasta:
 rule iqtree_representative_sequences:
     input:
         rules.anonymise_headers.output.fasta
+    threads: workflow.cores
+    params:
+        cores = workflow.cores
     output:
         config["outdir"] + "/anonymised.aln.fasta.treefile"
     shell:
-        "iqtree -s {input[0]:q} -bb 1000 -m HKY -o 'outgroup_A'"
+        "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"

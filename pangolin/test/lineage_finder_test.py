@@ -2,9 +2,8 @@ import unittest
 import dendropy
 import os
 
-from pangolin.scripts.lineage_assigner.lineage_finder import LineageFinder, all_equal, trim_to_common_ancestor, \
+from pangolin.scripts.lineage_finder import LineageFinder, all_equal, trim_to_common_ancestor, \
     get_basal_lineage
-from pangolin.scripts.lineage_assigner.utils import collapse_nodes
 
 this_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 data_dir = os.path.join(this_dir, "test", 'data', 'lineage_finder')
@@ -29,43 +28,46 @@ class LineageTests(unittest.TestCase):
         self.assertEqual(get_basal_lineage(extra_ticky), "A.1")
 
     def test_sibling(self):
-        tree = dendropy.Tree.get(path="%s/representative_sequences.aln.fasta.nexus.tree" % data_dir, schema="nexus",
-                                 preserve_underscores=True)
-        finder = LineageFinder(tree, "Iceland/222/2020|EPI_ISL_417837|B.1.8|Iceland|||2020-03-16")
+        tree = dendropy.Tree.get_from_string("(A|A,(B|B,((C|B.1,test),D|B.1)80/77));", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
 
-        self.assertEqual(finder.get_lineage(2, "|"), ["B.1.8", "77"])
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["B.1", 80, 77])
 
     def test_nested_no_sibling(self):
-        tree = dendropy.Tree.get(path="%s/representative_sequences.aln.fasta.nexus.tree" % data_dir, schema="nexus",
-                                 preserve_underscores=True)
-        finder = LineageFinder(tree, "France/IDF2256/2020|EPI_ISL_416498|B.1.4|France|||2020-03-11")
+        tree = dendropy.Tree.get_from_string("(A|A,(B|B,((C|B.1,c1|B.1),(D|B.1,d1|B.1),test)11.0/77));", "newick")
 
-        self.assertEqual(finder.get_lineage(2, "|"), ["B.1.4", "99"])
+        finder = LineageFinder(tree, "test", 1, "|")
+
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["B.1",  11,  77])
 
     def test_between_clades_fall_back(self):
-        tree = dendropy.Tree.get(path="%s/representative_sequences.aln.fasta.nexus.tree" % data_dir, schema="nexus",
-                                 preserve_underscores=True)
-        finder = LineageFinder(tree, "USA/CZB-RR057-013/2020|EPI_ISL_417937|B.1.3|USA|||2020-03-18")
+        tree = dendropy.Tree.get_from_string("(A|A,((B|B,(C|B.1,D|B.1)100/100)45/30,test));", "newick")
 
-        self.assertEqual(finder.get_lineage(2, "|"), ["B.1", "37"])
+        finder = LineageFinder(tree, "test", 1, "|")
 
-
-    def test_empty_subtype_in_name(self):
-        tree = dendropy.Tree.get(path="%s/EPI_ISL_413581X.aln.fasta.nexus.tree" % data_dir, schema="nexus",
-                                 preserve_underscores=True)
-
-        collapse_nodes(tree, lambda x: x.edge.length == 0)
-        finder = LineageFinder(tree, "Netherlands___Oss_1363500___2020|EPI_ISL_413581X|2020-02-29")
-
-        self.assertEqual(finder.get_lineage(2, "|"), ["B", "96.00"])
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["A",  45, 30])
 
     def test_polytomy_no_tip_Siblings(self):
-        tree = dendropy.Tree.get(path="%s/EPI_ISL_416626.aln.fasta.nexus.tree" % data_dir, schema="nexus",
-                                 preserve_underscores=True)
-        collapse_nodes(tree, lambda x: x.edge.length == 0)
-        finder = LineageFinder(tree, "EPI_ISL_416626||")
-        self.assertEqual(finder.get_lineage(2, "|"), ["B","89.00"])
+        tree = dendropy.Tree.get_from_string("(A|A,((B|B,b1|B),test,(C|B.1,D|B.1))77/80,a1|A);", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
 
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["B",  77, 80])
+
+    def test_new_root(self):
+        tree = dendropy.Tree.get_from_string("((A|A,((B|B,b1|B),(C|B.1,D|B.1))100/100),test);", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["A",  100, 100])
+
+    def test_off_root_child(self):
+        tree = dendropy.Tree.get_from_string("((A|A,test),((B|B,b1|B),(C|B.1,D|B.1))77/80);", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["A",  77,  80])
+
+    def test_off_root_child_internal(self):
+        tree = dendropy.Tree.get_from_string(
+            "(((A|A,(A2|A.1,A1|A.1)99/99),test),((B|B,b1|B),(C|B.1,D|B.1)10/10)99/99/99/99);", "newick")
+        finder = LineageFinder(tree, "test", 1, "|")
+        self.assertEqual([finder.lineage, finder.alrt, finder.boot], ["A", 98, 98])
 
 
 if __name__ == '__main__':

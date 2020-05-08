@@ -4,7 +4,7 @@ rule decrypt_aln:
     input:
         config["representative_aln"]
     output:
-        temp(config["outdir"] + "/temp/anonymised.aln.fasta")
+        temp(config["tempdir"] +"/anonymised.aln.fasta")
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -17,65 +17,88 @@ rule decrypt_aln:
 rule pass_query_hash:
     input:
         config["query_fasta"]
+    params:
+        pid = config["pid"]
     output:
-        t = temp(config["outdir"] + "/temp/temp.txt"),
-        fasta = temp(config["outdir"] + "/temp/query.fasta"),
-        key = temp(config["outdir"] + "/temp/query_key.csv")
+        fasta = temp(config["tempdir"] + "/query.fasta"),
+        key = temp(config["tempdir"] + "/query_key.csv"),
+        query_config = temp(config["tempdir"] + "/config.yaml")
     run:
         fkey = open(output.key, "w")
         ids = []
         c= 0
+        
         with open(output.fasta, "w") as fw:
             for record in SeqIO.parse(input[0],"fasta"):
                 c+=1
 
-                new_id = f"tax{c}tax"
+                new_id = f"tax{params.pid}{c}tax"
 
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
 
                 ids.append(new_id)
             
-            print(f"{c+1} hashed sequences written")
+            print(f"{c} hashed sequences written")
         fkey.close()
-        
-        query_sequence.store("query_store",ids)
-        shell("touch {output.t}")
+        ids = ids.rstrip(',')
+        with open(output.query_config, "w") as fconfig:
+            fconfig.write("query_sequences: [")
+            fconfig.write(ids + "]")
+        query_sequence.store("query_store",c)
 
 
 rule assign_lineages:
     input:
-        rules.pass_query_hash.output.t,
-        config=workflow.current_basedir+"/../config.yaml",
         snakefile = workflow.current_basedir+"/assign_query_lineage.smk",
         query = rules.pass_query_hash.output.fasta,
         key = rules.pass_query_hash.output.key,
         aln = rules.decrypt_aln.output,
-        guide_tree = config["guide_tree"]
+        guide_tree = config["guide_tree"],
+        query_config = config["tempdir"] + "/config.yaml"
     params:
         outdir= config["outdir"],
+        tempdir= config["tempdir"],
+        qcfail=config["qc_fail"],
         path = workflow.current_basedir,
-        cores = workflow.cores
+        cores = workflow.cores,
+        force = config["force"],
+        write_tree=config["write_tree"],
+        lineages_csv=config["lineages_csv"],
+        version=config["lineages_version"]
     output:
-        report = config["outdir"] + "/lineage_report.csv"
+        report = config["outfile"]
     run:
-        query_sequences = query_sequence.fetch("query_store")
-        num_query_seqs = len(query_sequences)
-        if query_sequences != "":
+        num_query_seqs = query_sequence.fetch("query_store")
+        if num_query_seqs != 0:
             print(f"Passing {num_query_seqs} into processing pipeline.")
-            config["query_sequences"]= query_sequences
             shell("snakemake --nolock --snakefile {input.snakefile:q} "
-                        "--configfile {input.config:q} "
+                        "{params.force}"
+                        "--directory {params.tempdir:q} "
+                        "--configfile {input.query_config:q} "
                         "--config "
-                        "query_sequences={config[query_sequences]} "
                         "outdir={params.outdir:q} "
+                        "outfile={output.report:q} "
+                        "write_tree={params.write_tree} "
+                        "tempdir={params.tempdir:q} "
                         "query_fasta={input.query:q} "
+                        "qc_fail={params.qcfail:q} "
                         "representative_aln={input.aln:q} "
+                        "lineages_version={params.version} "
+                        "{params.lineages_csv}"
                         "guide_tree={input.guide_tree:q} "
-                        "key={input.key} "
+                        "key={input.key:q} "
                         "--cores {params.cores}")
         else:
-            shell("touch {output.report}")
-
+            fw = open(output.report,"w")
+            fw.write("taxon,lineage,SH-alrt,UFbootstrap,lineages_version,status,note\n")
+            for record in SeqIO.parse(params.qcfail,"fasta"):
+                desc_list = record.description.split(" ")
+                note = ""
+                for i in desc_list:
+                    if i.startswith("fail="):
+                        note = i.lstrip("fail=")
+                fw.write(f"{record.id},None,0,0,{params.version},fail,{note}\n")
+            fw.close()
 
 
