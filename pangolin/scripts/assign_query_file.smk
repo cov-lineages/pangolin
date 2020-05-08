@@ -50,12 +50,12 @@ rule pass_query_hash:
 
 rule assign_lineages:
     input:
-        snakefile = os.path.join(workflow.current_basedir, "assign_query_lineage.smk"),
+        snakefile = os.path.join(workflow.current_basedir,"assign_query_lineage.smk"),
         query = rules.pass_query_hash.output.fasta,
         key = rules.pass_query_hash.output.key,
         aln = rules.decrypt_aln.output,
         guide_tree = config["guide_tree"],
-        query_config = os.path.join(config["tempdir"] , "config.yaml")
+        query_config = rules.pass_query_hash.output.query_config
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],
