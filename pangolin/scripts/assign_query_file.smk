@@ -4,7 +4,7 @@ rule decrypt_aln:
     input:
         config["representative_aln"]
     output:
-        temp(config["tempdir"] +"/anonymised.aln.fasta")
+        temp(os.path.join(config["tempdir"], "anonymised.aln.fasta"))
     run:
         c = 0
         with open(output[0],"w") as fw:
@@ -20,9 +20,9 @@ rule pass_query_hash:
     params:
         pid = config["pid"]
     output:
-        fasta = temp(config["tempdir"] + "/query.fasta"),
-        key = temp(config["tempdir"] + "/query_key.csv"),
-        query_config = temp(config["tempdir"] + "/config.yaml")
+        fasta = temp(os.path.join(config["tempdir"], "query.fasta")),
+        key = temp(os.path.join(config["tempdir"], "query_key.csv")),
+        query_config = temp(os.path.join(config["tempdir"], "config.yaml"))
     run:
         fkey = open(output.key, "w")
         ids = ''
@@ -50,12 +50,12 @@ rule pass_query_hash:
 
 rule assign_lineages:
     input:
-        snakefile = workflow.current_basedir+"/assign_query_lineage.smk",
+        snakefile = os.path.join(workflow.current_basedir,"assign_query_lineage.smk"),
         query = rules.pass_query_hash.output.fasta,
         key = rules.pass_query_hash.output.key,
         aln = rules.decrypt_aln.output,
         guide_tree = config["guide_tree"],
-        query_config = config["tempdir"] + "/config.yaml"
+        query_config = rules.pass_query_hash.output.query_config
     params:
         outdir= config["outdir"],
         tempdir= config["tempdir"],

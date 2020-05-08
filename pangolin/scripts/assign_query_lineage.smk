@@ -14,19 +14,19 @@ if config["lineages_csv"] != "":
         rule all:
             input:
                 config["outfile"],
-                config["outdir"] + "/global_lineage_information.csv",
-                config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+                os.path.join(config["outdir"],"global_lineage_information.csv"),
+                os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
     else: 
         rule all:
             input:
                 config["outfile"],
-                config["outdir"] + "/global_lineage_information.csv"
+                os.path.join(config["outdir"],"global_lineage_information.csv")
 else:
     if config["write_tree"]==True:
         rule all:
             input:
                 config["outfile"],
-                config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+                os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
     else:
         rule all:
             input:
@@ -39,18 +39,19 @@ rule expand_query_fasta:
     params:
         config["query_sequences"]
     output:
-        temp(expand(config["tempdir"] + '/{query}.fasta',query=config["query_sequences"]))
+        temp(expand(os.path.join(config["tempdir"],"{query}.fasta"),query=config["query_sequences"]))
     run:
         for record in SeqIO.parse(input[0],"fasta"):
-            with open(config["tempdir"] + f'/{record.id}.fasta',"w") as fw:
+            filename = os.path.join(config["tempdir"], f'{record.id}.fasta')
+            with open(filename,"w") as fw:
                 fw.write(f">{record.id}\n{record.seq}\n")
 
 rule profile_align_query:
     input:
         aln = config["representative_aln"],
-        query = config["tempdir"] + '/{query}.fasta'
+        query = os.path.join(config["tempdir"],'{query}.fasta')
     output:
-        temp(config["tempdir"] + "/{query}.aln.fasta")
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta"))
     shell:
         "mafft --addprofile {input.query:q} {input.aln:q} > {output:q}"
 
@@ -59,13 +60,13 @@ rule iqtree_with_guide_tree:
         profile_aln = rules.profile_align_query.output,
         guide_tree = config["guide_tree"]
     output:
-        temp(config["tempdir"] + "/{query}.aln.fasta.treefile"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.parstree"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.splits.nex"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.contree"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.log"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.ckp.gz"),
-        temp(config["tempdir"] + "/{query}.aln.fasta.iqtree")
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.treefile")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.parstree")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.splits.nex")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.contree")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.log")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.ckp.gz")),
+        temp(os.path.join(config["tempdir"],"{query}.aln.fasta.iqtree"))
     run:
         iqtree_check = output[0].rstrip("treefile") + "iqtree"
         if os.path.exists(iqtree_check):
@@ -76,10 +77,10 @@ rule iqtree_with_guide_tree:
 
 rule write_trees:
     input:
-        trees = expand(config["tempdir"] + "/{query}.aln.fasta.treefile", query=config["query_sequences"]),
+        trees = expand(os.path.join(config["tempdir"],"{query}.aln.fasta.treefile"), query=config["query_sequences"]),
         key = config["key"]
     output:
-        config["outdir"] + "/pangolin_trees/tree_file_names.txt"
+        os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
     run:
         key_dict = {}
         with open(input.key, "r") as f:
@@ -108,7 +109,7 @@ rule to_nexus:
     input:
         rules.iqtree_with_guide_tree.output
     output:
-        temp(config["tempdir"] + "/{query}.nexus.tree")
+        temp(os.path.join(config["tempdir"],"{query}.nexus.tree"))
     run:
         Phylo.convert(input[0], 'newick', output[0], 'nexus')
 
@@ -120,7 +121,7 @@ rule assign_lineage:
         collapse=0.000005,
 
     output:
-        temp(config["tempdir"] + "/{query}.txt")
+        temp(os.path.join(config["tempdir"],"{query}.txt"))
     shell:
         """
         assign_lineage.py  --separator '_' --index 1 \
@@ -130,12 +131,12 @@ rule assign_lineage:
         
 rule gather_reports:
     input:
-        reports = expand(config["tempdir"] + "/{query}.txt", query=config["query_sequences"]),
+        reports = expand(os.path.join(config["tempdir"], "{query}.txt"), query=config["query_sequences"]),
         key=config["key"]
     params:
         version = config["lineages_version"]
     output:
-        config["tempdir"] + "/lineage_report.pass_qc.csv"
+        os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
     run:
         key_dict = {}
         with open(input.key, "r") as f:
@@ -159,7 +160,7 @@ rule gather_reports:
 
 rule add_failed_seqs:
     input:
-        qcpass= config["tempdir"] + "/lineage_report.pass_qc.csv",
+        qcpass= os.path.join(config["tempdir"],"lineage_report.pass_qc.csv"),
         qcfail= config["qc_fail"]
     params:
         version = config["lineages_version"]
@@ -185,7 +186,7 @@ rule report_results:
         csv = config["outfile"],
         lineages_csv = config["lineages_csv"]
     output:
-        config["outdir"] + "/global_lineage_information.csv"
+        os.path.join(config["outdir"],"global_lineage_information.csv")
     shell:
         """
         report_results.py \
