@@ -25,8 +25,8 @@ setup(name='pangolin',
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
-            "pytools==2020.1",
-            'pandas==1.0.1'
+            "pytools>=2020.1",
+            'pandas>=1.0.1'
         ],
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/hCov-2019/pangolin',
