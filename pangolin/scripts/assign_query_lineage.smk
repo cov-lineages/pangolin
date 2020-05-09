@@ -136,7 +136,6 @@ rule gather_reports:
     params:
         version = config["lineages_version"]
     output:
-        os.path.join(config["tempdir"] , "lineage_report.pass_qc.csv")
         os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
     run:
         key_dict = {}

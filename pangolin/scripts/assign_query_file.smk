@@ -25,7 +25,7 @@ rule pass_query_hash:
         query_config = temp(os.path.join(config["tempdir"], "config.yaml"))
     run:
         fkey = open(output.key, "w")
-        ids = []
+        ids = ''
         c= 0
         
         with open(output.fasta, "w") as fw:
@@ -37,7 +37,7 @@ rule pass_query_hash:
                 fkey.write(f"{record.id},{new_id}\n")
                 fw.write(f">{new_id}\n{record.seq}\n")
 
-                ids.append(new_id)
+                ids+=new_id + ','
             
             print(f"{c} hashed sequences written")
         fkey.close()
