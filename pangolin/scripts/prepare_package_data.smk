@@ -8,7 +8,7 @@ rule all:
         os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile"),
         os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta"),
         os.path.join(config["outdir"] , "lineages.metadata.csv"),
-        defining = os.path.join(onfig["outdir"] , "defining_snps.csv")
+        os.path.join(config["outdir"] , "defining_snps.csv")
 
 rule find_representatives:
     input:
