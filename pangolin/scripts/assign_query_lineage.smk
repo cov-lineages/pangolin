@@ -15,7 +15,7 @@ if config["lineages_csv"] != "":
             input:
                 config["outfile"],
                 os.path.join(config["outdir"],"global_lineage_information.csv"),
-                os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
+                os.path.join(config["outdir"],"pangolin_trees","tree_file_names.txt")
     else: 
         rule all:
             input:
@@ -26,7 +26,7 @@ else:
         rule all:
             input:
                 config["outfile"],
-                os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
+                os.path.join(config["outdir"],"pangolin_trees","tree_file_names.txt")
     else:
         rule all:
             input:
@@ -79,6 +79,8 @@ rule write_trees:
     input:
         trees = expand(os.path.join(config["tempdir"],"{query}.aln.fasta.treefile"), query=config["query_sequences"]),
         key = config["key"]
+    params:
+        outdir= config["outdir"]
     output:
         os.path.join(config["outdir"],"pangolin_trees/tree_file_names.txt")
     run:
@@ -101,8 +103,9 @@ rule write_trees:
                             new_l = new_l.replace(key, key_dict[key])
                             taxon = key_dict[key].replace(" ","_").replace("/","_").replace("|","_")
                             fout.write(f"{key_dict[key]},{taxon}\n")
-                            outdir = "/".join(output[0].split("/")[:-1])
-                            with open(outdir + "/" + taxon + ".tree","w") as fw:
+                            treefile_name = taxon + ".tree"
+                            treefile = os.path.join(params.outdir, "pangolin_trees",treefile_name)
+                            with open(treefile,"w") as fw:
                                 fw.write(new_l + "\n")
 
 rule to_nexus:

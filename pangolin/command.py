@@ -47,7 +47,7 @@ def main(sysargs = sys.argv[1:]):
         args = parser.parse_args(sysargs)
 
     # find the Snakefile
-    snakefile = os.path.join(thisdir, 'scripts/Snakefile')
+    snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
@@ -110,10 +110,10 @@ def main(sysargs = sys.argv[1:]):
             else:
                 run.append(record)
 
-    post_qc_query = tempdir + '/query.post_qc.fasta'
+    post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
     with open(post_qc_query,"w") as fw:
         SeqIO.write(run, fw, "fasta")
-    qc_fail = tempdir + '/query.failed_qc.fasta'
+    qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
     with open(qc_fail,"w") as fw:
         SeqIO.write(do_not_run, fw, "fasta")
 
@@ -151,11 +151,11 @@ def main(sysargs = sys.argv[1:]):
     for r,d,f in os.walk(data_dir):
         for fn in f:
             if fn.endswith(".fasta"):
-                representative_aln = r + '/' + fn
+                representative_aln = os.path.join(r, fn)
             elif fn.endswith(".tree") or fn.endswith(".treefile"):
-                guide_tree = r + '/' + fn
+                guide_tree = os.path.join(r, fn)
             elif fn.endswith(".csv") and fn.startswith("lineages"):
-                lineages_csv = r + "/" + fn
+                lineages_csv = os.path.join(r, fn)
 
     print("\nData files found")
     print(f"Sequence alignment:\t{representative_aln}")
