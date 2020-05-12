@@ -8,22 +8,16 @@ class taxon():
         self.id = record_id
         self.lineage = lineage
         
-        country = record_id.split("|")[2]
-
-        self.country = country
+        self.country = self.id.split("|")[1]
 
         self.get_date_loc()
         
         
     def get_date_loc(self):
         
-        bits = self.id.split("|")
+        self.date = self.id.split("|")[2]
         
-        date = bits[::-1][0]
-        
-        self.date = date
-        
-        date_bits = date.split("-")
+        date_bits = self.date.split("-")
 
         if len(date_bits) == 3:
             self.date_dt = dt.date(int(date_bits[0]), int(date_bits[1]), int(date_bits[2]))
