@@ -139,7 +139,7 @@ def trim_to_common_ancestor(lineage_list):
     if len(lineage_list) == 1 or all_equal(lineage_list):
         return lineage_list[0]
     else:
-        return trim_to_common_ancestor([lineage[0:-2] for lineage in lineage_list])
+        return trim_to_common_ancestor([".".join(lineage.split(".")[0:-1]) for lineage in lineage_list])
 
 
 def get_annotations(taxon_key, annotation_list):
