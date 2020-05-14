@@ -211,9 +211,9 @@ def pad_taxa_to_5(taxa, lineages_dict, lineage):
     """if you have filled the representatives needed but dont have 
     very many taxa, pad that list to five for the craic"""
     pre_len = len(taxa)
-    if pre_len < 5:
+    if pre_len < 3:
         for record in lineages_dict[lineage]:
-            if len(taxa)<5:
+            if len(taxa)<3:
                 taxa_ids = get_ids_in_list_of_records(taxa)
                 if record.id not in taxa_ids:
                     taxa.append(record)
