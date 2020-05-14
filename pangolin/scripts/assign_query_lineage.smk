@@ -122,7 +122,6 @@ rule assign_lineage:
     params:
         query = "{query}",
         collapse=0.000005,
-
     output:
         temp(os.path.join(config["tempdir"],"{query}.txt"))
     shell:
