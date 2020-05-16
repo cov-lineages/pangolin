@@ -1,4 +1,4 @@
-import os 
+import os
 
 rule minimap2_to_reference:
     input:
@@ -13,19 +13,22 @@ rule minimap2_to_reference:
 
 rule find_query_snps:
     input:
-        rules.minimap2_to_reference.output.sam
+        sam = rules.minimap2_to_reference.output.sam,
+        ref = config["reference"]
     output:
         snps = os.path.join(config["tempdir"], "query_snps.csv")
     shell:
         """
+        python sam_2_snps.py -s {input.sam} -r {input.ref} -o {output.snps}
+
         ben script here
-        take in .sam file and output a csv of 
+        take in .sam file and output a csv of
         query_id1,SNP1;SNP2;SNP3
         query_id2,SNP1;SNP2;SNP3
 
         to make the SNP1;SNP2;SNP3 bit I have been using this function:
         def snp_list_to_snp_string(snp_list):
-            #turn a snp list into a `;`-separated string of snps that are sorted by 
+            #turn a snp list into a `;`-separated string of snps that are sorted by
             #position in the genome
             snp_string = ";".join(sorted(snp_list, key = lambda x : int(x[:-2])))
             return snp_string
