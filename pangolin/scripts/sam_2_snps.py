@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from Bio import SeqIO
 import pysam
 import re, itertools, operator
@@ -164,7 +166,7 @@ def get_snp_list(reference, query):
 
         if ref_nuc in ['a', 'c', 'g', 't'] and que_nuc in ['a', 'c', 'g', 't']:
             if ref_nuc != que_nuc:
-                snp_list.append(ref_nuc + str(position + 1) + que_nuc)
+                snp_list.append(str(position + 1) + ref_nuc.upper() + que_nuc.upper())
 
     return(snp_list)
 
