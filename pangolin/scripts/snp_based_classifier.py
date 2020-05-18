@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import collections
 from Bio import SeqIO
@@ -78,31 +80,8 @@ def parse_args():
 
     parser.add_argument("-snps","--defining-snps", action="store", type=str, dest="defining_snps")
     parser.add_argument("-q","--query-snps", action="store", type=str, dest="query_snps", help="A fasta file containing the query sequences")
-    # parser.add_argument("-r","--reference",action="store", type=str, dest="reference")
     parser.add_argument("-o","--outfile",action="store", type=str, dest="outfile")
     return parser.parse_args()
-
-def get_reference(ref_file):
-    for record in SeqIO.parse(ref_file,"fasta"):
-        return record
-
-def find_snps(ref,member):
-    """Identifies unambiguous snps between two sequences 
-    and returns them as a list, using position in the ref seq (i.e. no gaps in ref)"""
-    snps = []
-    index = 0 
-    for i in range(len(ref)):
-        if ref[i]!= '-':
-            index +=1
-            
-        col = [ref[i],member[i]]
-        if len(set(col))>1:
-            if not col[1].lower() in ["a","g","t","c","-"]:
-                pass
-            else:
-                snp = f"{index}{col[0].upper()}{col[1].upper()}"
-                snps.append(snp)
-    return snps
 
 def traverse(lineages,query,result=("",0,0),lineage="root"):
     query_snps = query.snps
@@ -154,17 +133,19 @@ def try_to_classify_by_snps():
 
     args = parse_args()
     
-    reference = get_reference(args.reference)
-
     lineages= create_lineage_tree(args.defining_snps)
     
     queries = []
-    for record in SeqIO.parse(args.query,"fasta"):
-        snps = find_snps(str(reference.seq),str(record.seq))
-        print(record.id, len(snps))
-        new_query = Query(record.id,snps)
-        traverse(lineages,new_query)
-        queries.append(new_query)
+
+    with open(args.query_snps,"r") as f:
+        for l in f:
+            l = l.rstrip("\n")
+            name,snp_string= l.split(',')
+            snps = snp_string.split(";")
+
+            new_query = Query(name,snps)
+            traverse(lineages,new_query)
+            queries.append(new_query)
 
     with open(args.outfile, "w") as fw:
         fw.write("name,lineage,identity,query_snps,num_query_snps_included\n")
