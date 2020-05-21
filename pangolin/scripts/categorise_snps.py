@@ -77,19 +77,12 @@ def get_lineage_dict(alignment, lineage_file):
     return sorted_by_n_lineages
 
 def add_phylotype_annotation(alignment,metadata):
-    c = 0
     phylotype = {}
     with open(metadata,newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             phylotype[row["sequence_name"]]=row["phylotype"]
-
     for record in alignment:
-        c +=1 
-        if c%500==0:
-            print(pcent_done(c, total), '%')
-
-        
         record.annotations["phylotype"] = phylotype[record.id]
 
 
@@ -224,10 +217,12 @@ def pad_taxa(taxa, lineages_dict, lineage,num_taxa):
     print(f"\t5f. {lineage}: {pre_len} padded to {len(taxa)} representative seqs")   
     return taxa
      
-def add_is_basal_annotation(lineage):
+def add_is_basal_annotation(lineage, lineages_dict):
     phylotype_len = {}
     phylotypes = []
-    for record in lineage:
+    records = lineages_dict[lineage]
+    for record in records:
+        print(record)
         phylotype = record.annotations["phylotype"]
         length = len(phylotype.split("."))
         phylotype_len[record.id]=length
@@ -285,7 +280,7 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
         snp_counter = collections.defaultdict(list)
         basal_snps = collections.defaultdict(list)
 
-        add_is_basal_annotation(lineage)
+        add_is_basal_annotation(lineage,lineages_dict)
         
         for record in lineages_dict[lineage]:
 
