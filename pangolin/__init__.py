@@ -1,2 +1,2 @@
 _program = "pangolin"
-__version__ = "1.1.13"
+__version__ = "1.1.14"
