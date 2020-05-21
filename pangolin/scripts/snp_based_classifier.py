@@ -25,12 +25,12 @@ class Lineage:
         self.name = name
         
         self.snps = []
-        
+        self.ancestors = []
         if self.name != "root":
             self.parent = self.assign_parent(lineages)
-            
+            self.get_ancestors(lineages)
         self.children = []
-    
+
     def get_children_names(self):
         print([i.name for i in self.children])
     
