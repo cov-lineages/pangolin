@@ -9,7 +9,7 @@ rule all:
         os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta"),
         os.path.join(config["outdir"] , "lineages.metadata.csv"),
         os.path.join(config["outdir"] , "defining_snps.csv"),
-        os.path.join(config["outdir"] , "anonymised.aln.fasta.safe.treefile")
+        os.path.join(config["outdir"] , "anonymised.aln.safe.fasta.treefile")
 
 rule seqs_with_lineage:
     input:
