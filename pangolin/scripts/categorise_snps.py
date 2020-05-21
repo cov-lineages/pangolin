@@ -168,7 +168,7 @@ def get_ids_in_list_of_records(records):
         ids.append(record.id)
     return ids
 
-def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
+def get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagged):
     """for each set of snps in the lineage snp dict, get the record 
     with the lowest n content that has that snp pattern. 
     for each snp in that set of snps, if it was flagged that it should be 
@@ -177,6 +177,18 @@ def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
     return the set of records that fulfill the representation needed."""
     represented= []
     taxa = []
+    print("Representative seqs:")
+    lowest_basal_Ns = []
+    for snp_set in basal_snps:
+        records_sorted_by_N = sorted(basal_snps[snp_set], key = lambda x : int(x[1]))
+        lowest_N = records_sorted_by_N[0]
+        lowest_basal_Ns.append(lowest_N)
+    lowest_basal = sorted(lowest_basal_Ns, key = lambda x : int(x[1]))[0][0]
+    print(lowest_basal)
+    for record in lineages_dict[lineage]:
+        if record.id == lowest_N:
+            taxa.append(record)
+
     for snp_set in lineage_snps:
 
         records_sorted_by_N = sorted(lineage_snps[snp_set], key = lambda x : int(x[1]))
@@ -230,7 +242,6 @@ def add_is_basal_annotation(lineage, lineages_dict):
 
         phylotype_len[record.id]=length
         phylotypes.append(length)
-    print(phylotypes)
     basal_length = sorted(phylotypes)[0]
     for record in records:
         if phylotype_len[record.id] == basal_length:
@@ -267,13 +278,13 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
     """
     print("1. Reading in the alignment")
     aln = AlignIO.read(alignment_file, "fasta")
-    print("3a. Annotating N content onto seq records")
+    print("2a. Annotating N content onto seq records")
     add_N_annotation(aln)
-    print("3b. Annotating snps onto seq records")
+    print("2b. Annotating snps onto seq records")
     add_snps_annotation(aln, snp_file)
-    print("3c. Annotating phylotype onto seq records")
+    print("2c. Annotating phylotype onto seq records")
     add_phylotype_annotation(aln,metadata_file)
-    print("4. Making lineages dict")
+    print("3. Making lineages dict")
     lineages_dict = get_lineage_dict(aln, lineage_file)
     
     to_mask = []
@@ -297,21 +308,22 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
 
             if record.annotations["is_basal"] == True:
                 basal_snps[snp_string].append((record.id,pcent_N))
+            
 
             lineage_snps[snp_string].append((record.id,pcent_N))
-
-        print("5. Lineage",lineage)
-        print(f"\t5a. Made lineage_snps")
-        print(f"\t5b. Counted up {len(snp_counter)} snps")
+        print(f"Number of basal snp patterns identified: {len(basal_snps)}")
+        print("4. Lineage",lineage)
+        print(f"\t4a. Made lineage_snps")
+        print(f"\t4b. Counted up {len(snp_counter)} snps")
         singletons = get_singleton_snps(lineage, snp_counter)
-        print(f"\t5c. Identified {len(singletons)} singletons in {lineage}")
+        print(f"\t4c. Identified {len(singletons)} singletons in {lineage}")
         for singleton in singletons:
             to_mask.append(singleton)
 
         defining,flagged = get_represented_and_defining_snps(singletons, snp_counter, lineages_dict, defining_cut_off,represent_cut_off,lineage)
-        print(f"\t5d. Identified {len(defining)} potential defining snps in {lineage}")
-        print(f"\t5e. Flagged {len(flagged)} snps to be represented in {lineage}")
-        taxa = get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged)
+        print(f"\t4d. Identified {len(defining)} potential defining snps in {lineage}")
+        print(f"\t4e. Flagged {len(flagged)} snps to be represented in {lineage}")
+        taxa = get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagged)
 
         taxa = pad_taxa(taxa, lineages_dict, lineage,num_taxa)
 
