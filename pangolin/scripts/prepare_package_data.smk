@@ -11,9 +11,33 @@ rule all:
         os.path.join(config["outdir"] , "defining_snps.csv"),
         os.path.join(config["outdir"] , "anonymised.aln.fasta.safe.treefile")
 
+rule seqs_with_lineage:
+    input:
+        aln = config["fasta"],
+        lineages = config["lineages"]
+    output:
+        fasta = os.path.join(config["outdir"], "sequences_with_lineage.fasta")
+    run:
+        to_write = []
+        with open(lineages,newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                to_write.append(row["taxon"])
+        
+        with open(output.fasta, "w") as fw:
+            records = []
+            for record in SeqIO.parse(aln,"fasta"):
+                c+=1
+                name,lineage = record.id.split('|')
+                if "WH04" in record.id:
+                    records.append(record)
+                elif record.id in to_write:
+                    records.append(record)
+            SeqIO.write(records, fw, "fasta")
+
 rule find_all_snps:
     input:
-        aln = config["fasta"]
+        aln = rules.seqs_with_lineage.output.fasta
     output:
         snps = os.path.join(config["outdir"] , "all_snps.csv")
     shell:
@@ -23,7 +47,7 @@ rule find_all_snps:
 
 rule find_representatives:
     input:
-        aln = config["fasta"],
+        aln = rules.seqs_with_lineage.output.fasta,
         lineages = config["lineages"],
         snps = rules.find_all_snps.output.snps
     output:
@@ -40,7 +64,7 @@ rule find_representatives:
 
 rule extract_representative_sequences:
     input:
-        aln = config["fasta"],
+        aln = rules.seqs_with_lineage.output.fasta,
         lineages = config["lineages"],
         metadata = config["metadata"],
         mask = os.path.join(config["outdir"] , "to_mask.csv"),
