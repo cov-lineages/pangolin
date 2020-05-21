@@ -222,13 +222,17 @@ def add_is_basal_annotation(lineage, lineages_dict):
     phylotypes = []
     records = lineages_dict[lineage]
     for record in records:
-        print(record)
         phylotype = record.annotations["phylotype"]
-        length = len(phylotype.split("."))
+        if phylotype == "":
+            length = 0
+        else:
+            length = len(phylotype.split("."))
+
         phylotype_len[record.id]=length
         phylotypes.append(length)
+    print(phylotypes)
     basal_length = sorted(phylotypes)[0]
-    for record in lineage:
+    for record in records:
         if phylotype_len[record.id] == basal_length:
             record.annotations["is_basal"] = True
         else:
