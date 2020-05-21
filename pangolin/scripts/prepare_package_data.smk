@@ -19,16 +19,14 @@ rule seqs_with_lineage:
         fasta = os.path.join(config["outdir"], "sequences_with_lineage.fasta")
     run:
         to_write = []
-        with open(lineages,newline="") as f:
+        with open(input.lineages,newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 to_write.append(row["taxon"])
         
         with open(output.fasta, "w") as fw:
             records = []
-            for record in SeqIO.parse(aln,"fasta"):
-                c+=1
-                name,lineage = record.id.split('|')
+            for record in SeqIO.parse(input.aln,"fasta"):
                 if "WH04" in record.id:
                     records.append(record)
                 elif record.id in to_write:
@@ -49,14 +47,16 @@ rule find_representatives:
     input:
         aln = rules.seqs_with_lineage.output.fasta,
         lineages = config["lineages"],
-        snps = rules.find_all_snps.output.snps
+        snps = rules.find_all_snps.output.snps,
+        metadata = config["metadata"]
     output:
         reps = os.path.join(config["outdir"] , "representative_seqs.csv"),
         defining = os.path.join(config["outdir"] , "defining_snps.csv"),
         mask = os.path.join(config["outdir"] , "to_mask.csv")
     shell:
-        """all_snps.py -a {input.aln:q} -l {input.lineages:q} \
+        """categorise_snps.py -a {input.aln:q} -l {input.lineages:q} \
                 --snps {input.snps:q} \
+                --metadata {input.metadata:q} \
                 --representative-seqs-out {output.reps:q} \
                 --defining-snps-out {output.defining:q} \
                 --mask-out {output.mask:q} 
@@ -180,7 +180,7 @@ rule anonymise_headers_safe:
             print(f"{c+1} safe anonymised sequences written to {output.fasta}")
         fkey.close()
 
-rule encrypt_fasta:
+rule encrypt_fasta_safe:
     input:
         rules.anonymise_headers_safe.output.fasta
     output:

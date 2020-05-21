@@ -76,9 +76,6 @@ def get_lineage_dict(alignment, lineage_file):
     
     return sorted_by_n_lineages
 
-def pcent_done(c, total):
-    return round((c*100)/total, 2)
-
 def add_phylotype_annotation(alignment,metadata):
     c = 0
     phylotype = {}
@@ -98,7 +95,6 @@ def add_phylotype_annotation(alignment,metadata):
 
 def add_snps_annotation(alignment, snps):
     """add list of snps relative to ref as an annotation to the seq record"""
-    c = 0
     total = len(alignment)
 
     snp_dict = {}
@@ -108,10 +104,7 @@ def add_snps_annotation(alignment, snps):
             snp_dict[row["taxon"]]=row["snps"]
 
     for record in alignment:
-        c +=1 
-        if c%500==0:
-            print(pcent_done(c, total), '%')
-
+        
         snp_string = snp_dict[record.id]
         record.annotations["snp_string"] = snp_string
         
