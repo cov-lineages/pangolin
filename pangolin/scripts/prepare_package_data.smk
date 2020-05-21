@@ -8,18 +8,31 @@ rule all:
         os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile"),
         os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta"),
         os.path.join(config["outdir"] , "lineages.metadata.csv"),
-        os.path.join(config["outdir"] , "defining_snps.csv")
+        os.path.join(config["outdir"] , "defining_snps.csv"),
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.safe.treefile")
+
+rule find_all_snps:
+    input:
+        aln = config["fasta"]
+    output:
+        snps = os.path.join(config["outdir"] , "all_snps.csv")
+    shell:
+        """
+        find_all_snps.py -a {input.aln:q} -o {output.snps:q}
+        """
 
 rule find_representatives:
     input:
         aln = config["fasta"],
-        lineages = config["lineages"]
+        lineages = config["lineages"],
+        snps = rules.find_all_snps.output.snps
     output:
         reps = os.path.join(config["outdir"] , "representative_seqs.csv"),
         defining = os.path.join(config["outdir"] , "defining_snps.csv"),
         mask = os.path.join(config["outdir"] , "to_mask.csv")
     shell:
         """all_snps.py -a {input.aln:q} -l {input.lineages:q} \
+                --snps {input.snps:q} \
                 --representative-seqs-out {output.reps:q} \
                 --defining-snps-out {output.defining:q} \
                 --mask-out {output.mask:q} 
@@ -110,3 +123,61 @@ rule iqtree_representative_sequences:
         os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile")
     shell:
         "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
+
+
+rule anonymise_headers_safe:
+    input:
+        rules.mafft_representative_sequences.output
+    output:
+        fasta = os.path.join(config["outdir"] , "anonymised.aln.safe.fasta"),
+        key = os.path.join(config["outdir"] , "tax_key.safe.csv")
+    run:
+        fkey = open(output.key, "w")
+        fkey.write("taxon,key\n")
+        key_dict = {}
+        c = 0
+        with open(output.fasta, "w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                c+=1
+                name,lineage = record.id.split('|')
+                lineage_list = lineage.split(".")
+                if lineage_list[-1].startswith("p"):
+                    lineage = ".".join(lineage_list[:-1])
+                new_id = ""
+                if "WH04" in record.id: # this is the WH04 GISAID ID
+                    print(record.id)
+                    new_id = f"outgroup_A"
+                else:
+                    new_id = f"{c}_{lineage}"
+
+                fkey.write(f"{record.id},{new_id}\n")
+                fw.write(f">{new_id}\n{record.seq}\n")
+            
+            print(f"{c+1} safe anonymised sequences written to {output.fasta}")
+        fkey.close()
+
+rule encrypt_fasta:
+    input:
+        rules.anonymise_headers_safe.output.fasta
+    output:
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.safe.fasta")
+    run:
+        c = 0
+        with open(output[0],"w") as fw:
+            for record in SeqIO.parse(input[0],"fasta"):
+                encrypted_seq = codecs.encode(str(record.seq), 'rot_13')
+                fw.write(f">{record.id}\n{encrypted_seq}\n")
+                c+=1
+        print(f"Encrypted {c} sequences with rot13")
+
+rule iqtree_representative_sequences_safe:
+    input:
+        rules.anonymise_headers_safe.output.fasta
+    threads: workflow.cores
+    params:
+        cores = workflow.cores
+    output:
+        os.path.join(config["outdir"] , "anonymised.aln.fasta.safe.treefile")
+    shell:
+        "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
+
