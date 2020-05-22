@@ -9,7 +9,8 @@ rule all:
         os.path.join(config["outdir"] , "anonymised.encrypted.aln.fasta"),
         os.path.join(config["outdir"] , "lineages.metadata.csv"),
         os.path.join(config["outdir"] , "defining_snps.csv"),
-        os.path.join(config["outdir"] , "anonymised.aln.safe.fasta.treefile")
+        os.path.join(config["outdir"] , "anonymised.aln.safe.fasta.treefile"),
+        os.path.join(config["outdir"] , "anonymised.encrypted.aln.safe.fasta")
 
 rule seqs_with_lineage:
     input:
@@ -142,7 +143,7 @@ rule iqtree_representative_sequences:
         rules.anonymise_headers.output.fasta
     threads: workflow.cores
     params:
-        cores = workflow.cores
+        cores = workflow.cores/2
     output:
         os.path.join(config["outdir"] , "anonymised.aln.fasta.treefile")
     shell:
@@ -199,9 +200,9 @@ rule iqtree_representative_sequences_safe:
         rules.anonymise_headers_safe.output.fasta
     threads: workflow.cores
     params:
-        cores = workflow.cores
+        cores = workflow.cores/2
     output:
-        os.path.join(config["outdir"] , "anonymised.aln.fasta.safe.treefile")
+        os.path.join(config["outdir"] , "anonymised.aln.safe.fasta.treefile")
     shell:
         "iqtree -s {input[0]:q} -nt AUTO -bb 10000 -m HKY -redo -au -alrt 1000 -o 'outgroup_A'"
 
