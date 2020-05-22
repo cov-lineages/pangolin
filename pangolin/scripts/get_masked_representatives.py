@@ -139,6 +139,7 @@ def make_metadata_out(metadata,lineage_dict,reps,metadata_out_file):
         reader = csv.DictReader(f)
         for row in reader:
             sequence_name = row["sequence_name"]
+            gisaid_id = row["covv_accession_id"]
             country = row["country"]
             travel_history = row["travel_history"]
             sample_date = row["sample_date"]
@@ -150,7 +151,7 @@ def make_metadata_out(metadata,lineage_dict,reps,metadata_out_file):
                 if sequence_name in reps:
                     rep = 1
                     r +=1
-                new_l = f"{sequence_name},{country},{travel_history},{sample_date},{epi_week},{lineage},{rep}\n"
+                new_l = f"{gisaid_id},{sequence_name},{country},{travel_history},{sample_date},{epi_week},{lineage},{rep}\n"
                 cin +=1
                 metadata_out_file.write(new_l)
             else:
@@ -241,7 +242,7 @@ def extract_representatives_and_do_the_masking_thing():
         make_masked_representative_fasta(alignment_file, reps, reference, fw, to_mask)
 
     with open(args.metadata_out, "w") as fm:
-        header = f"name,country,travel history,sample date,epiweek,lineage,representative\n"
+        header = f"GISAID ID,name,country,travel history,sample date,epiweek,lineage,representative\n"
         fm.write(header)
         make_metadata_out(metadata,lineage_dict,reps,fm)
 

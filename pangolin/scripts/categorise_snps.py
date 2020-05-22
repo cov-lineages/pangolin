@@ -4,6 +4,7 @@ import argparse
 import collections
 from Bio import AlignIO
 import os
+import csv
 cwd = os.getcwd()
 
 """
@@ -27,12 +28,16 @@ def parse_args():
 
     parser.add_argument("-a", action="store", type=str, dest="a")
     parser.add_argument("-l", action="store", type=str, dest="l")
+    parser.add_argument("--metadata",action="store", type=str, dest="metadata")
+    parser.add_argument("--snps",action="store", type=str, dest="snps")
 
     parser.add_argument("--representative-seqs-out", action="store", type=str, dest="representative_out")
     parser.add_argument("--defining-snps-out", action="store", type=str, dest="defining_out")
     parser.add_argument("--mask-out", action="store", type=str, dest="mask_out")
+
     parser.add_argument("--defining-cut-off", action="store", type=float, default=90,dest="def_cutoff")
     parser.add_argument("--represent-cut-off", action="store", type=float,default=10,dest="rep_cutoff")
+    parser.add_argument("--num-taxa", action="store", type=float,default=3,dest="num_taxa")
     return parser.parse_args()
 
 def get_lineage_dict(alignment, lineage_file):
@@ -71,46 +76,34 @@ def get_lineage_dict(alignment, lineage_file):
     
     return sorted_by_n_lineages
 
-def find_snps(ref,member):
-    """Identifies unambiguous snps between two sequences 
-    and returns them as a list, using position in the ref seq (i.e. no gaps in ref)"""
-    snps = []
-    index = 0 
-    for i in range(len(ref)):
-        if ref[i]!= '-':
-            index +=1
-            
-        col = [ref[i],member[i]]
-        if len(set(col))>1:
-            if not col[1].lower() in ["a","g","t","c","-"]:
-                pass
-            else:
-                snp = f"{index}{col[0].upper()}{col[1].upper()}"
-                snps.append(snp)
-    return snps
-
-def get_reference(alignment,reference_id="Wuhan/WH04/2020"):
-    """get reference seq record"""
+def add_phylotype_annotation(alignment,metadata):
+    phylotype = {}
+    with open(metadata,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            phylotype[row["sequence_name"]]=row["phylotype"]
     for record in alignment:
-        if record.id == reference_id:
-            return record
+        record.annotations["phylotype"] = phylotype[record.id]
 
-def pcent_done(c, total):
-    return round((c*100)/total, 2)
 
-def add_snps_annotation(alignment, reference):
+def add_snps_annotation(alignment, snps):
     """add list of snps relative to ref as an annotation to the seq record"""
-    c = 0
     total = len(alignment)
-    for record in alignment:
-        c +=1 
-        if c%500==0:
-            print(pcent_done(c, total), '%')
 
-        snps = find_snps(reference.seq, record.seq)
-        record.annotations["snps"] = snps
-        snp_string =snp_list_to_snp_string(snps)
+    snp_dict = {}
+    with open(snps,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            snp_dict[row["taxon"]]=row["snps"]
+
+    for record in alignment:
+        
+        snp_string = snp_dict[record.id]
         record.annotations["snp_string"] = snp_string
+        
+        record_snps =snp_string.split(";")
+        record.annotations["snps"] = record_snps
+
 
     print(total, "records annotated")
 
@@ -175,7 +168,7 @@ def get_ids_in_list_of_records(records):
         ids.append(record.id)
     return ids
 
-def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
+def get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagged):
     """for each set of snps in the lineage snp dict, get the record 
     with the lowest n content that has that snp pattern. 
     for each snp in that set of snps, if it was flagged that it should be 
@@ -184,6 +177,18 @@ def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
     return the set of records that fulfill the representation needed."""
     represented= []
     taxa = []
+    print("Representative seqs:")
+    lowest_basal_Ns = []
+    for snp_set in basal_snps:
+        records_sorted_by_N = sorted(basal_snps[snp_set], key = lambda x : int(x[1]))
+        lowest_N = records_sorted_by_N[0]
+        lowest_basal_Ns.append(lowest_N)
+    lowest_basal = sorted(lowest_basal_Ns, key = lambda x : int(x[1]))[0][0]
+    print(lowest_basal)
+    for record in lineages_dict[lineage]:
+        if record.id == lowest_N:
+            taxa.append(record)
+
     for snp_set in lineage_snps:
 
         records_sorted_by_N = sorted(lineage_snps[snp_set], key = lambda x : int(x[1]))
@@ -207,13 +212,13 @@ def get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged):
 
     return taxa
 
-def pad_taxa_to_5(taxa, lineages_dict, lineage):
+def pad_taxa(taxa, lineages_dict, lineage,num_taxa):
     """if you have filled the representatives needed but dont have 
     very many taxa, pad that list to five for the craic"""
     pre_len = len(taxa)
-    if pre_len < 3:
+    if pre_len < num_taxa:
         for record in lineages_dict[lineage]:
-            if len(taxa)<3:
+            if len(taxa)<num_taxa:
                 taxa_ids = get_ids_in_list_of_records(taxa)
                 if record.id not in taxa_ids:
                     taxa.append(record)
@@ -224,19 +229,39 @@ def pad_taxa_to_5(taxa, lineages_dict, lineage):
     print(f"\t5f. {lineage}: {pre_len} padded to {len(taxa)} representative seqs")   
     return taxa
      
+def add_is_basal_annotation(lineage, lineages_dict):
+    phylotype_len = {}
+    phylotypes = []
+    records = lineages_dict[lineage]
+    for record in records:
+        phylotype = record.annotations["phylotype"]
+        if phylotype == "":
+            length = 0
+        else:
+            length = len(phylotype.split("."))
+
+        phylotype_len[record.id]=length
+        phylotypes.append(length)
+    basal_length = sorted(phylotypes)[0]
+    for record in records:
+        if phylotype_len[record.id] == basal_length:
+            record.annotations["is_basal"] = True
+        else:
+            record.annotations["is_basal"] = False
+
 def snp_list_to_snp_string(snp_list):
     """turn a snp list into a `;`-separated string of snps that are sorted by 
     position in the genome"""
     snp_string = ";".join(sorted(snp_list, key = lambda x : int(x[:-2])))
     return snp_string
 
-def get_all_snps(alignment_file,lineage_file,outfile,defining_cut_off,represent_cut_off):
+def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_taxa,defining_cut_off,represent_cut_off):
     """ this is the main worker function of this script. 
     ultimately it returns a list of singleton snps to_mask
     and a list of lineage_defining_snps per lineage to write to a file
 
     1. reads in the alignment
-    2. identifies the reference sequence
+
     3. adds in some useful things to the seq record (n, snps, snp_string)
 
     4. structures alignment records by lineage
@@ -253,14 +278,13 @@ def get_all_snps(alignment_file,lineage_file,outfile,defining_cut_off,represent_
     """
     print("1. Reading in the alignment")
     aln = AlignIO.read(alignment_file, "fasta")
-    print("2. Getting the reference:")
-    reference = get_reference(aln)
-    print(reference.id)
-    print("3a. Annotating N content onto seq records")
+    print("2a. Annotating N content onto seq records")
     add_N_annotation(aln)
-    print("3b. Annotating snps onto seq records")
-    add_snps_annotation(aln, reference)
-    print("4. Making lineages dict")
+    print("2b. Annotating snps onto seq records")
+    add_snps_annotation(aln, snp_file)
+    print("2c. Annotating phylotype onto seq records")
+    add_phylotype_annotation(aln,metadata_file)
+    print("3. Making lineages dict")
     lineages_dict = get_lineage_dict(aln, lineage_file)
     
     to_mask = []
@@ -269,37 +293,45 @@ def get_all_snps(alignment_file,lineage_file,outfile,defining_cut_off,represent_
     for lineage in sorted(lineages_dict):
         lineage_snps = collections.defaultdict(list)
         snp_counter = collections.defaultdict(list)
+        basal_snps = collections.defaultdict(list)
 
+        add_is_basal_annotation(lineage,lineages_dict)
+        
         for record in lineages_dict[lineage]:
 
             snps = record.annotations["snps"]
             snp_string = record.annotations["snp_string"]
             pcent_N = record.annotations["pcent_N"]
-
+            
             for i in snps:
                 snp_counter[i].append(record.id)
 
+            if record.annotations["is_basal"] == True:
+                basal_snps[snp_string].append((record.id,pcent_N))
+            
+
             lineage_snps[snp_string].append((record.id,pcent_N))
-        print("5. Lineage",lineage)
-        print(f"\t5a. Made lineage_snps")
-        print(f"\t5b. Counted up {len(snp_counter)} snps")
+        print(f"Number of basal snp patterns identified: {len(basal_snps)}")
+        print("4. Lineage",lineage)
+        print(f"\t4a. Made lineage_snps")
+        print(f"\t4b. Counted up {len(snp_counter)} snps")
         singletons = get_singleton_snps(lineage, snp_counter)
-        print(f"\t5c. Identified {len(singletons)} singletons in {lineage}")
+        print(f"\t4c. Identified {len(singletons)} singletons in {lineage}")
         for singleton in singletons:
             to_mask.append(singleton)
 
         defining,flagged = get_represented_and_defining_snps(singletons, snp_counter, lineages_dict, defining_cut_off,represent_cut_off,lineage)
-        print(f"\t5d. Identified {len(defining)} potential defining snps in {lineage}")
-        print(f"\t5e. Flagged {len(flagged)} snps to be represented in {lineage}")
-        taxa = get_representative_taxa(lineage,lineage_snps,lineages_dict, flagged)
+        print(f"\t4d. Identified {len(defining)} potential defining snps in {lineage}")
+        print(f"\t4e. Flagged {len(flagged)} snps to be represented in {lineage}")
+        taxa = get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagged)
 
-        taxa = pad_taxa_to_5(taxa, lineages_dict, lineage)
+        taxa = pad_taxa(taxa, lineages_dict, lineage,num_taxa)
 
         for record in taxa:
             snp_string = record.annotations["snp_string"]
             outfile.write(f"{lineage},{record.id}\n")
         
-        defining_snps = list(set.intersection(*[set(x.split(";")) for x in lineage_snps]))
+        defining_snps = list(set.intersection(*[set(x.split(";")) for x in basal_snps]))
 
         if defining_snps == []:
             for snp in defining:
@@ -322,19 +354,33 @@ def read_alignment_and_write_files():
     else:
         print(f"Reading in alignment file {alignment_file}.")
 
+    metadata_file = os.path.join(cwd, args.metadata)
+    if not os.path.exists(metadata_file):
+        sys.stderr.write('Error: cannot find metadata file at {}\n'.format(metadata_file))
+        sys.exit(-1)
+    else:
+        print(f"Reading in metadata file {metadata_file}.")
+
     lineage_file = os.path.join(cwd, args.l)
     if not os.path.exists(lineage_file):
         sys.stderr.write('Error: cannot find lineage file at {}\n'.format(lineage_file))
         sys.exit(-1)
     else:
         print(f"Reading in lineage annotations file {lineage_file}.")
-    
+
+    snp_file = os.path.join(cwd, args.snps)
+    if not os.path.exists(snp_file):
+        sys.stderr.write('Error: cannot find snp file at {}\n'.format(snp_file))
+        sys.exit(-1)
+    else:
+        print(f"Reading in snp annotations file {snp_file}.")
+    num_taxa = args.num_taxa
     defining_cut_off = args.def_cutoff
     represent_cut_off = args.rep_cutoff
     
     fw = open(args.representative_out, "w")
     fw.write("lineage,name\n")
-    to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,fw,defining_cut_off,represent_cut_off)
+    to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,fw,num_taxa,defining_cut_off,represent_cut_off)
     fw.close()
     print("6. Writing mask, representatives and defining snps files.")
     with open(args.mask_out,"w") as fm:

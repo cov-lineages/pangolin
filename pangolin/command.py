@@ -36,6 +36,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin")
     parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
+    parser.add_argument("-p","--include-putative",action="store_true",help="Include the bleeding edge lineage definitions in assignment",dest="include_putative")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
@@ -150,19 +151,29 @@ def main(sysargs = sys.argv[1:]):
     lineages_csv = ""
     for r,d,f in os.walk(data_dir):
         for fn in f:
-            if fn.endswith(".fasta"):
-                representative_aln = os.path.join(r, fn)
-            elif fn.endswith(".tree") or fn.endswith(".treefile"):
-                guide_tree = os.path.join(r, fn)
-            elif fn.endswith(".csv") and fn.startswith("lineages"):
-                lineages_csv = os.path.join(r, fn)
+            if args.include_putative:
+                if fn.endswith("putative.fasta"):
+                    representative_aln = os.path.join(r, fn)
+                elif fn.endswith("putative.fasta.treefile"):
+                    guide_tree = os.path.join(r, fn)
+                elif fn.endswith(".csv") and fn.startswith("lineages"):
+                    lineages_csv = os.path.join(r, fn)
+            else:
+                if fn.endswith("safe.fasta"):
+                    representative_aln = os.path.join(r, fn)
+                elif fn.endswith("safe.fasta.treefile"):
+                    guide_tree = os.path.join(r, fn)
+                elif fn.endswith(".csv") and fn.startswith("lineages"):
+                    lineages_csv = os.path.join(r, fn)
 
     print("\nData files found")
     print(f"Sequence alignment:\t{representative_aln}")
     print(f"Guide tree:\t\t{guide_tree}")
     print(f"Lineages csv:\t\t{lineages_csv}")
     if representative_aln=="" or guide_tree=="" or lineages_csv=="":
-        print("Didn't find appropriate files.\nTreefile must end with `.tree` or `.treefile`.\nAlignment must be in `.fasta` format.\nExiting.")
+        print("""Didn't find appropriate files.\nTreefile must end with `.treefile`.\nAlignment must be in `.fasta` format.\n \
+If you've specified --include-putative \n 
+you must have files ending in putative.fasta.treefile\nExiting.""")
         exit(1)
     else:
         config["representative_aln"]=representative_aln
