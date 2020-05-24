@@ -11,8 +11,7 @@ import lineage_classes
 def parse_args():
     parser = argparse.ArgumentParser(description='SNP based classification.')
 
-    parser.add_argument("-snps","--defining-snps", action="store", type=str, dest="defining_snps")
-    parser.add_argument("-q","--query-snps", action="store", type=str, dest="query_snps", help="A fasta file containing the query sequences")
+    parser.add_argument("-snps", action="store", type=str, dest="snps")
     parser.add_argument("-o","--outfile",action="store", type=str, dest="outfile")
     return parser.parse_args()
 
@@ -35,7 +34,7 @@ def traverse(lineages,query,result=("",0,0),lineage="root"):
                         query.update_lineage(result)
 
             traverse(lineages,query,result,child.name)
-            
+
 def get_ancestors(lineages):
     for l in lineages:
         lineage = lineages[lineage]
@@ -54,6 +53,7 @@ def add_snps(lineages,snp_dict,lineage="root"):
                 child.add_snp(snp)
 
         recursively_add_snps(lineages,snp_dict,child.name)
+
 def create_lineage_tree(defining_snps):
     lineages = {}
     snp_dict = {}
