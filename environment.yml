@@ -5,9 +5,8 @@ channels:
   - defaults
 dependencies:
   - biopython=1.74
-  - iqtree
-  - mafft
   - iqtree<2
+  - mafft
   - pip=19.3.1
   - python=3.6
   - snakemake-minimal=5.13
