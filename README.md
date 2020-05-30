@@ -41,7 +41,7 @@ updates the conda environment (you're unlikely to need to do this, but just in c
 ### Usage
 
 1. Activate the environment ``conda activate pangolin``
-2. Run ``pangolin <query>``
+2. Run ``pangolin <query>``, where ``<query>`` is the name of your input file.
 
 ```
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
