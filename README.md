@@ -130,7 +130,7 @@ It uses lineages from [Rambaut et al.](https://www.biorxiv.org/content/10.1101/2
 
 ### Citing ``pangolin``
 
-There is a publication in prep for ``pangolin``, but in the meantime please to link to this github (github.com/hCoV-2019/pangolin)[github.com/hCoV-2019/pangolin] if you have used ``pangolin`` in your research. 
+There is a publication in prep for ``pangolin``, but in the meantime please to link to this github [github.com/hCoV-2019/pangolin](github.com/hCoV-2019/pangolin) if you have used ``pangolin`` in your research. 
 
 ### References
 
