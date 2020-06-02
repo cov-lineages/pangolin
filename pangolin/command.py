@@ -24,7 +24,7 @@ def main(sysargs = sys.argv[1:]):
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages', 
     usage='''pangolin <query> [options]''')
 
-    parser.add_argument('query', help='Query fasta file of sequences to analyse (FASTA format)')
+    parser.add_argument('query', help='Query fasta file of sequences to analyse.')
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
@@ -58,7 +58,7 @@ def main(sysargs = sys.argv[1:]):
     # find the query fasta
     query = os.path.join(cwd, args.query)
     if not os.path.exists(query):
-        sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease refer to pangolin usage at https://github.com/hCoV-2019/pangolin#usage'.format(query))
+        sys.stderr.write('Error: cannot find query (input) fasta file at {}\n. Please enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
         sys.exit(-1)
     else:
         print(f"The query file is {query}")
