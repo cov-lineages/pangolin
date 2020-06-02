@@ -4,6 +4,22 @@
 
 <img src="https://github.com/hCoV-2019/pangolin/blob/master/docs/logo.png" width="300">
 
+
+## Quick links
+
+  * [Requirements](#requirements)
+  * [Install pangolin](#install-pangolin)
+  * [Check the install worked](#check-the-install-worked)
+  * [Updating pangolin](#updating-pangolin)
+  * [Usage](#usage)
+  * [Output](#output)
+  * [Recall rate](#recall-rate)
+  * [Source data](#source-data)
+  * [Authors](#authors)
+  * [Citing ``pangolin``](#citing-pangolin)
+  * [References](#references)
+
+
 ### Requirements
 
 Pangolin runs on MacOS and Linux. The conda environment recipe may not build on Windows (I haven't tested it) but can be run using the Windows subsystem for Linux.
@@ -20,6 +36,16 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 5. That's it
 
 > Note: we recommend using pangolin in the conda environment specified in the ``environment.yml`` file as per the instructions above. If you can't use conda for some reason, bear in mind the data files are now hosted in a separate repository at [``hCoV-2019/lineages``](https://github.com/hCoV-2019/lineages.git) and you will need to pip install that alongside the other dependencies for pangolin (details found in [``environment.yml``](https://github.com/hCoV-2019/pangolin/blob/master/environment.yml)). 
+
+### Check the install worked
+
+Type (in the pangolin environment):
+
+```
+pangolin -v
+pangolin -lv
+```
+and you should see the versions of pangolin and lineages data release printed respectively.
 
 ### Updating pangolin
 
@@ -41,7 +67,7 @@ updates the conda environment (you're unlikely to need to do this, but just in c
 ### Usage
 
 1. Activate the environment ``conda activate pangolin``
-2. Run ``pangolin <query>``
+2. Run ``pangolin <query>``, where ``<query>`` is the name of your input file.
 
 ```
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
@@ -101,6 +127,10 @@ Given hCoV-2019 is relatively slow evolving for an RNA virus and there is still 
 Pangolin was created by [Áine O'Toole](https://aineotoole.co.uk/) and [JT McCrone](https://jtmccr1.github.io/).
 It uses lineages from [Rambaut et al.](https://www.biorxiv.org/content/10.1101/2020.04.17.046086v1).
 
+
+### Citing ``pangolin``
+
+There is a publication in prep for ``pangolin``, but in the meantime please to link to this github [github.com/hCoV-2019/pangolin](github.com/hCoV-2019/pangolin) if you have used ``pangolin`` in your research. 
 
 ### References
 
