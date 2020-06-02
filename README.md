@@ -73,7 +73,7 @@ updates the conda environment (you're unlikely to need to do this, but just in c
 pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages
 
 positional arguments:
-  query
+  input_file - input file with data to analyse (FASTA format)
 
 optional arguments:
   -h, --help                  show this help message and exit

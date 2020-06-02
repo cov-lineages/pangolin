@@ -22,9 +22,9 @@ def main(sysargs = sys.argv[1:]):
 
     parser = argparse.ArgumentParser(prog = _program, 
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages', 
-    usage='''pangolin <query> [options]''')
+    usage='''pangolin <input_file> [options]''')
 
-    parser.add_argument('query')
+    parser.add_argument('input_file',help='input file with data to analyse (FASTA format)')
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
@@ -56,9 +56,9 @@ def main(sysargs = sys.argv[1:]):
         print("Found the snakefile")
 
     # find the query fasta
-    query = os.path.join(cwd, args.query)
+    query = os.path.join(cwd, args.input_file)
     if not os.path.exists(query):
-        sys.stderr.write('Error: cannot find query at {}\n'.format(query))
+        sys.stderr.write('Error: cannot find query (input file) at {}\n'.format(query))
         sys.exit(-1)
     else:
         print(f"The query file is {query}")
