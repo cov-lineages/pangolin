@@ -58,7 +58,7 @@ def main(sysargs = sys.argv[1:]):
     # find the query fasta
     query = os.path.join(cwd, args.query)
     if not os.path.exists(query):
-        sys.stderr.write('Error: cannot find query (input) fasta file at {}\n. Please enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
+        sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
         sys.exit(-1)
     else:
         print(f"The query file is {query}")
