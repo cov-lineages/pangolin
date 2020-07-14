@@ -5,6 +5,9 @@
 <img src="https://github.com/hCoV-2019/pangolin/blob/master/docs/logo.png" width="300">
 
 
+>pangolin now comes in web-application form thanks to the [Centre for Genomic Pathogen and Surveillance](https://www.pathogensurveillance.net/)! Find it here at https://pangolin.cog-uk.io/.
+
+
 ## Quick links
 
   * [Requirements](#requirements)
