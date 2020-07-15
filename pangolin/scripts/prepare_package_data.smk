@@ -12,6 +12,37 @@ rule all:
         os.path.join(config["outdir"] , "anonymised.aln.safe.fasta.treefile"),
         os.path.join(config["outdir"] , "anonymised.encrypted.aln.safe.fasta")
 
+rule phylotype_to_metadata:
+    input:
+        phylotype = config["phylotypes"],
+        metadata = config["metadata"]
+    output:
+        os.path.join(config["outdir"], "metadata_with_phylotypes.csv")
+    run:
+        phylotype_dict = {}
+        with open(input.phylotype,"r") as f:
+            for l in f:
+                l = l.rstrip("\n")
+                name,phylotype=l.split(',')
+                phylotype_dict[name]=phylotype
+            
+        with open(input.metadata,newline="") as f:
+            reader = csv.DictReader(f)
+
+            header = reader.fieldnames
+            header.append("phylotype")
+            with open(output[0], "w") as fw:
+                writer = csv.DictWriter(fw, fieldnames=header,lineterminator='\n')
+                writer.writeheader()
+                for row in reader:
+                    if row["sequence_name"] in phylotype_dict:
+                        new_row = row
+                        name = new_row["sequence_name"]
+                        phylotype = phylotype_dict[name]
+                        new_row["phylotype"] = phylotype
+
+                        writer.writerow(new_row)
+
 rule seqs_with_lineage:
     input:
         aln = config["fasta"],
@@ -28,11 +59,13 @@ rule seqs_with_lineage:
         with open(output.fasta, "w") as fw:
             records = []
             for record in SeqIO.parse(input.aln,"fasta"):
-                if "WH04" in record.id:
+                if "Wuhan/WH04/2020" == record.id:
                     records.append(record)
                 elif record.id in to_write:
                     records.append(record)
             SeqIO.write(records, fw, "fasta")
+
+#input config all snp file
 
 rule find_all_snps:
     input:
@@ -44,32 +77,66 @@ rule find_all_snps:
         find_all_snps.py -a {input.aln:q} -o {output.snps:q}
         """
 
+rule find_polytomies:
+    input:
+        tree = config["global_tree"]
+    output:
+        outfile = os.path.join(config["outdir"] , "all_polytomies.csv")
+    shell:
+        """
+        get_polytomy.py \
+            --global-tree {input.tree} \
+            --outfile {output.outfile}
+        """
+
+rule find_basal_polytomies:
+    input:
+        polytomies = rules.find_polytomies.output.outfile,
+        lineages = config["lineages"],
+        metadata = os.path.join(config["outdir"], "metadata_with_phylotypes.csv")
+    output:
+        outfile = os.path.join(config["outdir"] , "basal_polytomy_taxa.csv")
+    shell:
+        """
+        get_basal_polytomy.py \
+            --polytomies {input.polytomies} \
+            --lineages {input.lineages} \
+            --metadata {input.metadata} \
+            --outfile {output.outfile}
+        """
+
 rule find_representatives:
     input:
         aln = rules.seqs_with_lineage.output.fasta,
         lineages = config["lineages"],
-        snps = rules.find_all_snps.output.snps,
-        metadata = config["metadata"]
+        tree = config["global_tree"],
+        snps = os.path.join(config["outdir"] , "all_snps.csv"), #config["all_snps"],
+        include = config["to_include"],
+        polytomies = rules.find_basal_polytomies.output.outfile
     output:
         reps = os.path.join(config["outdir"] , "representative_seqs.csv"),
         defining = os.path.join(config["outdir"] , "defining_snps.csv"),
-        mask = os.path.join(config["outdir"] , "to_mask.csv")
+        mask = os.path.join(config["outdir"] , "singletons.csv"),
     shell:
-        """categorise_snps.py -a {input.aln:q} -l {input.lineages:q} \
+        """categorise_snps.py \
+                -a {input.aln:q} \
+                -l {input.lineages:q} \
                 --snps {input.snps:q} \
-                --metadata {input.metadata:q} \
+                --global-tree {input.tree} \
+                --polytomy {input.polytomies:q} \
+                --to-include {input.include} \
                 --representative-seqs-out {output.reps:q} \
                 --defining-snps-out {output.defining:q} \
-                --mask-out {output.mask:q} 
+                --mask-out {output.mask:q} \
             """
 
 rule extract_representative_sequences:
     input:
         aln = rules.seqs_with_lineage.output.fasta,
         lineages = config["lineages"],
-        metadata = config["metadata"],
-        mask = os.path.join(config["outdir"] , "to_mask.csv"),
-        representatives = os.path.join(config["outdir"] , "representative_seqs.csv")
+        metadata = os.path.join(config["outdir"], "metadata_with_phylotypes.csv"),
+        mask = rules.find_representatives.output.mask,
+        representatives = rules.find_representatives.output.reps
     output:
         representatives = os.path.join(config["outdir"] , "representative_sequences.fasta"),
         metadata = os.path.join(config["outdir"] , "lineages.metadata.csv")
@@ -112,7 +179,7 @@ rule anonymise_headers:
                 c+=1
                 name,lineage = record.id.split('|')
                 new_id = ""
-                if "WH04" in record.id: # this is the WH04 GISAID ID
+                if "Wuhan/WH04/2020" in record.id: # this is the WH04 GISAID ID
                     print(record.id)
                     new_id = f"outgroup_A"
                 else:
@@ -169,7 +236,7 @@ rule anonymise_headers_safe:
                 if lineage_list[-1].startswith("p"):
                     lineage = ".".join(lineage_list[:-1])
                 new_id = ""
-                if "WH04" in record.id: # this is the WH04 GISAID ID
+                if "Wuhan/WH04/2020" in record.id: # this is the WH04 GISAID ID
                     print(record.id)
                     new_id = f"outgroup_A"
                 else:
