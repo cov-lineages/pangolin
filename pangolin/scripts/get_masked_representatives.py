@@ -104,7 +104,7 @@ def get_reference(fasta):
     """return reference seq record """
     reference = ""
     for record in SeqIO.parse(fasta,"fasta"):
-        if "WH04" in record.id:
+        if "Wuhan/WH04/2020" == record.id:
             reference = record
     return reference
 
