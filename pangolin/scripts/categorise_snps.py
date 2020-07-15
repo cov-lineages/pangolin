@@ -4,6 +4,7 @@ import argparse
 import collections
 from Bio import AlignIO
 import os
+import dendropy
 import csv
 cwd = os.getcwd()
 
@@ -27,9 +28,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Find all snps.')
 
     parser.add_argument("-a", action="store", type=str, dest="a")
+    parser.add_argument("--global-tree", action="store", type=str, dest="global_tree")
     parser.add_argument("-l", action="store", type=str, dest="l")
-    parser.add_argument("--metadata",action="store", type=str, dest="metadata")
     parser.add_argument("--snps",action="store", type=str, dest="snps")
+    parser.add_argument("--polytomy",action="store", type=str, dest="polytomy")
+    parser.add_argument("--to-include",action="store", type=str, dest="include_file")
 
     parser.add_argument("--representative-seqs-out", action="store", type=str, dest="representative_out")
     parser.add_argument("--defining-snps-out", action="store", type=str, dest="defining_out")
@@ -37,7 +40,7 @@ def parse_args():
 
     parser.add_argument("--defining-cut-off", action="store", type=float, default=90,dest="def_cutoff")
     parser.add_argument("--represent-cut-off", action="store", type=float,default=10,dest="rep_cutoff")
-    parser.add_argument("--num-taxa", action="store", type=float,default=3,dest="num_taxa")
+    parser.add_argument("--num-taxa", action="store", type=float,default=2,dest="num_taxa")
     return parser.parse_args()
 
 def get_lineage_dict(alignment, lineage_file):
@@ -47,11 +50,10 @@ def get_lineage_dict(alignment, lineage_file):
     lineages_dict = {}
     lineages_records = collections.defaultdict(list)
     sorted_by_n_lineages = {}
-    with open(lineage_file, "r") as f:
-        for l in f:
-            l = l.rstrip("\n")
-            tokens = l.split(",")
-            lineages_dict[tokens[0]]=tokens[1]
+    with open(lineage_file,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            lineages_dict[row["taxon"]]=row["lineage"]
     not_in_csv = []
     c= 0
     for record in alignment:
@@ -75,15 +77,6 @@ def get_lineage_dict(alignment, lineage_file):
         print(f"{lineage}\t\t{len(sorted_by_n_lineages[lineage])}")
     
     return sorted_by_n_lineages
-
-def add_phylotype_annotation(alignment,metadata):
-    phylotype = {}
-    with open(metadata,newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            phylotype[row["sequence_name"]]=row["phylotype"]
-    for record in alignment:
-        record.annotations["phylotype"] = phylotype[record.id]
 
 
 def add_snps_annotation(alignment, snps):
@@ -212,6 +205,20 @@ def get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagg
 
     return taxa
 
+def check_include_file(taxa, lineages_dict, lineage, include_file):
+    include = []
+    with open(include_file,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row["lineage"]==lineage:
+                include.append(row["taxon"])
+    for record in lineages_dict[lineage]:
+        if record.id in include:
+            taxa.append(record)
+            print(f"Adding {record.id} to representatives for {lineage}")
+    return taxa
+    
+
 def pad_taxa(taxa, lineages_dict, lineage,num_taxa):
     """if you have filled the representatives needed but dont have 
     very many taxa, pad that list to five for the craic"""
@@ -228,23 +235,19 @@ def pad_taxa(taxa, lineages_dict, lineage,num_taxa):
             pass
     print(f"\t5f. {lineage}: {pre_len} padded to {len(taxa)} representative seqs")   
     return taxa
-     
-def add_is_basal_annotation(lineage, lineages_dict):
-    phylotype_len = {}
-    phylotypes = []
-    records = lineages_dict[lineage]
-    for record in records:
-        phylotype = record.annotations["phylotype"]
-        if phylotype == "":
-            length = 0
-        else:
-            length = len(phylotype.split("."))
 
-        phylotype_len[record.id]=length
-        phylotypes.append(length)
-    basal_length = sorted(phylotypes)[0]
-    for record in records:
-        if phylotype_len[record.id] == basal_length:
+
+def add_basal_polytomy_annotation(polytomy_file, lineages_dict,alignment):
+
+    polytomies = []
+    with open(polytomy_file,newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            polytomies.append(row["taxon"])
+
+    for record in alignment:
+        
+        if record.id in polytomies:
             record.annotations["is_basal"] = True
         else:
             record.annotations["is_basal"] = False
@@ -255,7 +258,7 @@ def snp_list_to_snp_string(snp_list):
     snp_string = ";".join(sorted(snp_list, key = lambda x : int(x[:-2])))
     return snp_string
 
-def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_taxa,defining_cut_off,represent_cut_off):
+def get_all_snps(alignment_file,lineage_file,snp_file,polytomy_file,include_file,outfile,num_taxa,defining_cut_off,represent_cut_off):
     """ this is the main worker function of this script. 
     ultimately it returns a list of singleton snps to_mask
     and a list of lineage_defining_snps per lineage to write to a file
@@ -282,21 +285,21 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
     add_N_annotation(aln)
     print("2b. Annotating snps onto seq records")
     add_snps_annotation(aln, snp_file)
-    print("2c. Annotating phylotype onto seq records")
-    add_phylotype_annotation(aln,metadata_file)
+
     print("3. Making lineages dict")
     lineages_dict = get_lineage_dict(aln, lineage_file)
     
+    print("3a. Adding basal polytomy annotations")
+    add_basal_polytomy_annotation(polytomy_file,lineages_dict,aln)
     to_mask = []
     lineage_defining_snps = []
-
+    print("3b. Adding basal annotations")
     for lineage in sorted(lineages_dict):
+        print(lineage)
         lineage_snps = collections.defaultdict(list)
         snp_counter = collections.defaultdict(list)
         basal_snps = collections.defaultdict(list)
 
-        add_is_basal_annotation(lineage,lineages_dict)
-        
         for record in lineages_dict[lineage]:
 
             snps = record.annotations["snps"]
@@ -307,10 +310,10 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
                 snp_counter[i].append(record.id)
 
             if record.annotations["is_basal"] == True:
-                basal_snps[snp_string].append((record.id,pcent_N))
-            
+                basal_snps[snp_string].append((record.id,pcent_N))                
 
             lineage_snps[snp_string].append((record.id,pcent_N))
+
         print(f"Number of basal snp patterns identified: {len(basal_snps)}")
         print("4. Lineage",lineage)
         print(f"\t4a. Made lineage_snps")
@@ -324,7 +327,7 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
         print(f"\t4d. Identified {len(defining)} potential defining snps in {lineage}")
         print(f"\t4e. Flagged {len(flagged)} snps to be represented in {lineage}")
         taxa = get_representative_taxa(lineage,lineage_snps,basal_snps,lineages_dict, flagged)
-
+        taxa = check_include_file(taxa, lineages_dict, lineage, include_file)
         taxa = pad_taxa(taxa, lineages_dict, lineage,num_taxa)
 
         for record in taxa:
@@ -332,7 +335,7 @@ def get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,outfile,num_
             outfile.write(f"{lineage},{record.id}\n")
         
         defining_snps = list(set.intersection(*[set(x.split(";")) for x in basal_snps]))
-
+        print(lineage, defining_snps)
         if defining_snps == []:
             for snp in defining:
                 defining_snps.append(snp)
@@ -354,12 +357,12 @@ def read_alignment_and_write_files():
     else:
         print(f"Reading in alignment file {alignment_file}.")
 
-    metadata_file = os.path.join(cwd, args.metadata)
-    if not os.path.exists(metadata_file):
-        sys.stderr.write('Error: cannot find metadata file at {}\n'.format(metadata_file))
+    polytomy_file = os.path.join(cwd, args.polytomy)
+    if not os.path.exists(polytomy_file):
+        sys.stderr.write('Error: cannot find polytomy file at {}\n'.format(polytomy_file))
         sys.exit(-1)
     else:
-        print(f"Reading in metadata file {metadata_file}.")
+        print(f"Reading in polytomy file {polytomy_file}.")
 
     lineage_file = os.path.join(cwd, args.l)
     if not os.path.exists(lineage_file):
@@ -374,13 +377,22 @@ def read_alignment_and_write_files():
         sys.exit(-1)
     else:
         print(f"Reading in snp annotations file {snp_file}.")
+    
+    include_file = os.path.join(cwd, args.include_file)
+    if not os.path.exists(include_file):
+        sys.stderr.write('Error: cannot find include file at {}\n'.format(include_file))
+        sys.exit(-1)
+    else:
+        print(f"Reading in include file {include_file}.")
+
     num_taxa = args.num_taxa
     defining_cut_off = args.def_cutoff
     represent_cut_off = args.rep_cutoff
-    
+
+
     fw = open(args.representative_out, "w")
     fw.write("lineage,name\n")
-    to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,snp_file,metadata_file,fw,num_taxa,defining_cut_off,represent_cut_off)
+    to_mask,lineage_defining_snps = get_all_snps(alignment_file,lineage_file,snp_file,polytomy_file,include_file,fw,num_taxa,defining_cut_off,represent_cut_off)
     fw.close()
     print("6. Writing mask, representatives and defining snps files.")
     with open(args.mask_out,"w") as fm:
