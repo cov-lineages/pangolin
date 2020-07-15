@@ -19,6 +19,7 @@ snakemake
         --config                                \
                 metadata=your_new_metadata.csv  \
                 fasta=your_new_fasta.fasta      \
+				global_tree=global_tree.nexus   \
                 outdir=where/to/put/your/data   \
                 lineages=lineages.csv \
         --cores 2
