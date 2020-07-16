@@ -6,7 +6,7 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix
 from datetime import datetime
-import pickle
+import joblib
 
 dataList = []
 tempDataLines = []
@@ -96,7 +96,7 @@ def removeIndices(headersFile):
 
 	# loading the list of headers the model needs.
 	# example: '29657-A', '29657-T', '29657-C', '29657-G', '29657-N', '29657-gap'
-	model_headers = pickle.load(open(headersFile, 'rb'))
+	model_headers = joblib.load(headersFile)
 
 	# by cycling through model_headers, get which column indicies we need to keep in the test data
 	for h in model_headers:
@@ -134,7 +134,7 @@ df = pd.DataFrame(dataList, columns=headers)
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
 
-loaded_model = pickle.load(open(modelFile, 'rb'))
+loaded_model = joblib.load(modelFile)
 
 print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
 
