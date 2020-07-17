@@ -75,9 +75,6 @@ rule datafunk_trim_and_pad:
           --log-inserts 
         """
 
-rule datafunk_trim_and_pad:
-
-
 rule pangolearn:
     input:
         fasta = rules.datafunk_trim_and_pad.output.fasta,
