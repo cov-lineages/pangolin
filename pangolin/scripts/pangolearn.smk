@@ -43,9 +43,41 @@ else:
         input:
             config["outfile"]
 
-rule pangolearn:
+rule minimap2_to_reference:
     input:
         fasta = config["query_fasta"],
+        reference = config["reference_fasta"]
+    output:
+        sam = os.path.join(config["tempdir"],"reference_mapped.sam")
+    shell:
+        """
+        minimap2 -a -x asm5 {input.reference:q} {input.fasta:q} > {output.sam:q}
+        """
+
+rule datafunk_trim_and_pad:
+    input:
+        sam = rules.minimap2_to_reference.output.sam,
+        reference = config["reference_fasta"]
+    params:
+        trim_start = config["trim_start"],
+        trim_end = config["trim_end"],
+        insertions = os.path.join(config["tempdir"],"insertions.txt")
+    output:
+        fasta = os.path.join(config["tempdir"],"post_qc_query.aligned.fasta")
+    shell:
+        """
+        datafunk sam_2_fasta \
+          -s {input.sam:q} \
+          -r {input.reference:q} \
+          -o {output.fasta:q} \
+          -t [{params.trim_start}:{params.trim_end}] \
+          --pad \
+          --log-inserts 
+        """
+
+rule pangolearn:
+    input:
+        fasta = rules.datafunk_trim_and_pad.output.fasta,
         model = config["trained_model"],
         header = config["header_file"]
     output:
