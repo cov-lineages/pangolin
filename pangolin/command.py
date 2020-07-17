@@ -10,6 +10,7 @@ import pprint
 import json
 import lineages
 import setuptools
+import pkg_resources
 from Bio import SeqIO
 
 
