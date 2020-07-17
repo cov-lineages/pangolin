@@ -136,6 +136,8 @@ def main(sysargs = sys.argv[1:]):
         "outdir":outdir,
         "outfile":outfile,
         "tempdir":tempdir,
+        "trim_start":265,   # where to pad to using datafunk
+        "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__
         }
@@ -149,6 +151,9 @@ def main(sysargs = sys.argv[1:]):
     else:
         lineages_dir = lineages.__path__[0]
         data_dir = os.path.join(lineages_dir,"data")
+
+    reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
+    config["reference_fasta"] = reference_fasta
 
     print(f"Looking in {data_dir} for data files...")
     representative_aln = ""
