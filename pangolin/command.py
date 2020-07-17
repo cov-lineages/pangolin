@@ -33,6 +33,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
+    parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
@@ -92,6 +93,10 @@ def main(sysargs = sys.argv[1:]):
     else:
         temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
         tempdir = temporary_directory.name
+    
+    if args.no_temp:
+        print(f"--no-temp: All intermediate files will be written to {outdir}")
+        tempdir = outdir
 
     """ 
     QC steps:
@@ -197,6 +202,9 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
         config["guide_tree"]=guide_tree
         config["trained_model"] = trained_model
         config["header_file"] = header_file
+
+        # if no temp, just write everything to outdir
+
     if args.write_tree:
         config["write_tree"]="True"
 
