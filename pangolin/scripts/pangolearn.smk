@@ -10,6 +10,9 @@ import os
 if config.get("trained_model"):
     config["trained_model"] = os.path.join(workflow.current_basedir,'..', config["trained_model"])
 
+if config.get("header_file"):
+    config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
+
 if config.get("lineages_csv"):
     lineages_csv_path = os.path.join(workflow.current_basedir,'..', config["lineages_csv"])
     config["lineages_csv"]=f"lineages_csv={lineages_csv_path} "
@@ -40,23 +43,18 @@ else:
         input:
             config["outfile"]
 
-
-rule all:
-    input:
-        config["outfile"]
-
 rule pangolearn:
     input:
-        config["post_qc_query"],
-        config["trained_model"],
-        config["header_file"]
+        fasta = config["query_fasta"],
+        model = config["trained_model"],
+        header = config["header_file"]
     output:
         os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
-    script:
+    shell:
         # should output a csv file with no headers but with columns similar to:
         # "taxon,lineage,SH-alrt,UFbootstrap"
         """
-        pangolearn.py
+        pangolearn.py --header-file {input.header} --model-file {input.model} --fasta {input.fasta} -o {output[0]}
         """
 
 rule add_failed_seqs:

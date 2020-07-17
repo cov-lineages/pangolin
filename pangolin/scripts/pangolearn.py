@@ -6,14 +6,27 @@ from sklearn.datasets import make_classification
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix
 from datetime import datetime
+import argparse
 import joblib
+import argparse
 
 dataList = []
 tempDataLines = []
 
-sequencesFile = snakemake.input[0]
-modelFile = snakemake.input[1]
-headerFile = snakemake.input[2]
+def parse_args():
+    parser = argparse.ArgumentParser(description='pangoLEARN.')
+
+    parser.add_argument("--header-file", action="store", type=str, dest="header_file")
+    parser.add_argument("--model-file", action="store", type=str, dest="model_file")
+    parser.add_argument("--fasta", action="store", type=str, dest="sequences_file")
+    parser.add_argument("-o","--outfile", action="store", type=str, dest="outfile")
+    return parser.parse_args()
+
+args = parse_args()
+
+sequencesFile = args.sequences_file
+modelFile = args.model_file
+headerFile = args.header_file
 
 # small class to store vector objects
 class VectorObject:
@@ -141,6 +154,6 @@ print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 predictions = loaded_model.predict(df)
 
 # write predictions to a file
-f = open(snakemake.output[0], "w")
+f = open(args.outfile, "w")
 f.write(predictions)
 f.close()

@@ -34,7 +34,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
-    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="assign_using_tree")
+    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument('--assign-using-tree',action='store_true',help="Use original phylogenetic assignment methods with guide tree. Note: will be significantly slower than pangoLEARN")
     parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
@@ -50,10 +50,10 @@ def main(sysargs = sys.argv[1:]):
         args = parser.parse_args(sysargs)
 
     if args.assign_using_tree:
-        snakefile = os.path.join(thisdir, 'scripts','pangoLEARN.smk')
+        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     # find the Snakefile
     else:
-        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
+        snakefile = os.path.join(thisdir, 'scripts','pangoLEARN.smk')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
@@ -155,9 +155,12 @@ def main(sysargs = sys.argv[1:]):
     guide_tree = ""
     lineages_csv = ""
     trained_model = ""
+    header_file = ""
     for r,d,f in os.walk(data_dir):
         for fn in f:
-            if "training" in fn:
+            if fn == "multinomialLogRegHeaders_v1.joblib":
+                header_file = os.path.join(r, fn)
+            elif fn == "multinomialLogReg_v1.joblib":
                 trained_model = os.path.join(r, fn)
             if args.include_putative:
                 if fn.endswith("putative.fasta"):
@@ -178,8 +181,8 @@ def main(sysargs = sys.argv[1:]):
     print(f"Sequence alignment:\t{representative_aln}")
     print(f"Guide tree:\t\t{guide_tree}")
     print(f"Lineages csv:\t\t{lineages_csv}")
-    if representative_aln=="" or guide_tree=="" or lineages_csv=="" or trained_model="":
-        print("""Didn't find appropriate files.\nTreefile must end with `.treefile`.\nAlignment must be in `.fasta` format.\n Trained model must exist. \
+    if representative_aln=="" or guide_tree=="" or lineages_csv=="" or trained_model=="" or header_file=="":
+        print("""Check your environment, didn't find appropriate files from the lineages repo.\nTreefile must end with `.treefile`.\nAlignment must be in `.fasta` format.\n Trained model must exist. \
 If you've specified --include-putative \n 
 you must have files ending in putative.fasta.treefile\nExiting.""")
         exit(1)
@@ -187,7 +190,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
         config["representative_aln"]=representative_aln
         config["guide_tree"]=guide_tree
         config["trained_model"] = trained_model
-        
+        config["header_file"] = header_file
     if args.write_tree:
         config["write_tree"]="True"
 
