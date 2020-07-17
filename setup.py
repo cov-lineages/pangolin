@@ -28,16 +28,18 @@ setup(name='pangolin',
                 'pangolin/scripts/report_classes.py',
                 'pangolin/scripts/report_results.py'
                 ],
+      package_data={"pangolin":["data/reference.fasta"]},
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
             "pytools>=2020.1",
             'pandas>=1.0.1',
-            'sklearn>=0.0',
+            "wheel>=0.34",
+            'sklearn',
             'pysam>=0.15.4'
         ],
       description='hcov-2019 subtyping command line tool',
-      url='https://github.com/hCov-2019/pangolin',
+      url='https://github.com/cov-lineages/pangolin',
       author='Aine OToole and JT McCrone',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
