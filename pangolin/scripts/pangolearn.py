@@ -12,15 +12,16 @@ import argparse
 
 dataList = []
 tempDataLines = []
+idList = []
 
 def parse_args():
     parser = argparse.ArgumentParser(description='pangoLEARN.')
-
     parser.add_argument("--header-file", action="store", type=str, dest="header_file")
     parser.add_argument("--model-file", action="store", type=str, dest="model_file")
     parser.add_argument("--fasta", action="store", type=str, dest="sequences_file")
     parser.add_argument("-o","--outfile", action="store", type=str, dest="outfile")
     return parser.parse_args()
+
 
 args = parse_args()
 
@@ -71,6 +72,9 @@ def readInAndFormatData():
 				line = line.strip()
 
 				if ">" in line:
+					# this is a fasta line designating an id, but we don't want to keep the >
+					idList.append(line[1:])
+
 					# starting new entry, gotta save the old one
 					if currentSeq:
 						tempDataLines.append(currentSeq)
@@ -151,9 +155,25 @@ loaded_model = joblib.load(modelFile)
 
 print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
 
-predictions = loaded_model.predict(df)
+predictions = loaded_model.predict_proba(df)
 
 # write predictions to a file
 f = open(args.outfile, "w")
-f.write(predictions)
+for index in range(len(predictions)):
+	
+	maxScore = 0
+	maxIndex = -1
+
+	# get the max probability score and its assosciated index
+	for i in range(len(predictions[index])):
+		if predictions[index][i] > maxScore:
+			maxScore = predictions[index][i]
+			maxIndex = i
+
+	score = maxScore
+	prediction = loaded_model.classes_[maxIndex]
+	seqId = idList[index]
+
+	f.write(seqId + "," + prediction + "," + str(score) + "\n")
+
 f.close()
