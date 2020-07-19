@@ -43,9 +43,44 @@ else:
         input:
             config["outfile"]
 
-rule minimap2_to_reference:
+
+rule minimap2_check_distance:
     input:
         fasta = config["query_fasta"],
+        reference = config["reference_fasta"]
+    output:
+        paf = os.path.join(config["tempdir"],"reference_mapped.paf")
+    shell:
+        """
+        minimap2 -x asm5 {input.reference:q} {input.fasta:q} > {output.paf:q}
+        """
+
+rule parse_paf:
+    input:
+        paf = rules.minimap2_check_distance.output.paf,
+        fasta = config["query_fasta"],
+    output:
+        fasta = os.path.join(config["tempdir"], "mappable.fasta"),
+        mapfail = os.path.join(config["tempdir"],"mapfail.csv")
+    run:
+        mapped = []
+        with open(input.paf, "r") as f:
+            for l in f:
+                tokens = l.rstrip("\n").split('\t')
+                mapped.append(tokens[0])
+        unmapped = open(output.mapfail, "w")
+        with open(output.fasta, 'w') as fw:
+            for record in SeqIO.parse(input.fasta,"fasta"):
+                if record.id in mapped:
+                    fw.write(f">{record.description}\n{record.seq}\n")
+                else:
+                    unmapped.write(f"{record.id},failed to map\n")
+                    
+
+
+rule minimap2_to_reference:
+    input:
+        fasta = rules.parse_paf.output.fasta,
         reference = config["reference_fasta"]
     output:
         sam = os.path.join(config["tempdir"],"reference_mapped.sam")
@@ -92,14 +127,15 @@ rule pangolearn:
 rule add_failed_seqs:
     input:
         qcpass= os.path.join(config["tempdir"],"lineage_report.pass_qc.csv"),
-        qcfail= config["qc_fail"]
+        qcfail= config["qc_fail"],
+        mapfail = rules.parse_paf.output.mapfail
     params:
         version = config["lineages_version"]
     output:
         config["outfile"]
     run:
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,SH-alrt,UFbootstrap,lineages_version,status,note\n")
+        fw.write("taxon,lineage,support,lineages_version,status,note\n")
 
         with open(input.qcpass, "r") as f:
             for l in f:
@@ -113,7 +149,13 @@ rule add_failed_seqs:
                 if i.startswith("fail="):
                     note = i.lstrip("fail=")
             # needs to mirror the structure of the output from pangolearn
-            fw.write(f"{record.id},None,0,0,{params.version},fail,{note}\n")
+            fw.write(f"{record.id},None,0,{params.version},fail,{note}\n")
+        
+        with open(input.mapfail,"r") as f:
+            for l in f:
+                l = l.rstrip("\n")
+                name,fail = l.split(",")
+                fw.write(f"{name},None,0,{param.version},fail,{fail}\n")
 
         fw.close()
 
