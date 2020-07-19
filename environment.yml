@@ -7,6 +7,7 @@ dependencies:
   - biopython=1.74
   - iqtree<2
   - mafft
+  - minimap2
   - pip=19.3.1
   - python=3.6
   - snakemake-minimal=5.13
