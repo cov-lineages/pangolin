@@ -40,7 +40,7 @@ setup(name='pangolin',
         ],
       description='hcov-2019 subtyping command line tool',
       url='https://github.com/cov-lineages/pangolin',
-      author='Aine OToole and JT McCrone',
+      author='Aine OToole, JT McCrone & Emily Scher',
       author_email='aine.otoole@ed.ac.uk',
       entry_points="""
       [console_scripts]
