@@ -74,6 +74,12 @@ def main(sysargs = sys.argv[1:]):
     outdir = ''
     if args.outdir:
         outdir = os.path.join(cwd, args.outdir)
+        if not os.path.exists(outdir):
+            try:
+                os.mkdir(outdir)
+            except:
+                sys.stderr.write(f'Error: cannot create directory {outdir}')
+                sys.exit(-1)
     else:
         outdir = cwd
 
