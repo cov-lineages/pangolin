@@ -29,8 +29,6 @@ if config.get("lineages_csv"):
 else:
     config["lineages_csv"]=""
 
-config["pid"] = str(os.getpid())
-
 ##### Target rules #####
 
 if config["lineages_csv"] != "":
@@ -76,7 +74,6 @@ rule parse_paf:
                 else:
                     unmapped.write(f"{record.id},failed to map\n")
                     
-
 
 rule minimap2_to_reference:
     input:
@@ -130,7 +127,7 @@ rule add_failed_seqs:
         qcfail= config["qc_fail"],
         mapfail = rules.parse_paf.output.mapfail
     params:
-        version = config["lineages_version"]
+        version = config["pangoLEARN_version"]
     output:
         config["outfile"]
     run:
