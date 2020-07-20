@@ -155,7 +155,7 @@ rule add_failed_seqs:
             for l in f:
                 l = l.rstrip("\n")
                 name,fail = l.split(",")
-                fw.write(f"{name},None,0,{param.version},fail,{fail}\n")
+                fw.write(f"{name},None,0,{params.version},fail,{fail}\n")
 
         fw.close()
 
