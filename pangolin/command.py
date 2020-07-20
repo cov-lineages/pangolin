@@ -45,7 +45,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
-    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"lineages {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -210,6 +210,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             print(f"Looking in {data_dir} for data files...")
             trained_model = ""
             header_file = ""
+            lineages_csv = ""
 
             for r,d,f in os.walk(data_dir):
                 for fn in f:
@@ -217,13 +218,16 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                         header_file = os.path.join(r, fn)
                     elif fn == "multinomialLogReg_v1.joblib":
                         trained_model = os.path.join(r, fn)
-            if trained_model=="" or header_file=="":
+                    elif fn.endswith(".csv") and fn.startswith("lineages"):
+                        lineages_csv = os.path.join(r, fn)
+            if trained_model=="" or header_file==""  or lineages_csv=="":
                 print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed.""")
                 exit(1)
             else:
                 print("\nData files found")
                 print(f"Trained model:\t{trained_model}")
                 print(f"Header file:\t{header_file}")
+                print(f"Lineages csv:\t{lineages_csv}")
                 config["trained_model"] = trained_model
                 config["header_file"] = header_file
 
