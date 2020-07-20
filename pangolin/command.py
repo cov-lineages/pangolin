@@ -37,7 +37,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
-    parser.add_argument('--assign-using-tree',action='store_true',help="LEGACY: Use original phylogenetic assignment methods with guide tree. Note, will be significantly slower than pangoLEARN")
+    parser.add_argument('--legacy',action='store_true',help="LEGACY: Use original phylogenetic assignment methods with guide tree. Note, will be significantly slower than pangoLEARN")
     parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree. Only works in combination with legacy `--assign-using-tree`",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-p","--include-putative",action="store_true",help="Include the bleeding edge lineage definitions in assignment",dest="include_putative")
@@ -52,7 +52,7 @@ def main(sysargs = sys.argv[1:]):
     else:
         args = parser.parse_args(sysargs)
 
-    if args.assign_using_tree:
+    if args.legacy:
         snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     # find the Snakefile
     else:
@@ -161,7 +161,7 @@ def main(sysargs = sys.argv[1:]):
     if args.data:
         data_dir = os.path.join(cwd, args.data)
     else:
-        if args.assign_using_tree:
+        if args.legacy:
             lineages_dir = lineages.__path__[0]
             data_dir = os.path.join(lineages_dir,"data")
 
@@ -236,7 +236,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
-        
+
 
     if args.verbose:
         quiet_mode = False
