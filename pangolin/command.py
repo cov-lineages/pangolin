@@ -227,7 +227,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                 print("\nData files found")
                 print(f"Trained model:\t{trained_model}")
                 print(f"Header file:\t{header_file}")
-                print(f"Lineages csv:\t{lineages_csv}")
+                print(f"Lineages csv:\t'{lineages_csv}'")
                 config["trained_model"] = trained_model
                 config["header_file"] = header_file
 

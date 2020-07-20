@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# config["trained_model"] = trained_model
 import csv
 from Bio import SeqIO
 import os
@@ -14,8 +13,9 @@ if config.get("header_file"):
     config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
 
 if config.get("lineages_csv"):
+    print("Going to run the global report summary")
     lineages_csv_path = os.path.join(workflow.current_basedir,'..', config["lineages_csv"])
-    config["lineages_csv"]=f"lineages_csv={lineages_csv_path} "
+    config["lineages_csv"]=f"lineages_csv='{lineages_csv_path}'"
 else:
     config["lineages_csv"]=""
 
@@ -23,11 +23,6 @@ if config.get("force"):
     config["force"] = "--forceall "
 else:
     config["force"] = ""
-
-if config.get("lineages_csv"):
-    print("Going to run the global report summary")
-else:
-    config["lineages_csv"]=""
 
 ##### Target rules #####
 
@@ -167,7 +162,7 @@ rule report_results:
     shell:
         """
         report_results.py \
-        -p {input.csv} \
+        -p {input.csv:q} \
         -b {input.lineages_csv} \
         -o {output:q} 
         """
