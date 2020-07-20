@@ -12,13 +12,13 @@ if config.get("trained_model"):
 if config.get("header_file"):
     config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
 
+##### Target rules #####
+
 if config.get("lineages_csv"):
-    lineages_csv_path = os.path.join(workflow.current_basedir,'..', config["lineages_csv"])
-    config["lineages_csv"]=f"lineages_csv='{lineages_csv_path}'"
+    print("Going to run the global report summary")
 else:
     config["lineages_csv"]=""
 
-##### Target rules #####
 
 if config["lineages_csv"] != "":
     rule all:
@@ -29,7 +29,6 @@ else:
     rule all:
         input:
             config["outfile"]
-
 
 rule minimap2_check_distance:
     input:
@@ -122,10 +121,10 @@ rule add_failed_seqs:
     params:
         version = config["pangoLEARN_version"]
     output:
-        config["outfile"]
+        csv = config["outfile"]
     run:
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,support,pangoLEARN_version,status,note\n")
+        fw.write("taxon,lineage,probability,pangoLEARN_version,status,note\n")
 
         with open(input.qcpass, "r") as f:
             for l in f:
@@ -160,7 +159,7 @@ rule report_results:
     shell:
         """
         report_results.py \
-        -p {input.csv:q} \
+        -p {input.csv} \
         -b {input.lineages_csv} \
         -o {output:q} 
         """

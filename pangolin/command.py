@@ -236,6 +236,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
+        
 
     if args.verbose:
         quiet_mode = False
