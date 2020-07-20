@@ -132,7 +132,7 @@ rule add_failed_seqs:
         config["outfile"]
     run:
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,support,lineages_version,status,note\n")
+        fw.write("taxon,lineage,support,pangoLEARN_version,status,note\n")
 
         with open(input.qcpass, "r") as f:
             for l in f:
