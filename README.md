@@ -154,7 +154,7 @@ Given cov-lineages is relatively slow evolving for an RNA virus and there is sti
 
 ### Source data
 
-<strong>pangolin</strong> runs a model trained against lineage assignments based on GISAID data.
+<strong>pangolin</strong> runs a multinomial logistic regression model trained against lineage assignments based on GISAID data.
 
 Legacy <strong>pangolin</strong> runs using a guide tree and alignment hosted at [``cov-lineages/lineages``](https://github.com/cov-lineages/lineages.git). Some of this data is sourced from GISAID, but anonymised and encrypted to fit with guidelines. Appropriate permissions have been given and acknowledgements for the teams that have worked to provide the original SARS-CoV-2 genome sequences to GISAID are also hosted in [``cov-lineages.org``](https://cov-lineages.org/gisaid_acknowledgements.html).
 
