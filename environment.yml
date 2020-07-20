@@ -16,4 +16,5 @@ dependencies:
     - pytools==2020.1
     - dendropy>=4.4.0
     - git+https://github.com/cov-ert/datafunk.git
-    - git+https://github.com/hCoV-2019/lineages.git
+    - git+https://github.com/cov-lineages/pangoLEARN.git
+    - git+https://github.com/cov-lineages/lineages.git@2020-05-19-2 
