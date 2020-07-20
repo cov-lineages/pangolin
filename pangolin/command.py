@@ -32,7 +32,6 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
-    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
@@ -157,8 +156,6 @@ def main(sysargs = sys.argv[1:]):
         "pangoLEARN_version":pangoLEARN.__version__
         }
 
-    if args.force:
-        config["force"]="forceall"
     # find the data
     data_dir = ""
     if args.data:
@@ -227,7 +224,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                 print("\nData files found")
                 print(f"Trained model:\t{trained_model}")
                 print(f"Header file:\t{header_file}")
-                print(f"Lineages csv:\t'{lineages_csv}'")
+                print(f"Lineages csv:\t{lineages_csv}")
                 config["trained_model"] = trained_model
                 config["header_file"] = header_file
 
@@ -247,7 +244,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
-                                 dryrun=args.dry_run, forceall=args.force,force_incomplete=True,
+                                 dryrun=args.dry_run, forceall=True,force_incomplete=True,
                                  config=config, cores=threads,lock=False,quiet=quiet_mode,workdir=tempdir
                                  )
 

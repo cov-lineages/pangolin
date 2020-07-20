@@ -13,16 +13,10 @@ if config.get("header_file"):
     config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
 
 if config.get("lineages_csv"):
-    print("Going to run the global report summary")
     lineages_csv_path = os.path.join(workflow.current_basedir,'..', config["lineages_csv"])
     config["lineages_csv"]=f"lineages_csv='{lineages_csv_path}'"
 else:
     config["lineages_csv"]=""
-
-if config.get("force"):
-    config["force"] = "--forceall "
-else:
-    config["force"] = ""
 
 ##### Target rules #####
 
@@ -43,9 +37,11 @@ rule minimap2_check_distance:
         reference = config["reference_fasta"]
     output:
         paf = os.path.join(config["tempdir"],"reference_mapped.paf")
+    log:
+        os.path.join(config["tempdir"], "logs/minimap2_check.log")
     shell:
         """
-        minimap2 -x asm5 {input.reference:q} {input.fasta:q} > {output.paf:q}
+        minimap2 -x asm5 {input.reference:q} {input.fasta:q} -o {output.paf:q} &> {log}
         """
 
 rule parse_paf:
@@ -76,9 +72,11 @@ rule minimap2_to_reference:
         reference = config["reference_fasta"]
     output:
         sam = os.path.join(config["tempdir"],"reference_mapped.sam")
+    log:
+        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 {input.reference:q} {input.fasta:q} > {output.sam:q}
+        minimap2 -a -x asm5 {input.reference:q} {input.fasta:q} -o {output.sam:q} &> {log}
         """
 
 rule datafunk_trim_and_pad:
