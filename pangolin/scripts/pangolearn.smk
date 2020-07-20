@@ -140,7 +140,9 @@ rule add_failed_seqs:
         with open(input.qcpass, "r") as f:
             for l in f:
                 l=l.rstrip('\n')
-                fw.write(f"{l},{params.version},passed_qc,\n")
+                name,lineage,support = l.split(",")
+                support = round(float(support), 2)
+                fw.write(f"{name},{lineage},{support},{params.version},passed_qc,\n")
 
         for record in SeqIO.parse(input.qcfail,"fasta"):
             desc_list = record.description.split(" ")
