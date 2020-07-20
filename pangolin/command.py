@@ -9,7 +9,8 @@ import tempfile
 import pprint
 import json
 import lineages
-import setuptools
+import pangoLEARN
+
 import pkg_resources
 from Bio import SeqIO
 
@@ -37,13 +38,14 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
-    parser.add_argument('--assign-using-tree',action='store_true',help="Use original phylogenetic assignment methods with guide tree. Note: will be significantly slower than pangoLEARN")
+    parser.add_argument('--assign-using-tree',action='store_true',help="LEGACY: Use original phylogenetic assignment methods with guide tree. Note, will be significantly slower than pangoLEARN")
     parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-p","--include-putative",action="store_true",help="Include the bleeding edge lineage definitions in assignment",dest="include_putative")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
+    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"lineages {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -151,7 +153,8 @@ def main(sysargs = sys.argv[1:]):
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
-        "lineages_version":lineages.__version__
+        "lineages_version":lineages.__version__,
+        "pangoLEARN_version":pangoLEARN.__version__
         }
 
     if args.force:
@@ -161,55 +164,71 @@ def main(sysargs = sys.argv[1:]):
     if args.data:
         data_dir = os.path.join(cwd, args.data)
     else:
-        lineages_dir = lineages.__path__[0]
-        data_dir = os.path.join(lineages_dir,"data")
+        if args.assign_using_tree:
+            lineages_dir = lineages.__path__[0]
+            data_dir = os.path.join(lineages_dir,"data")
+
+            representative_aln = ""
+            guide_tree = ""
+            lineages_csv = ""
+
+            for r,d,f in os.walk(data_dir):
+                for fn in f:
+                    if args.include_putative:
+                        if fn.endswith("putative.fasta"):
+                            representative_aln = os.path.join(r, fn)
+                        elif fn.endswith("putative.fasta.treefile"):
+                            guide_tree = os.path.join(r, fn)
+                        elif fn.endswith(".csv") and fn.startswith("lineages"):
+                            lineages_csv = os.path.join(r, fn)
+                    else:
+                        if fn.endswith("safe.fasta"):
+                            representative_aln = os.path.join(r, fn)
+                        elif fn.endswith("safe.fasta.treefile"):
+                            guide_tree = os.path.join(r, fn)
+                        elif fn.endswith(".csv") and fn.startswith("lineages"):
+                            lineages_csv = os.path.join(r, fn)
+
+            
+            if representative_aln=="" or guide_tree=="" or lineages_csv=="":
+                print("""Check your environment, didn't find appropriate files from the lineages repo.\nTreefile must end with `.treefile`.\
+\nAlignment must be in `.fasta` format.\n Trained model must exist. \
+If you've specified --include-putative\n \
+you must have files ending in putative.fasta.treefile\nExiting.""")
+                exit(1)
+            else:
+                print("\nData files found")
+                print(f"Sequence alignment:\t{representative_aln}")
+                print(f"Guide tree:\t\t{guide_tree}")
+                print(f"Lineages csv:\t\t{lineages_csv}")
+                config["representative_aln"]=representative_aln
+                config["guide_tree"]=guide_tree
+
+        else:
+            pangoLEARN_dir = pangoLEARN.__path__[0]
+            data_dir = os.path.join(pangoLEARN_dir,"data")
+            print(f"Looking in {data_dir} for data files...")
+            trained_model = ""
+            header_file = ""
+
+            for r,d,f in os.walk(data_dir):
+                for fn in f:
+                    if fn == "multinomialLogRegHeaders_v1.joblib":
+                        header_file = os.path.join(r, fn)
+                    elif fn == "multinomialLogReg_v1.joblib":
+                        trained_model = os.path.join(r, fn)
+            if trained_model=="" or header_file=="":
+                print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed.""")
+                exit(1)
+            else:
+                print("\nData files found")
+                print(f"Trained model:\t{trained_model}")
+                print(f"Header file:\t{header_file}")
+                config["trained_model"] = trained_model
+                config["header_file"] = header_file
 
     reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
     config["reference_fasta"] = reference_fasta
-
-    print(f"Looking in {data_dir} for data files...")
-    representative_aln = ""
-    guide_tree = ""
-    lineages_csv = ""
-    trained_model = ""
-    header_file = ""
-    for r,d,f in os.walk(data_dir):
-        for fn in f:
-            if fn == "multinomialLogRegHeaders_v1.joblib":
-                header_file = os.path.join(r, fn)
-            elif fn == "multinomialLogReg_v1.joblib":
-                trained_model = os.path.join(r, fn)
-            if args.include_putative:
-                if fn.endswith("putative.fasta"):
-                    representative_aln = os.path.join(r, fn)
-                elif fn.endswith("putative.fasta.treefile"):
-                    guide_tree = os.path.join(r, fn)
-                elif fn.endswith(".csv") and fn.startswith("lineages"):
-                    lineages_csv = os.path.join(r, fn)
-            else:
-                if fn.endswith("safe.fasta"):
-                    representative_aln = os.path.join(r, fn)
-                elif fn.endswith("safe.fasta.treefile"):
-                    guide_tree = os.path.join(r, fn)
-                elif fn.endswith(".csv") and fn.startswith("lineages"):
-                    lineages_csv = os.path.join(r, fn)
-
-    print("\nData files found")
-    print(f"Sequence alignment:\t{representative_aln}")
-    print(f"Guide tree:\t\t{guide_tree}")
-    print(f"Lineages csv:\t\t{lineages_csv}")
-    if representative_aln=="" or guide_tree=="" or lineages_csv=="" or trained_model=="" or header_file=="":
-        print("""Check your environment, didn't find appropriate files from the lineages repo.\nTreefile must end with `.treefile`.\nAlignment must be in `.fasta` format.\n Trained model must exist. \
-If you've specified --include-putative \n 
-you must have files ending in putative.fasta.treefile\nExiting.""")
-        exit(1)
-    else:
-        config["representative_aln"]=representative_aln
-        config["guide_tree"]=guide_tree
-        config["trained_model"] = trained_model
-        config["header_file"] = header_file
-
-        # if no temp, just write everything to outdir
 
     if args.write_tree:
         config["write_tree"]="True"
