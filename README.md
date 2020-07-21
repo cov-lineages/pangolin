@@ -17,6 +17,7 @@
   * [Updating pangolin](#updating-pangolin)
   * [Usage](#usage)
   * [Output](#output)
+  * [pangoLEARN description](#pangolearn-description)
   * [Recall rate](#recall-rate)
   * [SNPs associated with a given lineage](#snps-associated-with-a-given-lineage)
   * [Source data](#source-data)
