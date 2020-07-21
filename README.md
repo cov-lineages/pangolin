@@ -4,6 +4,7 @@
 
 <img src="https://github.com/cov-lineages/pangolin/blob/master/docs/logo.png" width="300">
 
+><strong>pangolin 2.0</strong> comes with major updates, including a significant speedup and assignment based on machine learning (affectionately described as pangoLEARN).
 
 >pangolin now comes in web-application form thanks to the [Centre for Genomic Pathogen and Surveillance](https://www.pathogensurveillance.net/)! Find it here at https://pangolin.cog-uk.io/.
 
@@ -40,18 +41,22 @@ Pangolin runs on MacOS and Linux. The conda environment recipe may not build on 
 
 > Troubleshooting install see the [pangolin wiki](https://github.com/cov-lineages/pangolin/wiki)
 
-> Note: we recommend using pangolin in the conda environment specified in the ``environment.yml`` file as per the instructions above. If you can't use conda for some reason, bear in mind the data files are now hosted in a separate repository at [``cov-lineages/lineages``](https://github.com/cov-lineages/lineages.git) and you will need to pip install that alongside the other dependencies for pangolin (details found in [``environment.yml``](https://github.com/cov-lineages/pangolin/blob/master/environment.yml)).
+> Note: we recommend using pangolin in the conda environment specified in the ``environment.yml`` file as per the instructions above. If you can't use conda for some reason, bear in mind the data files are  hosted in two separate repositories at
+- [<strong>cov-lineages/lineages</strong>](https://github.com/cov-lineages/lineages.git) 
+- [<strong>cov-lineages/pangoLEARN</strong>](https://github.com/cov-lineages/pangoLEARN.git) <br>
+you will need to pip install them alongside the other dependencies for pangolin (details found in [<strong>environment.yml</strong>](https://github.com/cov-lineages/pangolin/blob/master/environment.yml)).
 
 ### Check the install worked
 
-Type (in the pangolin environment):
+Type (in the <strong>pangolin</strong> environment):
 
 ```
 pangolin -v
 pangolin -pv
 pangolin -lv
 ```
-and you should see the versions of pangolin , pangoLEARN and lineages data release printed respectively.
+and you should see the versions of <strong>pangolin</strong>, and <strong>pangoLEARN</strong> and <strong>lineages</strong> data release printed respectively.
+
 
 ### Updating pangolin
 
@@ -147,16 +152,40 @@ Legacy phylogenetics output example:
 
 Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference).
 
+
+### pangoLEARN description
+<p><strong>pangoLEARN</strong> is an alternative algorithm for lineage assignment, which uses machine learning, that is implemented as of <strong>pangolin 2.0</strong>. Benefits of the new algorithm include a major speed up, as the phylogenetic approach was struggling to scale with the increase in number of lineages needing to be represented in the guide tree, and that this new approach takes into account all of the diversity present within a lineage rather than just selecting a representative few. The consequences of this approach mean that for large lineages, we have improved our recall and precision significantly and we are continuing to develop more sophisticated approaches to machine learning for lineage assignment.</p>
+
+<p>The current version of <strong>pangoLEARN</strong> uses multinomial logistic regression, but the pipeline has been written so that as more complex models are developed,the user will be able to choose which model to use to assign their lineages.</p>
+
+<p>To explain the model we're currently using, while a standard regression fits a line to a set of training data to model a linear relationship between variables of interest, a logistic regressions fits a sigmoid (S-shaped) function to the training data, in order to tell two different classes apart. A multinomial logistic regression is an extension of a standard logistic regression in that it can be used to classify more than two classes. Each potential assignment (i.e. lineage) is modeled as a set of n-1 independent binary choices (sigmoid functions), where n is the number of classes.</p>
+
+The model was trained using 30,000 SARS-CoV-2 sequences from GISAID, acknowledgements [here](./gisaid_acknowledgements.html), with their lineages by manually curating the global ML tree, as is the standard lineages data release procedure for <strong>pangolin</strong>. Each base of each genome was [one-hot](https://www.hackernoon.com/what-is-one-hot-encoding-why-and-when-do-you-have-to-use-it-e3c6186d008f) encoded. This left us with a large number of parameters to train, which is why training this model takes approximately 14 hours on our systems (may change with different hardware). 
+This model was built using the standard [sci-kit learn implementation](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html) of multinomial logistic regression. The code for this process is available in the [cov-lineages/cov-support](https://github.com/cov-lineages/cov-support/blob/master/cov_support/scripts/pangoLEARNMultinomialLogReg_v1.py) repository.
+
+<p> Multinomial logistic regression is an extremely commonly used model as it is able to simply and intuitively assign probabilities to class assignments. However, it does not incorporate any hierarchical structure. We are currently developing new models that do incorporate hierarchical structure. However, given the limitations of this simple model, it has performed surprisingly well with this data. While more complex models may offer improvements in assignment accuracies for smaller lineages, the logistic regression has the advantages of being intuitive, easy to implement, and relatively fast to train. </p>
+
 ### Recall rate
+<strong>Pre-pangolin 2.0:</strong>
 Of 9,843 GISAID sequences assigned lineages by hand (taking sequence, phylogeny and metadata into account), pangolin accurately assigns the lineage of 97.85% of those sequences. Of the sequences that were not recalled correctly, 74.5% had 0 bootstrap and 0 alrt. We're continuing to work to improve this recall rate, but recommend interpreting the pangolin output cautiously with due attention to the UFbootstrap and aLRT values. 
 
 Given cov-lineages is relatively slow evolving for an RNA virus and there is still not a huge amount of diversity, missing or ambiguous data at key residues may lead to incorrect placement within the guide tree. We have a filter in place that by default with not call a lineage for any sequence with >50% N-content, but this can be made more conservative with the command line option `--max-ambig`.
+
+<strong>pangolin 2.0 onwards:</strong>
+
+<p>Recall and supporting statistics were generated using the same procedure as above to train a model using 75% of the data, while 25% of the data was used as testing data. Smaller lineages may have lower recall rates due to the very small sample sizes in the test set.</p>
+
+
+### SNPs associated with a given lineage
+
+The model trains coefficients for each input parameter, for each potential lineage assignment. A particularly large coefficient in a particular lineage’s sigmoid function indicates a stronger association between that location and that lineage. A particularly negative coefficient in a particular lineage’s sigmoid function indicates the opposite. In other words, we can pick up SNPs that are strongly associated with or strongly negatively associated with a given lineage. This information is hosted for download from the [pangoLEARN](https://github.com/cov-lineages/pangoLEARN) data repository.
+
 
 ### Source data
 
 <strong>pangolin</strong> runs a multinomial logistic regression model trained against lineage assignments based on GISAID data.
 
-Legacy <strong>pangolin</strong> runs using a guide tree and alignment hosted at [``cov-lineages/lineages``](https://github.com/cov-lineages/lineages.git). Some of this data is sourced from GISAID, but anonymised and encrypted to fit with guidelines. Appropriate permissions have been given and acknowledgements for the teams that have worked to provide the original SARS-CoV-2 genome sequences to GISAID are also hosted in [``cov-lineages.org``](https://cov-lineages.org/gisaid_acknowledgements.html).
+Legacy <strong>pangolin</strong> runs using a guide tree and alignment hosted at [<strong>cov-lineages/lineages</strong>](https://github.com/cov-lineages/lineages.git). Some of this data is sourced from GISAID, but anonymised and encrypted to fit with guidelines. Appropriate permissions have been given and acknowledgements for the teams that have worked to provide the original SARS-CoV-2 genome sequences to GISAID are also hosted [here](https://cov-lineages.org/gisaid_acknowledgements.html).
 
 
 ### Authors
