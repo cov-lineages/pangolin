@@ -18,6 +18,7 @@
   * [Usage](#usage)
   * [Output](#output)
   * [Recall rate](#recall-rate)
+  * [SNPs associated with a given lineage](#snps-associated-with-a-given-lineage)
   * [Source data](#source-data)
   * [Authors](#authors)
   * [Citing <strong>pangolin</strong>](#citing-pangolin)
