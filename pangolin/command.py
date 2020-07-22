@@ -160,73 +160,75 @@ def main(sysargs = sys.argv[1:]):
     data_dir = ""
     if args.data:
         data_dir = os.path.join(cwd, args.data)
-    else:
-        if args.legacy:
+
+    if args.legacy:
+        if not args.data
             lineages_dir = lineages.__path__[0]
             data_dir = os.path.join(lineages_dir,"data")
 
-            representative_aln = ""
-            guide_tree = ""
-            lineages_csv = ""
+        representative_aln = ""
+        guide_tree = ""
+        lineages_csv = ""
 
-            for r,d,f in os.walk(data_dir):
-                for fn in f:
-                    if args.include_putative:
-                        if fn.endswith("putative.fasta"):
-                            representative_aln = os.path.join(r, fn)
-                        elif fn.endswith("putative.fasta.treefile"):
-                            guide_tree = os.path.join(r, fn)
-                        elif fn.endswith(".csv") and fn.startswith("lineages"):
-                            lineages_csv = os.path.join(r, fn)
-                    else:
-                        if fn.endswith("safe.fasta"):
-                            representative_aln = os.path.join(r, fn)
-                        elif fn.endswith("safe.fasta.treefile"):
-                            guide_tree = os.path.join(r, fn)
-                        elif fn.endswith(".csv") and fn.startswith("lineages"):
-                            lineages_csv = os.path.join(r, fn)
+        for r,d,f in os.walk(data_dir):
+            for fn in f:
+                if args.include_putative:
+                    if fn.endswith("putative.fasta"):
+                        representative_aln = os.path.join(r, fn)
+                    elif fn.endswith("putative.fasta.treefile"):
+                        guide_tree = os.path.join(r, fn)
+                    elif fn.endswith(".csv") and fn.startswith("lineages"):
+                        lineages_csv = os.path.join(r, fn)
+                else:
+                    if fn.endswith("safe.fasta"):
+                        representative_aln = os.path.join(r, fn)
+                    elif fn.endswith("safe.fasta.treefile"):
+                        guide_tree = os.path.join(r, fn)
+                    elif fn.endswith(".csv") and fn.startswith("lineages"):
+                        lineages_csv = os.path.join(r, fn)
 
-            
-            if representative_aln=="" or guide_tree=="" or lineages_csv=="":
-                print("""Check your environment, didn't find appropriate files from the lineages repo, please see https://cov-lineages.org/pangolin.html for installation instructions. \nTreefile must end with `.treefile`.\
+        
+        if representative_aln=="" or guide_tree=="" or lineages_csv=="":
+            print("""Check your environment, didn't find appropriate files from the lineages repo, please see https://cov-lineages.org/pangolin.html for installation instructions. \nTreefile must end with `.treefile`.\
 \nAlignment must be in `.fasta` format.\n Trained model must exist. \
 If you've specified --include-putative\n \
 you must have files ending in putative.fasta.treefile\nExiting.""")
-                exit(1)
-            else:
-                print("\nData files found")
-                print(f"Sequence alignment:\t{representative_aln}")
-                print(f"Guide tree:\t\t{guide_tree}")
-                print(f"Lineages csv:\t\t{lineages_csv}")
-                config["representative_aln"]=representative_aln
-                config["guide_tree"]=guide_tree
-
+            exit(1)
         else:
+            print("\nData files found")
+            print(f"Sequence alignment:\t{representative_aln}")
+            print(f"Guide tree:\t\t{guide_tree}")
+            print(f"Lineages csv:\t\t{lineages_csv}")
+            config["representative_aln"]=representative_aln
+            config["guide_tree"]=guide_tree
+
+    else:
+        if not args.data
             pangoLEARN_dir = pangoLEARN.__path__[0]
             data_dir = os.path.join(pangoLEARN_dir,"data")
-            print(f"Looking in {data_dir} for data files...")
-            trained_model = ""
-            header_file = ""
-            lineages_csv = ""
+        print(f"Looking in {data_dir} for data files...")
+        trained_model = ""
+        header_file = ""
+        lineages_csv = ""
 
-            for r,d,f in os.walk(data_dir):
-                for fn in f:
-                    if fn == "multinomialLogRegHeaders_v1.joblib":
-                        header_file = os.path.join(r, fn)
-                    elif fn == "multinomialLogReg_v1.joblib":
-                        trained_model = os.path.join(r, fn)
-                    elif fn.endswith(".csv") and fn.startswith("lineages"):
-                        lineages_csv = os.path.join(r, fn)
-            if trained_model=="" or header_file==""  or lineages_csv=="":
-                print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
-                exit(1)
-            else:
-                print("\nData files found")
-                print(f"Trained model:\t{trained_model}")
-                print(f"Header file:\t{header_file}")
-                print(f"Lineages csv:\t{lineages_csv}")
-                config["trained_model"] = trained_model
-                config["header_file"] = header_file
+        for r,d,f in os.walk(data_dir):
+            for fn in f:
+                if fn == "multinomialLogRegHeaders_v1.joblib":
+                    header_file = os.path.join(r, fn)
+                elif fn == "multinomialLogReg_v1.joblib":
+                    trained_model = os.path.join(r, fn)
+                elif fn.endswith(".csv") and fn.startswith("lineages"):
+                    lineages_csv = os.path.join(r, fn)
+        if trained_model=="" or header_file==""  or lineages_csv=="":
+            print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
+            exit(1)
+        else:
+            print("\nData files found")
+            print(f"Trained model:\t{trained_model}")
+            print(f"Header file:\t{header_file}")
+            print(f"Lineages csv:\t{lineages_csv}")
+            config["trained_model"] = trained_model
+            config["header_file"] = header_file
 
     reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
     config["reference_fasta"] = reference_fasta
