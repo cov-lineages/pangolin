@@ -188,7 +188,7 @@ def main(sysargs = sys.argv[1:]):
 
             
             if representative_aln=="" or guide_tree=="" or lineages_csv=="":
-                print("""Check your environment, didn't find appropriate files from the lineages repo.\nTreefile must end with `.treefile`.\
+                print("""Check your environment, didn't find appropriate files from the lineages repo, please see https://cov-lineages.org/pangolin.html for installation instructions. \nTreefile must end with `.treefile`.\
 \nAlignment must be in `.fasta` format.\n Trained model must exist. \
 If you've specified --include-putative\n \
 you must have files ending in putative.fasta.treefile\nExiting.""")
@@ -218,7 +218,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                     elif fn.endswith(".csv") and fn.startswith("lineages"):
                         lineages_csv = os.path.join(r, fn)
             if trained_model=="" or header_file==""  or lineages_csv=="":
-                print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed.""")
+                print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
                 exit(1)
             else:
                 print("\nData files found")
