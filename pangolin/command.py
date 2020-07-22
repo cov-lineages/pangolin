@@ -56,7 +56,7 @@ def main(sysargs = sys.argv[1:]):
         snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     # find the Snakefile
     else:
-        snakefile = os.path.join(thisdir, 'scripts','pangoLEARN.smk')
+        snakefile = os.path.join(thisdir, 'scripts','pangolearn.smk')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
