@@ -9,8 +9,11 @@ import tempfile
 import pprint
 import json
 import lineages
-import setuptools
+import pangoLEARN
+
+import pkg_resources
 from Bio import SeqIO
+
 
 from . import _program
 
@@ -29,17 +32,19 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
-    parser.add_argument('-f', '--force', action='store_true',help="Overwrite all output",dest="force")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
+    parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
-    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin")
-    parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree",dest="write_tree")
+    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
+    parser.add_argument('--legacy',action='store_true',help="LEGACY: Use original phylogenetic assignment methods with guide tree. Note, will be significantly slower than pangoLEARN")
+    parser.add_argument('--write-tree', action='store_true',help="Output a phylogeny for each query sequence placed in the guide tree. Only works in combination with legacy `--assign-using-tree`",dest="write_tree")
     parser.add_argument('-t', '--threads', action='store',type=int,help="Number of threads")
     parser.add_argument("-p","--include-putative",action="store_true",help="Include the bleeding edge lineage definitions in assignment",dest="include_putative")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
+    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -47,8 +52,11 @@ def main(sysargs = sys.argv[1:]):
     else:
         args = parser.parse_args(sysargs)
 
+    if args.legacy:
+        snakefile = os.path.join(thisdir, 'scripts','Snakefile')
     # find the Snakefile
-    snakefile = os.path.join(thisdir, 'scripts','Snakefile')
+    else:
+        snakefile = os.path.join(thisdir, 'scripts','pangoLEARN.smk')
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
@@ -67,6 +75,12 @@ def main(sysargs = sys.argv[1:]):
     outdir = ''
     if args.outdir:
         outdir = os.path.join(cwd, args.outdir)
+        if not os.path.exists(outdir):
+            try:
+                os.mkdir(outdir)
+            except:
+                sys.stderr.write(f'Error: cannot create directory {outdir}')
+                sys.exit(-1)
     else:
         outdir = cwd
 
@@ -86,6 +100,10 @@ def main(sysargs = sys.argv[1:]):
     else:
         temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
         tempdir = temporary_directory.name
+    
+    if args.no_temp:
+        print(f"--no-temp: All intermediate files will be written to {outdir}")
+        tempdir = outdir
 
     """ 
     QC steps:
@@ -131,59 +149,94 @@ def main(sysargs = sys.argv[1:]):
         "outdir":outdir,
         "outfile":outfile,
         "tempdir":tempdir,
+        "trim_start":265,   # where to pad to using datafunk
+        "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
-        "lineages_version":lineages.__version__
+        "lineages_version":lineages.__version__,
+        "pangoLEARN_version":pangoLEARN.__version__
         }
 
-    if args.force:
-        config["force"]="forceall"
     # find the data
     data_dir = ""
     if args.data:
         data_dir = os.path.join(cwd, args.data)
     else:
-        lineages_dir = lineages.__path__[0]
-        data_dir = os.path.join(lineages_dir,"data")
+        if args.legacy:
+            lineages_dir = lineages.__path__[0]
+            data_dir = os.path.join(lineages_dir,"data")
 
-    print(f"Looking in {data_dir} for data files...")
-    representative_aln = ""
-    guide_tree = ""
-    lineages_csv = ""
-    for r,d,f in os.walk(data_dir):
-        for fn in f:
-            if args.include_putative:
-                if fn.endswith("putative.fasta"):
-                    representative_aln = os.path.join(r, fn)
-                elif fn.endswith("putative.fasta.treefile"):
-                    guide_tree = os.path.join(r, fn)
-                elif fn.endswith(".csv") and fn.startswith("lineages"):
-                    lineages_csv = os.path.join(r, fn)
-            else:
-                if fn.endswith("safe.fasta"):
-                    representative_aln = os.path.join(r, fn)
-                elif fn.endswith("safe.fasta.treefile"):
-                    guide_tree = os.path.join(r, fn)
-                elif fn.endswith(".csv") and fn.startswith("lineages"):
-                    lineages_csv = os.path.join(r, fn)
+            representative_aln = ""
+            guide_tree = ""
+            lineages_csv = ""
 
-    print("\nData files found")
-    print(f"Sequence alignment:\t{representative_aln}")
-    print(f"Guide tree:\t\t{guide_tree}")
-    print(f"Lineages csv:\t\t{lineages_csv}")
-    if representative_aln=="" or guide_tree=="" or lineages_csv=="":
-        print("""Didn't find appropriate files.\nTreefile must end with `.treefile`.\nAlignment must be in `.fasta` format.\n \
-If you've specified --include-putative \n 
+            for r,d,f in os.walk(data_dir):
+                for fn in f:
+                    if args.include_putative:
+                        if fn.endswith("putative.fasta"):
+                            representative_aln = os.path.join(r, fn)
+                        elif fn.endswith("putative.fasta.treefile"):
+                            guide_tree = os.path.join(r, fn)
+                        elif fn.endswith(".csv") and fn.startswith("lineages"):
+                            lineages_csv = os.path.join(r, fn)
+                    else:
+                        if fn.endswith("safe.fasta"):
+                            representative_aln = os.path.join(r, fn)
+                        elif fn.endswith("safe.fasta.treefile"):
+                            guide_tree = os.path.join(r, fn)
+                        elif fn.endswith(".csv") and fn.startswith("lineages"):
+                            lineages_csv = os.path.join(r, fn)
+
+            
+            if representative_aln=="" or guide_tree=="" or lineages_csv=="":
+                print("""Check your environment, didn't find appropriate files from the lineages repo, please see https://cov-lineages.org/pangolin.html for installation instructions. \nTreefile must end with `.treefile`.\
+\nAlignment must be in `.fasta` format.\n Trained model must exist. \
+If you've specified --include-putative\n \
 you must have files ending in putative.fasta.treefile\nExiting.""")
-        exit(1)
-    else:
-        config["representative_aln"]=representative_aln
-        config["guide_tree"]=guide_tree
+                exit(1)
+            else:
+                print("\nData files found")
+                print(f"Sequence alignment:\t{representative_aln}")
+                print(f"Guide tree:\t\t{guide_tree}")
+                print(f"Lineages csv:\t\t{lineages_csv}")
+                config["representative_aln"]=representative_aln
+                config["guide_tree"]=guide_tree
+
+        else:
+            pangoLEARN_dir = pangoLEARN.__path__[0]
+            data_dir = os.path.join(pangoLEARN_dir,"data")
+            print(f"Looking in {data_dir} for data files...")
+            trained_model = ""
+            header_file = ""
+            lineages_csv = ""
+
+            for r,d,f in os.walk(data_dir):
+                for fn in f:
+                    if fn == "multinomialLogRegHeaders_v1.joblib":
+                        header_file = os.path.join(r, fn)
+                    elif fn == "multinomialLogReg_v1.joblib":
+                        trained_model = os.path.join(r, fn)
+                    elif fn.endswith(".csv") and fn.startswith("lineages"):
+                        lineages_csv = os.path.join(r, fn)
+            if trained_model=="" or header_file==""  or lineages_csv=="":
+                print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
+                exit(1)
+            else:
+                print("\nData files found")
+                print(f"Trained model:\t{trained_model}")
+                print(f"Header file:\t{header_file}")
+                print(f"Lineages csv:\t{lineages_csv}")
+                config["trained_model"] = trained_model
+                config["header_file"] = header_file
+
+    reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
+    config["reference_fasta"] = reference_fasta
 
     if args.write_tree:
         config["write_tree"]="True"
 
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
+
 
     if args.verbose:
         quiet_mode = False
@@ -192,7 +245,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     # run subtyping
     status = snakemake.snakemake(snakefile, printshellcmds=True,
-                                 dryrun=args.dry_run, forceall=args.force,force_incomplete=True,
+                                 dryrun=args.dry_run, forceall=True,force_incomplete=True,
                                  config=config, cores=threads,lock=False,quiet=quiet_mode,workdir=tempdir
                                  )
 

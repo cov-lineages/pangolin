@@ -7,6 +7,7 @@ dependencies:
   - biopython=1.74
   - iqtree<2
   - mafft
+  - minimap2
   - pip=19.3.1
   - python=3.6
   - snakemake-minimal=5.13
@@ -14,4 +15,6 @@ dependencies:
     - pandas==1.0.1
     - pytools==2020.1
     - dendropy>=4.4.0
-    - git+https://github.com/hCoV-2019/lineages.git
+    - git+https://github.com/cov-ert/datafunk.git
+    - git+https://github.com/cov-lineages/pangoLEARN.git
+    - git+https://github.com/cov-lineages/lineages.git@2020-05-19-2 
