@@ -162,7 +162,7 @@ def main(sysargs = sys.argv[1:]):
         data_dir = os.path.join(cwd, args.data)
 
     if args.legacy:
-        if not args.data
+        if not args.data:
             lineages_dir = lineages.__path__[0]
             data_dir = os.path.join(lineages_dir,"data")
 
@@ -203,7 +203,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             config["guide_tree"]=guide_tree
 
     else:
-        if not args.data
+        if not args.data:
             pangoLEARN_dir = pangoLEARN.__path__[0]
             data_dir = os.path.join(pangoLEARN_dir,"data")
         print(f"Looking in {data_dir} for data files...")
