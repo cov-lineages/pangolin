@@ -129,7 +129,7 @@ def main(sysargs = sys.argv[1:]):
             else:
                 run.append(record)
     if run == []:
-        sys.stderr.write(f'Error: no query sequences have passed the qc')
+        sys.stderr.write(f'Error: no query sequences have passed the qc\n')
         sys.exit(-1)
     post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
     with open(post_qc_query,"w") as fw:
