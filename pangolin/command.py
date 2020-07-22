@@ -34,7 +34,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    parser.add_argument('--max-ambig', action="store", default=0.8, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
+    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument('--legacy',action='store_true',help="LEGACY: Use original phylogenetic assignment methods with guide tree. Note, will be significantly slower than pangoLEARN")
