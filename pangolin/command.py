@@ -217,7 +217,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                     header_file = os.path.join(r, fn)
                 elif fn == "multinomialLogReg_v1.joblib":
                     trained_model = os.path.join(r, fn)
-                elif fn.endswith(".csv") and fn.startswith("lineages"):
+                elif fn == "lineages.metadata.csv":
                     lineages_csv = os.path.join(r, fn)
         if trained_model=="" or header_file==""  or lineages_csv=="":
             print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
