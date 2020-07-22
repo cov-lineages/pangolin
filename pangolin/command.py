@@ -128,7 +128,9 @@ def main(sysargs = sys.argv[1:]):
                 print(f"{record.id}\thas an N content of {prop_N}")
             else:
                 run.append(record)
-
+    if run == []:
+        sys.stderr.write(f'Error: no query sequences have passed the qc')
+        sys.exit(-1)
     post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
     with open(post_qc_query,"w") as fw:
         SeqIO.write(run, fw, "fasta")
