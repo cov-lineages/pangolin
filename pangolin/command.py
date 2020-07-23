@@ -128,6 +128,7 @@ def main(sysargs = sys.argv[1:]):
                 print(f"{record.id}\thas an N content of {prop_N}")
             else:
                 run.append(record)
+
     if not args.legacy:
         if run == []:
             with open(outfile, "w") as fw:
@@ -139,8 +140,9 @@ def main(sysargs = sys.argv[1:]):
                         if item.startswith("fail="):
                             reason = item.split("=")[1]
                     fw.write(f"{record.id},None,0,{pangoLEARN.__version__},fail,{reason}\n")
-            sys.stderr.write(f'Note: no query sequences have passed the qc\n')
-            sys.exit(-1)
+            print(f'Note: no query sequences have passed the qc\n')
+            sys.exit(0)
+            
     post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
     with open(post_qc_query,"w") as fw:
         SeqIO.write(run, fw, "fasta")
