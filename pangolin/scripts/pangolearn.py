@@ -10,9 +10,6 @@ import argparse
 import joblib
 import argparse
 
-dataList = []
-tempDataLines = []
-idList = []
 
 def parse_args():
     parser = argparse.ArgumentParser(description='pangoLEARN.')
@@ -25,157 +22,119 @@ def parse_args():
 
 args = parse_args()
 
-sequencesFile = args.sequences_file
-modelFile = args.model_file
-headerFile = args.header_file
 
 # small class to store vector objects
 class VectorObject:
-	def __init__(self, vector):
-		self.vector = vector
+    def __init__(self, vector):
+        self.vector = vector
 
-	def equals(self, vector):
-		for i in range(len(vector.vector)):
-			if vector.vector[i] != self.vector[i]:
-				return False
+    def equals(self, vector):
+        for i in range(len(vector.vector)):
+            if vector.vector[i] != self.vector[i]:
+                return False
 
-		return True
+        return True
 
 
 # produces the proper one-hot encoding for a particular genomic site
 def getOneHotEncoding(char):
-	# ATCGN-
-	if char == "A":
-		return VectorObject([1, 0, 0, 0, 0, 0])
-	elif char == "T":
-		return VectorObject([0, 1, 0, 0, 0, 0])
-	elif char == "C":
-		return VectorObject([0, 0, 1, 0, 0, 0])
-	elif char == "G":
-		return VectorObject([0, 0, 0, 1, 0, 0])
-	elif char == "-":
-		return VectorObject([0, 0, 0, 0, 0, 1])
-	else:
-		return VectorObject([0, 0, 0, 0, 1, 0])
+    alphabet = 'ATCGN-'
+    v = [0] * len(alphabet)
+    if char in alphabet:
+        v[alphabet.index(char)] = 1
+        return VectorObject(v)
+    else:
+        # default to N
+        return VectorObject([0, 0, 0, 0, 1, 0])
+
+
+# converts sequence to flattened one-hot vector
+def encodeSeq(seq, indiciesToKeep):
+    dataLine = []
+    for i in indiciesToKeep:
+        if i < len(seq):
+            dataLine.extend(getOneHotEncoding(seq[i]).vector)
+    return dataLine
 
 
 # reads in the two data files
-def readInAndFormatData():
-	# open sequencesFile, which is the first snakemake input file
-	with open(sequencesFile) as f:
-		currentSeq = ""
+def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
+    idList = []
+    seqList = []
 
-		# go line by line through the file, collecting a list of the sequences
-		for line in f:
-			# if the line isn't the header line
-			if "taxon,lineage" not in line:
-				line = line.strip()
+    # open sequencesFile, which is the first snakemake input file
+    with open(sequencesFile) as f:
+        currentSeq = ""
 
-				if ">" in line:
-					# this is a fasta line designating an id, but we don't want to keep the >
-					idList.append(line[1:])
+        # go line by line through the file, collecting a list of the sequences
+        for line in f:
+            # if the line isn't the header line
+            if "taxon,lineage" not in line:
+                line = line.strip()
 
-					# starting new entry, gotta save the old one
-					if currentSeq:
-						tempDataLines.append(currentSeq)
+                if ">" in line:
+                    # starting new entry, gotta save the old one
+                    if currentSeq:
+                        # yield sequence as one-hot encoded vector
+                        idList.append(seqid)
+                        seqList.append(encodeSeq(currentSeq, indiciesToKeep))
 
-					currentSeq = ""
+                    # this is a fasta line designating an id, but we don't want to keep the >
+                    seqid = line.strip('>')
+                    currentSeq = ""
 
-				else:
-					currentSeq = currentSeq + line
+                else:
+                    currentSeq = currentSeq + line
 
-		# gotta get the last one
-		if  currentSeq:
-			tempDataLines.append(currentSeq)
+            if len(seqList) == blockSize:
+                yield idList, seqList
+                idList = []
+                seqList = []
 
-	# get a list of viral genomes, represented as a list of one-hot encoded vectors
-	for line in tempDataLines:
-		dataLine = []
-		for index in range(len(line)):
-				char = line[index]
+        # gotta get the last one
+        idList.append(seqid)
+        seqList.append(encodeSeq(currentSeq, indiciesToKeep))
 
-				dataLine.append(getOneHotEncoding(char))
-				
-		dataList.append(dataLine)
-
-	# close the file
-	f.close()
+    yield idList, seqList
 
 
-# remove the indicies representing genomic locations which aren't used by the model
-def removeIndices(headersFile):
-	# will hold the final data from which the model will make predictions
-	finalList = []
-	# list of headers representing the genomic locations of each entry
-	headers = list(range(len(dataList[0])))
-	# list which will hold the indicies of interest
-	indiciesToKeep = []
 
-	# loading the list of headers the model needs.
-	# example: '29657-A', '29657-T', '29657-C', '29657-G', '29657-N', '29657-gap'
-	model_headers = joblib.load(headersFile)
+# loading the list of headers the model needs.
+# example: '29657-A', '29657-T', '29657-C', '29657-G', '29657-N', '29657-gap'
+model_headers = joblib.load(args.header_file)
+indiciesToKeep = []
 
-	# by cycling through model_headers, get which column indicies we need to keep in the test data
-	for h in model_headers:
-		if h != "lineage" and "-A" in h:
-			# -1 because in the training data the 0 position is the lineage
-			index = int(h.split("-")[0]) - 1
-			indiciesToKeep.append(index)
-
-	# for each entry in dataList, remove the irrelevant columns
-	while len(dataList) > 0:
-		line = dataList.pop(0)
-
-		finalLine = []
-
-		for index in indiciesToKeep:
-			if index < len(line):
-				finalLine.extend(line[index].vector)
-
-		finalList.append(finalLine)
-
-	# return the final data, along with the relevant headers 
-	# model_headers[1:] because the first is just "lineage" which we won't have for this test data
-	return finalList, model_headers[1:]
+# by cycling through model_headers, get which column indicies we need to keep in the test data
+for h in model_headers:
+    if h != "lineage" and "-A" in h:
+        # -1 because in the training data the 0 position is the lineage
+        index = int(h.split("-")[0]) - 1
+        indiciesToKeep.append(index)
 
 
-print("reading in data " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
+print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+loaded_model = joblib.load(args.model_file)
 
-readInAndFormatData()
-
-print("removing unnecessary columns " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
-
-dataList, headers = removeIndices(headerFile)
-
-#print("constructing data frame " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
-
-df = pd.DataFrame(dataList, columns=headers)
-
-print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
-
-loaded_model = joblib.load(modelFile)
-
-print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
-
-predictions = loaded_model.predict_proba(df)
-
+print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 # write predictions to a file
 f = open(args.outfile, "w")
-for index in range(len(predictions)):
-	
-	maxScore = 0
-	maxIndex = -1
 
-	# get the max probability score and its assosciated index
-	for i in range(len(predictions[index])):
-		if predictions[index][i] > maxScore:
-			maxScore = predictions[index][i]
-			maxIndex = i
+for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
+    print("processing block of {} sequences {}".format(
+        len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+    ))
+    df = pd.DataFrame(seqList, columns=model_headers[1:])
+    predictions = loaded_model.predict_proba(df)
 
-	score = maxScore
-	prediction = loaded_model.classes_[maxIndex]
-	seqId = idList[index]
+    for row, pred in enumerate(predictions):
+        # find index of maximum prediction score
+        intermed = [(pr, idx) for idx, pr in enumerate(pred)]
+        intermed.sort(reverse=True)
+        maxScore, maxIndex = intermed[0]
 
-	f.write(seqId + "," + prediction + "," + str(score) + "\n")
+        prediction = loaded_model.classes_[maxIndex]
+        f.write("{},{},{}\n".format(idList[row], prediction, maxScore))
 
 f.close()
+
+print("complete " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
