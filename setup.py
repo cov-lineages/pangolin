@@ -40,6 +40,7 @@ setup(name='pangolin',
             "pytools>=2020.1",
             'pandas>=1.0.1',
             "wheel>=0.34",
+            'joblib>=0.11',
             'sklearn',
             'pysam>=0.15.4'
         ],
