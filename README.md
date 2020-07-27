@@ -15,6 +15,7 @@
   * [Install pangolin](#install-pangolin)
   * [Check the install worked](#check-the-install-worked)
   * [Updating pangolin](#updating-pangolin)
+  * [Updating from pangolin v1.0 to pangolin v2.0](#updating-from-pangolin-v10-to-pangolin-v20)
   * [Usage](#usage)
   * [Output](#output)
   * [pangoLEARN description](#pangolearn-description)
@@ -77,6 +78,16 @@ updates the conda environment (you're unlikely to need to do this, but just in c
 updates if there is a new data release
 6. ``pip install git+https://github.com/cov-lineages/lineages.git --upgrade`` \
 updates if there is a new data release, this is the legacy data repo and is unlikely to have tagged releases in the future
+
+### Updating from pangolin v1.0 to pangolin v2.0 
+
+1. If invoking data path (-d), changed to pangoLEARN instead of lineages
+```
+-d /home/vix/miniconda3/envs/pangolin/lib/python3.6/site-packages/pangoLEARN/data
+```
+2. The columns in the output file has also changed, unless running `--legacy`
+  - No longer `UFBootstrap`, `aLRT` or `lineages_version`
+  - New fields: `probability` and `pangoLEARN_version`
 
 ### Usage
 
