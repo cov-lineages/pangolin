@@ -128,8 +128,11 @@ def removeIndices(headersFile):
 
 		finalLine = []
 
-		for index in range(len(line)):
-			if index in indiciesToKeep:
+		#for index in range(len(line)):
+		#	if index in indiciesToKeep:
+		#		finalLine.extend(line[index].vector)
+		for index in indiciesToKeep:
+			if index < len(line):
 				finalLine.extend(line[index].vector)
 
 		finalList.append(finalLine)
@@ -146,6 +149,8 @@ readInAndFormatData()
 print("removing unnecessary columns " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
 
 dataList, headers = removeIndices(headerFile)
+
+print("constructing data frame" + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"));
 
 df = pd.DataFrame(dataList, columns=headers)
 
