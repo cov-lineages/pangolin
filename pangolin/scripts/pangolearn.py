@@ -12,12 +12,12 @@ import argparse
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='pangoLEARN.')
-    parser.add_argument("--header-file", action="store", type=str, dest="header_file")
-    parser.add_argument("--model-file", action="store", type=str, dest="model_file")
-    parser.add_argument("--fasta", action="store", type=str, dest="sequences_file")
-    parser.add_argument("-o","--outfile", action="store", type=str, dest="outfile")
-    return parser.parse_args()
+	parser = argparse.ArgumentParser(description='pangoLEARN.')
+	parser.add_argument("--header-file", action="store", type=str, dest="header_file")
+	parser.add_argument("--model-file", action="store", type=str, dest="model_file")
+	parser.add_argument("--fasta", action="store", type=str, dest="sequences_file")
+	parser.add_argument("-o","--outfile", action="store", type=str, dest="outfile")
+	return parser.parse_args()
 
 
 args = parse_args()
@@ -25,77 +25,82 @@ args = parse_args()
 
 # small class to store vector objects
 class VectorObject:
-    def __init__(self, vector):
-        self.vector = vector
+	def __init__(self, vector):
+		self.vector = vector
 
-    def equals(self, vector):
-        for i in range(len(vector.vector)):
-            if vector.vector[i] != self.vector[i]:
-                return False
+	def equals(self, vector):
+		for i in range(len(vector.vector)):
+			if vector.vector[i] != self.vector[i]:
+				return False
 
-        return True
+		return True
 
 
 # produces the proper one-hot encoding for a particular genomic site
 def getOneHotEncoding(char):
-    alphabet = 'ATCGN-'
-    v = [0] * len(alphabet)
-    if char in alphabet:
-        v[alphabet.index(char)] = 1
-        return VectorObject(v)
-    else:
-        # default to N
-        return VectorObject([0, 0, 0, 0, 1, 0])
+	# ATCGN-
+	if char == "A":
+		return VectorObject([1, 0, 0, 0, 0, 0])
+	elif char == "T":
+		return VectorObject([0, 1, 0, 0, 0, 0])
+	elif char == "C":
+		return VectorObject([0, 0, 1, 0, 0, 0])
+	elif char == "G":
+		return VectorObject([0, 0, 0, 1, 0, 0])
+	elif char == "-":
+		return VectorObject([0, 0, 0, 0, 0, 1])
+	else:
+		return VectorObject([0, 0, 0, 0, 1, 0])
 
 
 # converts sequence to flattened one-hot vector
 def encodeSeq(seq, indiciesToKeep):
-    dataLine = []
-    for i in indiciesToKeep:
-        if i < len(seq):
-            dataLine.extend(getOneHotEncoding(seq[i]).vector)
-    return dataLine
+	dataLine = []
+	for i in indiciesToKeep:
+		if i < len(seq):
+			dataLine.extend(getOneHotEncoding(seq[i]).vector)
+	return dataLine
 
 
 # reads in the two data files
 def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
-    idList = []
-    seqList = []
+	idList = []
+	seqList = []
 
-    # open sequencesFile, which is the first snakemake input file
-    with open(sequencesFile) as f:
-        currentSeq = ""
+	# open sequencesFile, which is the first snakemake input file
+	with open(sequencesFile) as f:
+		currentSeq = ""
 
-        # go line by line through the file, collecting a list of the sequences
-        for line in f:
-            # if the line isn't the header line
-            if "taxon,lineage" not in line:
-                line = line.strip()
+		# go line by line through the file, collecting a list of the sequences
+		for line in f:
+			# if the line isn't the header line
+			if "taxon,lineage" not in line:
+				line = line.strip()
 
-                if ">" in line:
-                    # starting new entry, gotta save the old one
-                    if currentSeq:
-                        # yield sequence as one-hot encoded vector
-                        idList.append(seqid)
-                        seqList.append(encodeSeq(currentSeq, indiciesToKeep))
+				if ">" in line:
+					# starting new entry, gotta save the old one
+					if currentSeq:
+						# yield sequence as one-hot encoded vector
+						idList.append(seqid)
+						seqList.append(encodeSeq(currentSeq, indiciesToKeep))
 
-                    # this is a fasta line designating an id, but we don't want to keep the >
-                    seqid = line.strip('>')
-                    currentSeq = ""
+					# this is a fasta line designating an id, but we don't want to keep the >
+					seqid = line.strip('>')
+					currentSeq = ""
 
-                else:
-                    currentSeq = currentSeq + line
+				else:
+					currentSeq = currentSeq + line
 
-            if len(seqList) == blockSize:
-                yield idList, seqList
-                idList = []
-                seqList = []
+			if len(seqList) == blockSize:
+				yield idList, seqList
+				idList = []
+				seqList = []
 
-        # gotta get the last one
-        idList.append(seqid)
-        seqList.append(encodeSeq(currentSeq, indiciesToKeep))
+		# gotta get the last one
+		idList.append(seqid)
+		seqList.append(encodeSeq(currentSeq, indiciesToKeep))
 
-    yield idList, seqList
+	yield idList, seqList
 
 
 
@@ -106,34 +111,43 @@ indiciesToKeep = []
 
 # by cycling through model_headers, get which column indicies we need to keep in the test data
 for h in model_headers:
-    if h != "lineage" and "-A" in h:
-        # -1 because in the training data the 0 position is the lineage
-        index = int(h.split("-")[0]) - 1
-        indiciesToKeep.append(index)
+	if h != "lineage" and "-A" in h:
+		# -1 because in the training data the 0 position is the lineage
+		index = int(h.split("-")[0]) - 1
+		indiciesToKeep.append(index)
 
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
+
 
 print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 # write predictions to a file
 f = open(args.outfile, "w")
 
 for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
-    print("processing block of {} sequences {}".format(
-        len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-    ))
-    df = pd.DataFrame(seqList, columns=model_headers[1:])
-    predictions = loaded_model.predict_proba(df)
+	print("processing block of {} sequences {}".format(
+		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+	))
+	df = pd.DataFrame(seqList, columns=model_headers[1:])
+	predictions = loaded_model.predict_proba(df)
 
-    for row, pred in enumerate(predictions):
-        # find index of maximum prediction score
-        intermed = [(pr, idx) for idx, pr in enumerate(pred)]
-        intermed.sort(reverse=True)
-        maxScore, maxIndex = intermed[0]
+	for index in range(len(predictions)):
 
-        prediction = loaded_model.classes_[maxIndex]
-        f.write("{},{},{}\n".format(idList[row], prediction, maxScore))
+		maxScore = 0
+		maxIndex = -1
+
+		# get the max probability score and its assosciated index
+		for i in range(len(predictions[index])):
+			if predictions[index][i] > maxScore:
+				maxScore = predictions[index][i]
+				maxIndex = i
+
+		score = maxScore
+		prediction = loaded_model.classes_[maxIndex]
+		seqId = idList[index]
+
+		f.write(seqId + "," + prediction + "," + str(score) + "\n")
 
 f.close()
 
