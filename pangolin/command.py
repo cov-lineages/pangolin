@@ -115,6 +115,9 @@ def main(sysargs = sys.argv[1:]):
     do_not_run = []
     run = []
     for record in SeqIO.parse(query, "fasta"):
+        # replace spaces in sequence headers with underscores
+        record.id = record.description.replace(' ', '_')
+
         if len(record) <args.minlen:
             record.description = record.description + f" fail=seq_len:{len(record)}"
             do_not_run.append(record)
