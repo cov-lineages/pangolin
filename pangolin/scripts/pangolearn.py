@@ -25,42 +25,20 @@ def parse_args():
 args = parse_args()
 
 
-# small class to store vector objects
-class VectorObject:
-	def __init__(self, vector):
-		self.vector = vector
-
-	def equals(self, vector):
-		for i in range(len(vector.vector)):
-			if vector.vector[i] != self.vector[i]:
-				return False
-
-		return True
+# function for handling weird sequence characters
+def clean(x):
+	if x == 'A' or x == 'C' or x == 'T' or x == '-':
+		return x
+	return 'N'
 
 
-# produces the proper one-hot encoding for a particular genomic site
-def getOneHotEncoding(char):
-	# ATCGN-
-	if char == "A":
-		return VectorObject([1, 0, 0, 0, 0, 0])
-	elif char == "T":
-		return VectorObject([0, 1, 0, 0, 0, 0])
-	elif char == "C":
-		return VectorObject([0, 0, 1, 0, 0, 0])
-	elif char == "G":
-		return VectorObject([0, 0, 0, 1, 0, 0])
-	elif char == "-":
-		return VectorObject([0, 0, 0, 0, 0, 1])
-	else:
-		return VectorObject([0, 0, 0, 0, 1, 0])
-
-
-# converts sequence to flattened one-hot vector
+# generates data line
 def encodeSeq(seq, indiciesToKeep):
 	dataLine = []
 	for i in indiciesToKeep:
 		if i < len(seq):
-			dataLine.extend(getOneHotEncoding(seq[i]).vector)
+			dataLine.extend(clean(seq[i]))
+
 	return dataLine
 
 
@@ -85,10 +63,10 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 						# yield sequence as one-hot encoded vector
 						idList.append(seqid)
 						seqList.append(encodeSeq(currentSeq, indiciesToKeep))
+						currentSeq = ""
 
 					# this is a fasta line designating an id, but we don't want to keep the >
 					seqid = line.strip('>')
-					currentSeq = ""
 
 				else:
 					currentSeq = currentSeq + line
@@ -105,25 +83,13 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 	yield idList, seqList
 
 
-
 # loading the list of headers the model needs.
-# example: '29657-A', '29657-T', '29657-C', '29657-G', '29657-N', '29657-gap'
 model_headers = joblib.load(args.header_file)
-indiciesToKeep = []
-
-# by cycling through model_headers, get which column indicies we need to keep in the test data
-for h in model_headers:
-	if h != "lineage" and "-A" in h:
-		# -1 because in the training data the 0 position is the lineage
-		index = int(h.split("-")[0]) - 1
-		indiciesToKeep.append(index)
-
+indiciesToKeep = model_headers[1:]
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
 
-
-print("generating predictions " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 # write predictions to a file
 f = open(args.outfile, "w")
 
@@ -131,7 +97,25 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	print("processing block of {} sequences {}".format(
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 	))
-	df = pd.DataFrame(seqList, columns=model_headers[1:])
+
+	# create a data from from the seqList
+	df = pd.DataFrame(seqList, columns=indiciesToKeep)
+
+	# possible nucleotide symbols
+	categories = ['A', 'C', 'G', 'T', 'N', '-']
+
+	# add extra rows to ensure all of the categories are represented, as otherwise 
+	# not enough columns will be created when we call get_dummies
+	for i in categories:
+		line = [i] * len(indiciesToKeep)
+		df.loc[len(df)] = line
+
+	# get one-hot encoding
+	df = pd.get_dummies(df, columns=indiciesToKeep)
+
+	# get rid of the fake data we just added
+	df.drop(df.tail(len(categories)).index,inplace=True)
+
 	predictions = loaded_model.predict_proba(df)
 
 	for index in range(len(predictions)):
