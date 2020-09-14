@@ -232,9 +232,9 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
         for r,d,f in os.walk(data_dir):
             for fn in f:
-                if fn == "multinomialLogRegHeaders_v1.joblib":
+                if fn == "pangolearnDecisionTreeHeaders_v1.joblib":
                     header_file = os.path.join(r, fn)
-                elif fn == "multinomialLogReg_v1.joblib":
+                elif fn == "pangolearnDecisionTree_v1.joblib":
                     trained_model = os.path.join(r, fn)
                 elif fn == "lineages.metadata.csv":
                     lineages_csv = os.path.join(r, fn)
