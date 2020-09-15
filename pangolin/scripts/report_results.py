@@ -38,7 +38,7 @@ def make_objects(background_data, lineages_present):
     with open(background_data,newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row["name"]
+            name = row["sequence_name"]
             lin_string = row["lineage"]
             date = row["sample date"]
             country = row["country"]
