@@ -11,7 +11,7 @@ from datetime import datetime
 import argparse
 import joblib
 import argparse
-
+import os
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='pangoLEARN.')
@@ -24,12 +24,30 @@ def parse_args():
 
 args = parse_args()
 
+dirname = os.path.dirname(__file__)
+referenceFile = os.path.join(dirname, '../data/reference.fasta')
+
+referenceSeq = ""
+referenceId = "Wuhan/WH04/2020"
+
+def findReferenceSeq():
+	currentSeq = ""
+
+	with open(referenceFile) as f:
+		for line in f:
+			if ">" not in line:
+				currentSeq = currentSeq + line.strip()
+
+	f.close()
+	return currentSeq
+
 
 # function for handling weird sequence characters
-def clean(x):
+def clean(x, loc):
 	if x == 'A' or x == 'C' or x == 'T' or x == '-':
 		return x
-	return 'N'
+	# replace ambiguity with the reference seq value
+	return referenceSeq[loc]
 
 
 # generates data line
@@ -37,7 +55,7 @@ def encodeSeq(seq, indiciesToKeep):
 	dataLine = []
 	for i in indiciesToKeep:
 		if i < len(seq):
-			dataLine.extend(clean(seq[i]))
+			dataLine.extend(clean(seq[i], i))
 
 	return dataLine
 
@@ -72,6 +90,8 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 					currentSeq = currentSeq + line
 
 			if len(seqList) == blockSize:
+				idList.append(referenceId)
+				seqList.append(referenceSeq)
 				yield idList, seqList
 				idList = []
 				seqList = []
@@ -86,6 +106,8 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 # loading the list of headers the model needs.
 model_headers = joblib.load(args.header_file)
 indiciesToKeep = model_headers[1:]
+
+referenceSeq = findReferenceSeq()
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
@@ -102,7 +124,7 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	df = pd.DataFrame(seqList, columns=indiciesToKeep)
 
 	# possible nucleotide symbols
-	categories = ['A', 'C', 'G', 'T', 'N', '-']
+	categories = ['A', 'C', 'G', 'T', '-']
 
 	# add extra rows to ensure all of the categories are represented, as otherwise 
 	# not enough columns will be created when we call get_dummies
@@ -112,6 +134,8 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 
 	# get one-hot encoding
 	df = pd.get_dummies(df, columns=indiciesToKeep)
+
+	headers = list(df)
 
 	# get rid of the fake data we just added
 	df.drop(df.tail(len(categories)).index,inplace=True)
@@ -133,7 +157,8 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		prediction = loaded_model.classes_[maxIndex]
 		seqId = idList[index]
 
-		f.write(seqId + "," + prediction + "," + str(score) + "\n")
+		if seqId != referenceId:
+			f.write(seqId + "," + prediction + "," + str(score) + "\n")
 
 f.close()
 
