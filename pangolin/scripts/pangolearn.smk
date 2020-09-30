@@ -103,14 +103,15 @@ rule pangolearn:
     input:
         fasta = rules.datafunk_trim_and_pad.output.fasta,
         model = config["trained_model"],
-        header = config["header_file"]
+        header = config["header_file"],
+        reference = config["reference_fasta"]
     output:
         os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
     shell:
         # should output a csv file with no headers but with columns similar to:
         # "taxon,lineage,SH-alrt,UFbootstrap"
         """
-        pangolearn.py --header-file {input.header} --model-file {input.model} --fasta {input.fasta} -o {output[0]}
+        pangolearn.py --header-file {input.header} --model-file {input.model} --reference-file {input.reference:q} --fasta {input.fasta} -o {output[0]}
         """
 
 rule add_failed_seqs:

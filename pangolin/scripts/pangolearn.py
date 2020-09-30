@@ -18,6 +18,7 @@ def parse_args():
 	parser.add_argument("--header-file", action="store", type=str, dest="header_file")
 	parser.add_argument("--model-file", action="store", type=str, dest="model_file")
 	parser.add_argument("--fasta", action="store", type=str, dest="sequences_file")
+	parser.add_argument("--reference-file",action="store",type=str,dest="reference_file")
 	parser.add_argument("-o","--outfile", action="store", type=str, dest="outfile")
 	return parser.parse_args()
 
@@ -25,7 +26,7 @@ def parse_args():
 args = parse_args()
 
 dirname = os.path.dirname(__file__)
-referenceFile = os.path.join(dirname, '../data/reference.fasta')
+referenceFile = args.reference_file
 
 referenceSeq = ""
 referenceId = "Wuhan/WH04/2020"
