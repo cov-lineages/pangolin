@@ -91,8 +91,8 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 					currentSeq = currentSeq + line
 
 			if len(seqList) == blockSize:
-				idList.append(referenceId)
-				seqList.append(referenceSeq)
+				# idList.append(referenceId)
+				# seqList.append(referenceSeq)
 				yield idList, seqList
 				idList = []
 				seqList = []
@@ -127,7 +127,7 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	# possible nucleotide symbols
 	categories = ['A', 'C', 'G', 'T', '-']
 
-	# add extra rows to ensure all of the categories are represented, as otherwise 
+	# add extra rows to ensure all of the categories are represented, as otherwise
 	# not enough columns will be created when we call get_dummies
 	for i in categories:
 		line = [i] * len(indiciesToKeep)
