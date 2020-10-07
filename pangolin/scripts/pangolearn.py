@@ -91,8 +91,6 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 					currentSeq = currentSeq + line
 
 			if len(seqList) == blockSize:
-				# idList.append(referenceId)
-				# seqList.append(referenceSeq)
 				yield idList, seqList
 				idList = []
 				seqList = []
@@ -120,6 +118,12 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	print("processing block of {} sequences {}".format(
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 	))
+
+	# the reference seq must be added to everry block to make sure that the 
+	# spots in the reference have Ns are in the dataframe to guarentee that 
+	# the correct number of columns is created when get_dummies is called
+	idList.append(referenceId)
+	seqList.append(encodeSeq(referenceSeq, indiciesToKeep))
 
 	# create a data from from the seqList
 	df = pd.DataFrame(seqList, columns=indiciesToKeep)
