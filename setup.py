@@ -33,6 +33,7 @@ setup(name='pangolin',
             "wheel>=0.34",
             'joblib>=0.11',
             'sklearn',
+            "PuLP>=2",
             'pysam>=0.15.4'
         ],
       description='hcov-2019 subtyping command line tool',
