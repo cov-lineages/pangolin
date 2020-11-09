@@ -29,7 +29,7 @@ dirname = os.path.dirname(__file__)
 referenceFile = args.reference_file
 
 referenceSeq = ""
-referenceId = "Wuhan/WH04/2020"
+referenceId = "reference"
 
 def findReferenceSeq():
 	currentSeq = ""
