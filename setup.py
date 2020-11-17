@@ -32,7 +32,7 @@ setup(name='pangolin',
             'pandas>=1.0.1',
             "wheel>=0.34",
             'joblib>=0.11',
-            'sklearn',
+            'scikit-learn>=0.23.1',
             "PuLP>=2",
             'pysam>=0.15.4'
         ],
