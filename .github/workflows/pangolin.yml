@@ -1,0 +1,25 @@
+name: pangolin
+
+on: [push, pull_request]
+
+jobs:
+  run_pangolin_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yml
+          activate-environment: pangolin
+          channels: conda-forge,bioconda,defaults
+          mamba-version: "*"
+      - name: Install pangolin
+        shell: bash -l {0}
+        run: pip install -e .
+      - name: Check pangolin version
+        shell: bash -l {0}
+        run: pangolin --version
+      - name: Run pangolin with test data
+        shell: bash -l {0}
+        run: pangolin pangolin/test/test_seqs.fasta |& tee pangolin.log
+# add more tests here
