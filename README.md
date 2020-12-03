@@ -1,5 +1,7 @@
 # pangolin
 
+![pangolin test output](https://github.com/pvanheus/pangolin/workflows/pangolin/badge.svg)
+
 **P**hylogenetic **A**ssignment of **N**amed **G**lobal **O**utbreak **LIN**eages
 
 <img src="https://github.com/cov-lineages/pangolin/blob/master/docs/logo.png" width="300">
