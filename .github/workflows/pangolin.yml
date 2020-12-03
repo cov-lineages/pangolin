@@ -25,5 +25,5 @@ jobs:
         run: pangolin --version
       - name: Run pangolin with test data
         shell: bash -l {0}
-        run: pangolin pangolin/test/test_seqs.fasta |& tee pangolin.log
+        run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
 # add more tests here
