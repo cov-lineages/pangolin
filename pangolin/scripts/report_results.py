@@ -40,7 +40,7 @@ def make_objects(background_data, lineages_present):
         for row in reader:
             name = row["sequence_name"]
             lin_string = row["lineage"]
-            date = row["sample date"]
+            date = row["sample_date"]
             country = row["country"]
             
             tax_name = f"{name}|{country}|{date}"
