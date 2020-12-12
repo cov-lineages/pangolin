@@ -9,7 +9,7 @@ dependencies:
   - mafft
   - minimap2
   - pip=19.3.1
-  - python=3.6
+  - python=3.7
   - snakemake-minimal=5.13
   - pip:
     - pandas==1.0.1
