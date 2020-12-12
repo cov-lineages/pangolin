@@ -28,11 +28,11 @@ setup(name='pangolin',
       install_requires=[
             "biopython>=1.70",
             "dendropy>=4.4.0",
-            "pytools>=2020.1",
+            "pytools==2020.1",
             'pandas>=1.0.1',
             "wheel>=0.34",
             'joblib>=0.11',
-            'scikit-learn>=0.23.1',
+            'scikit-learn==0.23.1',
             "PuLP>=2",
             'pysam>=0.15.4'
         ],
