@@ -40,7 +40,7 @@ rule minimap2_check_distance:
         os.path.join(config["tempdir"], "logs/minimap2_check.log")
     shell:
         """
-        minimap2 -x asm5 {input.reference:q} {input.fasta:q} -o {output.paf:q} &> {log}
+        minimap2 -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} -o {output.paf:q} &> {log}
         """
 
 rule parse_paf:
@@ -75,7 +75,7 @@ rule minimap2_to_reference:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 {input.reference:q} {input.fasta:q} -o {output.sam:q} &> {log}
+        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} -o {output.sam:q} &> {log}
         """
 
 rule datafunk_trim_and_pad:
@@ -122,7 +122,7 @@ rule add_failed_seqs:
     params:
         version = config["pangoLEARN_version"]
     output:
-        csv = config["outfile"]
+        csv= os.path.join(config["tempdir"],"pangolearn_assignments.csv")
     run:
         fw = open(output[0],"w")
         fw.write("taxon,lineage,probability,pangoLEARN_version,status,note\n")
@@ -151,6 +151,73 @@ rule add_failed_seqs:
 
         fw.close()
 
+rule type_variants_b1117:
+    input:
+        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        variants = config["b117_variants"],
+        reference = config["reference_fasta"]
+    output:
+        variants = os.path.join(config["tempdir"],"variants.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
+
+rule filter_variants_b117:
+    input:
+        
+    output:
+        b117 = os.path.join(config["tempdir"],"b117.csv")
+    run:
+        with open(output.b117, "w") as fw:
+            fw.write("taxon,count\n")
+            # "taxon,lineage,probability,pangoLEARN_version,status,note" 
+            with open(input.variants, "r") as f:
+                reader = csv.DictReader(f)
+
+
+rule overwrite_b117:
+    input:
+        csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
+        variants = os.path.join(config["tempdir"],"variants.csv")
+    output:
+        csv = config["outfile"]
+    run:
+        b117 = {}
+        with open(input.variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 4:
+                    b117[row["query"]] = row["alt_count"]
+
+        with open(output.csv, "w") as fw:
+            # "taxon,lineage,probability,pangoLEARN_version,status,note" 
+            with open(input.csv, "r") as f:
+                reader = csv.DictReader(f)
+                header_names = reader.fieldnames
+                writer = csv.DictWriter(fw, fieldnames=header_names,lineterminator='\n')
+                writer.writeheader()
+
+                for row in reader:
+                    if row["taxon"] in b117:
+                        new_row = row
+                        
+                        snps = b117[row["taxon"]]
+                        note = f"{snps}/17 B.1.1.7 SNPs"
+
+                        new_row["note"] = note
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.1.7"
+
+                        writer.writerow(new_row)
+                    else:
+                        writer.writerow(row)
+                        
 rule report_results:
     input:
         csv = config["outfile"],
@@ -160,7 +227,7 @@ rule report_results:
     shell:
         """
         report_results.py \
-        -p {input.csv} \
-        -b {input.lineages_csv} \
+        -p {input.csv:q} \
+        -b {input.lineages_csv:q} \
         -o {output:q} 
         """
