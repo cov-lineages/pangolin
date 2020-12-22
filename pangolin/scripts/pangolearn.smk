@@ -151,13 +151,13 @@ rule add_failed_seqs:
 
         fw.close()
 
-rule type_variants_b1117:
+rule type_variants_b117:
     input:
         fasta = rules.datafunk_trim_and_pad.output.fasta,
         variants = config["b117_variants"],
         reference = config["reference_fasta"]
     output:
-        variants = os.path.join(config["tempdir"],"variants.csv")
+        variants = os.path.join(config["tempdir"],"variants_b117.csv")
     shell:
         """
         type_variants.py \
@@ -168,32 +168,44 @@ rule type_variants_b1117:
         --append-genotypes
         """
 
-rule filter_variants_b117:
+rule type_variants_b1351:
     input:
-        
+        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        variants = config["b1351_variants"],
+        reference = config["reference_fasta"]
     output:
-        b117 = os.path.join(config["tempdir"],"b117.csv")
-    run:
-        with open(output.b117, "w") as fw:
-            fw.write("taxon,count\n")
-            # "taxon,lineage,probability,pangoLEARN_version,status,note" 
-            with open(input.variants, "r") as f:
-                reader = csv.DictReader(f)
+        variants = os.path.join(config["tempdir"],"variants_b1351.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
 
 
-rule overwrite_b117:
+rule overwrite:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
-        variants = os.path.join(config["tempdir"],"variants.csv")
+        b117_variants = rules.type_variants_b117.output.variants,
+        b1351_variants = rules.type_variants_b1351.output.variants
     output:
         csv = config["outfile"]
     run:
         b117 = {}
-        with open(input.variants, "r") as f:
+        with open(input.b117_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 4:
                     b117[row["query"]] = row["alt_count"]
+        b1351 = {}
+        with open(input.b1351_variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 3:
+                    b1351[row["query"]] = row["alt_count"]
 
         with open(output.csv, "w") as fw:
             # "taxon,lineage,probability,pangoLEARN_version,status,note" 
@@ -213,6 +225,17 @@ rule overwrite_b117:
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
                         new_row["lineage"] = "B.1.1.7"
+
+                        writer.writerow(new_row)
+                    elif row["taxon"] in b1351:
+                        new_row = row
+                        
+                        snps = b1351[row["taxon"]]
+                        note = f"{snps}/5 B.1.351 SNPs"
+
+                        new_row["note"] = note
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.351"
 
                         writer.writerow(new_row)
                     else:
