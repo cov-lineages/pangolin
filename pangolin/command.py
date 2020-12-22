@@ -8,6 +8,7 @@ from tempfile import gettempdir
 import tempfile
 import pprint
 import json
+import os
 import lineages
 import pangoLEARN
 
@@ -252,6 +253,12 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
     reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
     config["reference_fasta"] = reference_fasta
 
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.1.7.csv')
+    config["b117_variants"] = variants_file
+    
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
+    config["b1351_variants"] = variants_file
+    
     if args.write_tree:
         config["write_tree"]="True"
 
