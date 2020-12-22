@@ -8,6 +8,7 @@ from tempfile import gettempdir
 import tempfile
 import pprint
 import json
+import os
 import lineages
 import pangoLEARN
 
