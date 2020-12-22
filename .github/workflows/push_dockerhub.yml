@@ -29,8 +29,8 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker tag cov-lineages/pangolin:latest covlineages/pangolin:dev
-          docker push cov-lineages/pangolin:dev
+          docker tag covlineages/pangolin:latest covlineages/pangolin:dev
+          docker push covlineages/pangolin:dev
 
       - name: Push Docker image to DockerHub (release)
         if: ${{ github.event_name == 'release' }}
