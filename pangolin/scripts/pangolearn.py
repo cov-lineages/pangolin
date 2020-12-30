@@ -46,11 +46,11 @@ def findReferenceSeq():
 # function for handling weird sequence characters
 def clean(x, loc):
 	if x == 'A' or x == 'C' or x == 'T' or x == '-' or x == 'G':
-    	return x
+		return x
 
-    if x == 'U':
-    	return 'T'
-    	
+	if x == 'U':
+		return 'T'
+		
 	# replace ambiguity with the reference seq value
 	return referenceSeq[loc]
 
