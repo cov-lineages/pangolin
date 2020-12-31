@@ -216,7 +216,15 @@ rule overwrite:
                 writer.writeheader()
 
                 for row in reader:
-                    if row["taxon"] in b117:
+                    if row["lineage"] =="B.1.1.7" and row["taxon"] not in b117:
+                        new_row = row
+                        
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.1"
+
+                        writer.writerow(new_row)
+
+                    elif row["taxon"] in b117:
                         new_row = row
                         
                         snps = b117[row["taxon"]]
@@ -227,6 +235,14 @@ rule overwrite:
                         new_row["lineage"] = "B.1.1.7"
 
                         writer.writerow(new_row)
+                    elif row["lineage"] =="B.1.351" and row["taxon"] not in b1351:
+                        new_row = row
+                        
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1"
+
+                        writer.writerow(new_row)
+                        
                     elif row["taxon"] in b1351:
                         new_row = row
                         
