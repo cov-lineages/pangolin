@@ -1,14 +1,9 @@
 aa:E:P71L
 aa:N:T205I
-aa:orf1a:T265I
 aa:orf1a:K1655N
-aa:orf1a:K3353R
-aa:orf1b:P314L
-aa:orf3a:Q57H
-aa:orf3a:S171L
 aa:S:D80A
 aa:S:D215G
 aa:S:K417N
-aa:S:E484K
-aa:S:N501Y
 aa:S:A701V
+aa:S:N501Y
+aa:S:E484K

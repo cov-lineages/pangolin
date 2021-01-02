@@ -204,7 +204,7 @@ rule overwrite:
         with open(input.b1351_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if int(row["alt_count"]) > 8:
+                if int(row["alt_count"]) > 4:
                     b1351[row["query"]] = row["alt_count"]
 
         with open(output.csv, "w") as fw:
@@ -247,7 +247,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = b1351[row["taxon"]]
-                        note = f"{snps}/14 B.1.351 SNPs"
+                        note = f"{snps}/9 B.1.351 SNPs"
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
