@@ -1,6 +1,8 @@
 name: pangolin
-
 on: [push, pull_request]
+defaults:
+  run:
+    shell: bash -l {0}
 
 jobs:
   run_pangolin_test:
@@ -18,12 +20,9 @@ jobs:
           channels: conda-forge,bioconda,defaults
           mamba-version: "*"
       - name: Install pangolin
-        shell: bash -l {0}
         run: pip install -e .
       - name: Check pangolin version
-        shell: bash -l {0}
         run: pangolin --version
       - name: Run pangolin with test data
-        shell: bash -l {0}
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
 # add more tests here
