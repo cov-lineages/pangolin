@@ -185,12 +185,48 @@ rule type_variants_b1351:
         --append-genotypes
         """
 
+rule type_variants_p2:
+    input:
+        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        variants = config["p2_variants"],
+        reference = config["reference_fasta"]
+    output:
+        variants = os.path.join(config["tempdir"],"variants_p2.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
+
+
+rule type_variants_p1:
+    input:
+        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        variants = config["p1_variants"],
+        reference = config["reference_fasta"]
+    output:
+        variants = os.path.join(config["tempdir"],"variants_p1.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
 
 rule overwrite:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
         b117_variants = rules.type_variants_b117.output.variants,
-        b1351_variants = rules.type_variants_b1351.output.variants
+        b1351_variants = rules.type_variants_b1351.output.variants,
+        p2_variants = rules.type_variants_p2.output.variants,
+        p1_variants = rules.type_variants_p1.output.variants
     output:
         csv = config["outfile"]
     run:
@@ -206,6 +242,18 @@ rule overwrite:
             for row in reader:
                 if int(row["alt_count"]) > 4:
                     b1351[row["query"]] = row["alt_count"]
+        p1 = {}
+        with open(input.p1_variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 10:
+                    p1[row["query"]] = row["alt_count"]
+        p2 = {}
+        with open(input.p2_variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 4:
+                    p2[row["query"]] = row["alt_count"]
 
         with open(output.csv, "w") as fw:
             # "taxon,lineage,probability,pangoLEARN_version,status,note" 
@@ -252,6 +300,28 @@ rule overwrite:
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
                         new_row["lineage"] = "B.1.351"
+
+                        writer.writerow(new_row)
+                    elif row["taxon"] in p2:
+                        new_row = row
+                        
+                        snps = p2[row["taxon"]]
+                        note = f"{snps}/5 P.2 (B.1.1.28.2) SNPs"
+
+                        new_row["note"] = note
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "P.2"
+
+                        writer.writerow(new_row)
+                    elif row["taxon"] in p1:
+                        new_row = row
+                        
+                        snps = p1[row["taxon"]]
+                        note = f"{snps}/17 P.1 (B.1.1.28.1) SNPs"
+
+                        new_row["note"] = note
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "P.1"
 
                         writer.writerow(new_row)
                     else:
