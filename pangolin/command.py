@@ -258,6 +258,12 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
     
     variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
     config["b1351_variants"] = variants_file
+
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.1.csv')
+    config["p1_variants"] = variants_file
+
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.2.csv')
+    config["p2_variants"] = variants_file
     
     if args.write_tree:
         config["write_tree"]="True"
