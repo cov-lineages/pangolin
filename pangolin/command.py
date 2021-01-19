@@ -9,6 +9,7 @@ import tempfile
 import pprint
 import json
 import os
+import joblib
 import lineages
 import pangoLEARN
 
@@ -173,7 +174,8 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__,
-        "pangoLEARN_version":pangoLEARN.__version__
+        "pangoLEARN_version":pangoLEARN.__version__,
+        "compressed_model_size": 569253
         }
 
     # find the data
@@ -243,6 +245,14 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
             exit(1)
         else:
+            if("compressed_model_size" in config):
+                if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
+                    print("Decompressing model and header files")
+                    model = joblib.load(trained_model)
+                    joblib.dump(model, trained_model, compress=0)
+                    headers = joblib.load(header_file)
+                    joblib.dump(headers, header_file, compress=0)
+
             print("\nData files found")
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
