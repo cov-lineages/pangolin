@@ -249,8 +249,10 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                 if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
                     print("Decompressing model and header files")
                     model = joblib.load(trained_model)
-                    joblib.dump(model, trained_model, compress=0)
                     headers = joblib.load(header_file)
+                    trained_model = os.path.join(tempdir, os.path.basename(trained_model))
+                    header_file = os.path.join(tempdir, os.path.basename(header_file))
+                    joblib.dump(model, trained_model, compress=0)
                     joblib.dump(headers, header_file, compress=0)
 
             print("\nData files found")
