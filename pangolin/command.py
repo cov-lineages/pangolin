@@ -36,6 +36,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    parser.add_argument('--temp-decompress',action="store_true",dest="temp_decompress",help="Don't try to permanently decompress the model file.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
@@ -47,6 +48,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    
 
     if len(sysargs)<1:
         parser.print_help()
@@ -245,13 +247,14 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
             exit(1)
         else:
-            if("compressed_model_size" in config):
-                if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
-                    print("Decompressing model and header files")
-                    model = joblib.load(trained_model)
-                    joblib.dump(model, trained_model, compress=0)
-                    headers = joblib.load(header_file)
-                    joblib.dump(headers, header_file, compress=0)
+            if not args.temp_decompress:
+                if "compressed_model_size" in config:
+                    if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
+                        print("Decompressing model and header files")
+                        model = joblib.load(trained_model)
+                        joblib.dump(model, trained_model, compress=0)
+                        headers = joblib.load(header_file)
+                        joblib.dump(headers, header_file, compress=0)
 
             print("\nData files found")
             print(f"Trained model:\t{trained_model}")
