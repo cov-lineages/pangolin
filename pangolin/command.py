@@ -36,7 +36,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    parser.add_argument('--temp-decompress',action="store_true",dest="temp_decompress",help="Don't try to permanently decompress the model file.")
+    parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
@@ -247,7 +247,7 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
             exit(1)
         else:
-            if not args.temp_decompress:
+            if args.decompress:
                 if "compressed_model_size" in config:
                     if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
                         print("Decompressing model and header files")
@@ -255,6 +255,16 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
                         joblib.dump(model, trained_model, compress=0)
                         headers = joblib.load(header_file)
                         joblib.dump(headers, header_file, compress=0)
+                    else:
+                        print(f'Error: model file already decompressed. Exiting\n')
+                        sys.exit(-1)
+
+                    if os.path.getsize(trained_model) >= config["compressed_model_size"] + 10:
+                        print(f'Success! Decompressed the model file. Exiting\n')
+                        sys.exit(0)
+                    else:
+                        print(f'Error: failed to decompress model. Exiting\n')
+                        sys.exit(-1)
 
             print("\nData files found")
             print(f"Trained model:\t{trained_model}")
