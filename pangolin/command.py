@@ -334,9 +334,14 @@ def update(pangolin_version, lineages_version, pangoLEARN_version):
     of each pangolin, lineages, and pangoLEARN
 
     Compare these to the currently running versions and if newer versions
-    exist
+    exist then updates them (or if current) then exits safely
 
-    If newer versions exist then update and exit safely
+    pangolin_version: string containing the __version__ data for the currently
+                      running pangolin module
+    lineages_version: string containing the __version__ data for the imported
+                      lineages data module
+    pangoLEARN_version: string containing the __version__ data for the imported
+                       pangoLEARN data module
     """
     # flag if any element is update if everything is the latest release
     # we want to just continue running
