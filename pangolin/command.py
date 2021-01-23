@@ -12,6 +12,7 @@ import tempfile
 import pprint
 import json
 import os
+import joblib
 import lineages
 import pangoLEARN
 
@@ -38,6 +39,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('-n', '--dry-run', action='store_true',help="Go through the motions but don't actually run")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
     parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
@@ -190,7 +192,8 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__,
-        "pangoLEARN_version":pangoLEARN.__version__
+        "pangoLEARN_version":pangoLEARN.__version__,
+        "compressed_model_size": 460167
         }
 
     # find the data
@@ -260,6 +263,25 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             print("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions.""")
             exit(1)
         else:
+            if args.decompress:
+                if "compressed_model_size" in config:
+                    if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
+                        print("Decompressing model and header files")
+                        model = joblib.load(trained_model)
+                        joblib.dump(model, trained_model, compress=0)
+                        headers = joblib.load(header_file)
+                        joblib.dump(headers, header_file, compress=0)
+                    else:
+                        print(f'Error: model file already decompressed. Exiting\n')
+                        sys.exit(-1)
+
+                    if os.path.getsize(trained_model) >= config["compressed_model_size"] + 10:
+                        print(f'Success! Decompressed the model file. Exiting\n')
+                        sys.exit(0)
+                    else:
+                        print(f'Error: failed to decompress model. Exiting\n')
+                        sys.exit(-1)
+
             print("\nData files found")
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
@@ -275,6 +297,12 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
     config["b1351_variants"] = variants_file
+
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.1.csv')
+    config["p1_variants"] = variants_file
+
+    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.2.csv')
+    config["p2_variants"] = variants_file
 
     if args.write_tree:
         config["write_tree"]="True"
