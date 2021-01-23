@@ -333,8 +333,9 @@ def update(pangolin_version, lineages_version, pangoLEARN_version):
     Using the github releases API check for the latest current release
     of each pangolin, lineages, and pangoLEARN
 
-    Compare these to the currently running versions and if newer versions
-    exist then updates them (or if current) then exits safely
+    Compare these to the currently running versions and if newer releases
+    exist update to them accordingly (or do nothing if current).
+    Afterwards, exit program safely with a 0 exit code.
 
     pangolin_version: string containing the __version__ data for the currently
                       running pangolin module
