@@ -4,6 +4,9 @@ import argparse
 import os.path
 import snakemake
 import sys
+from urllib import request
+import subprocess
+import json
 from tempfile import gettempdir
 import tempfile
 import pprint
@@ -24,11 +27,11 @@ cwd = os.getcwd()
 
 def main(sysargs = sys.argv[1:]):
 
-    parser = argparse.ArgumentParser(prog = _program, 
-    description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages', 
+    parser = argparse.ArgumentParser(prog = _program,
+    description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages',
     usage='''pangolin <query> [options]''')
 
-    parser.add_argument('query', help='Query fasta file of sequences to analyse.')
+    parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('-d', '--data', action='store',help="Data directory minimally containing a fasta alignment and guide tree")
@@ -46,12 +49,17 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-lv","--lineages-version", action='version', version=f"lineages {lineages.__version__}",help="show lineages's version number and exit")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN, and lineages then exits")
 
     if len(sysargs)<1:
         parser.print_help()
         sys.exit(-1)
     else:
         args = parser.parse_args(sysargs)
+    args = parser.parse_args()
+
+    if args.update:
+        update(__version__, lineages.__version__, pangoLEARN.__version__)
 
     if args.legacy:
         snakefile = os.path.join(thisdir, 'scripts','Snakefile')
@@ -64,13 +72,20 @@ def main(sysargs = sys.argv[1:]):
     else:
         print("Found the snakefile")
 
-    # find the query fasta
-    query = os.path.join(cwd, args.query)
-    if not os.path.exists(query):
-        sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
+    # to enable not having to pass a query if running update
+    # by allowing query to accept 0 to many arguments
+    if len(args.query) > 1:
+        print(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only")
+        parser.print_help()
         sys.exit(-1)
     else:
-        print(f"The query file is {query}")
+        # find the query fasta
+        query = os.path.join(cwd, args.query[0])
+        if not os.path.exists(query):
+            sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
+            sys.exit(-1)
+        else:
+            print(f"The query file is {query}")
 
         # default output dir
     outdir = ''
@@ -101,12 +116,14 @@ def main(sysargs = sys.argv[1:]):
     else:
         temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
         tempdir = temporary_directory.name
-    
+
     if args.no_temp:
         print(f"--no-temp: All intermediate files will be written to {outdir}")
         tempdir = outdir
 
-    """ 
+
+
+    """
     QC steps:
     1) check no empty seqs
     2) check N content
@@ -128,7 +145,7 @@ def main(sysargs = sys.argv[1:]):
         else:
             num_N = str(record.seq).upper().count("N")
             prop_N = round((num_N)/len(record.seq), 2)
-            if prop_N > args.maxambig: 
+            if prop_N > args.maxambig:
                 record.description = record.description + f" fail=N_content:{prop_N}"
                 do_not_run.append(record)
                 print(f"{record.id}\thas an N content of {prop_N}")
@@ -148,7 +165,7 @@ def main(sysargs = sys.argv[1:]):
                     fw.write(f"{record.id},None,0,{pangoLEARN.__version__},fail,{reason}\n")
             print(f'Note: no query sequences have passed the qc\n')
             sys.exit(0)
-            
+
     post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
     with open(post_qc_query,"w") as fw:
         SeqIO.write(run, fw, "fasta")
@@ -207,7 +224,7 @@ def main(sysargs = sys.argv[1:]):
                     elif fn.endswith(".csv") and fn.startswith("lineages"):
                         lineages_csv = os.path.join(r, fn)
 
-        
+
         if representative_aln=="" or guide_tree=="" or lineages_csv=="":
             print("""Check your environment, didn't find appropriate files from the lineages repo, please see https://cov-lineages.org/pangolin.html for installation instructions. \nTreefile must end with `.treefile`.\
 \nAlignment must be in `.fasta` format.\n Trained model must exist. \
@@ -255,10 +272,10 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
 
     variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.1.7.csv')
     config["b117_variants"] = variants_file
-    
+
     variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
     config["b1351_variants"] = variants_file
-    
+
     if args.write_tree:
         config["write_tree"]="True"
 
@@ -281,6 +298,47 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
        return 0
 
     return 1
+
+
+def update(pangolin_version, lineages_version, pangoLEARN_version):
+    """
+    Using the github releases API check for the latest current release
+    of each pangolin, lineages, and pangoLEARN
+
+    Compare these to the currently running versions and if newer versions
+    exist
+
+    If newer versions exist then update and exit safely
+    """
+    # flag if any element is update if everything is the latest release
+    # we want to just continue running
+    for dependency, version in [('pangolin', pangolin_version),
+                                ('pangoLEARN', pangoLEARN_version),
+                                ('lineages', lineages_version)]:
+        latest_release = request.urlopen(\
+            f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
+        latest_release = json.load(latest_release)
+        latest_release = latest_release[0]['tag_name']
+
+        # to match the tag names add a v to the pangolin internal version
+        if dependency == 'pangolin':
+            version = "v" + version
+        # lineages doesn't need any changes for matching
+        # to match the tag names for pangoLEARN add data release
+        elif dependency == 'pangoLEARN':
+            version = version.replace(' ', ' data release ')
+
+        if version != latest_release:
+            subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
+                            f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
+                            check=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+            print(f"{dependency} updated to {latest_release}", file=sys.stderr)
+        else:
+            print(f"{dependency} already latest release ({latest_release})", file=sys.stderr)
+
+    sys.exit(0)
 
 if __name__ == '__main__':
     main()
