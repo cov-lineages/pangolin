@@ -194,7 +194,7 @@ def main(sysargs = sys.argv[1:]):
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__,
         "pangoLEARN_version":pangoLEARN.__version__,
-        "compressed_model_size": 460167
+        "compressed_model_size": 498199
         }
 
     # find the data
