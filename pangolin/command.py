@@ -5,6 +5,7 @@ import os.path
 import snakemake
 import sys
 from urllib import request
+from distutils.version import LooseVersion
 import subprocess
 import json
 from tempfile import gettempdir
@@ -193,7 +194,7 @@ def main(sysargs = sys.argv[1:]):
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__,
         "pangoLEARN_version":pangoLEARN.__version__,
-        "compressed_model_size": 460167
+        "compressed_model_size": 498199
         }
 
     # find the data
@@ -352,7 +353,7 @@ def update(pangolin_version, lineages_version, pangoLEARN_version):
         latest_release = request.urlopen(\
             f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
         latest_release = json.load(latest_release)
-        latest_release = latest_release[0]['tag_name']
+        latest_release = LooseVersion(latest_release[0]['tag_name'])
 
         # to match the tag names add a v to the pangolin internal version
         if dependency == 'pangolin':
@@ -362,15 +363,24 @@ def update(pangolin_version, lineages_version, pangoLEARN_version):
         elif dependency == 'pangoLEARN':
             version = version.replace(' ', ' data release ')
 
-        if version != latest_release:
+        # convert to LooseVersion to have proper ordering of versions
+        # this prevents someone using the latest commit/HEAD from being
+        # downgraded to the last stable release
+        version = LooseVersion(version)
+
+        if version < latest_release:
             subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
                             f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
                             check=True,
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
             print(f"{dependency} updated to {latest_release}", file=sys.stderr)
+        elif version > latest_release:
+            print(f"{dependency} ({version}) is newer than latest stable "
+                  f"release ({latest_release}), not updating.", file=sys.stderr)
         else:
-            print(f"{dependency} already latest release ({latest_release})", file=sys.stderr)
+            print(f"{dependency} already latest release ({latest_release})",
+                    file=sys.stderr)
 
     sys.exit(0)
 
