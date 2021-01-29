@@ -234,13 +234,13 @@ rule overwrite:
         with open(input.b117_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if int(row["alt_count"]) > 4 and int(row["ref_count"])<5:
+                if int(row["alt_count"]) > 4 and int(row["ref_count"])<10:
                     b117[row["query"]] = row["alt_count"]
         b1351 = {}
         with open(input.b1351_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if int(row["alt_count"]) > 4 and int(row["ref_count"])<5:
+                if int(row["alt_count"]) > 4 and int(row["ref_count"])<10:
                     b1351[row["query"]] = row["alt_count"]
         p1 = {}
         with open(input.p1_variants, "r") as f:
