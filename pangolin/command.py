@@ -193,8 +193,7 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "lineages_version":lineages.__version__,
-        "pangoLEARN_version":pangoLEARN.__version__,
-        "compressed_model_size": 489464
+        "pangoLEARN_version":pangoLEARN.__version__
         }
 
     # find the data
@@ -265,23 +264,20 @@ you must have files ending in putative.fasta.treefile\nExiting.""")
             exit(1)
         else:
             if args.decompress:
-                if "compressed_model_size" in config:
-                    if os.path.getsize(trained_model) <= config["compressed_model_size"] + 10:
-                        print("Decompressing model and header files")
-                        model = joblib.load(trained_model)
-                        joblib.dump(model, trained_model, compress=0)
-                        headers = joblib.load(header_file)
-                        joblib.dump(headers, header_file, compress=0)
-                    else:
-                        print(f'Error: model file already decompressed. Exiting\n')
-                        sys.exit(-1)
+                prev_size = os.path.getsize(trained_model)
 
-                    if os.path.getsize(trained_model) >= config["compressed_model_size"] + 10:
-                        print(f'Success! Decompressed the model file. Exiting\n')
-                        sys.exit(0)
-                    else:
-                        print(f'Error: failed to decompress model. Exiting\n')
-                        sys.exit(-1)
+                print("Decompressing model and header files")
+                model = joblib.load(trained_model)
+                joblib.dump(model, trained_model, compress=0)
+                headers = joblib.load(header_file)
+                joblib.dump(headers, header_file, compress=0)
+
+                if os.path.getsize(trained_model) >= prev_size:
+                    print(f'Success! Decompressed the model file. Exiting\n')
+                    sys.exit(0)
+                else:
+                    print(f'Error: failed to decompress model. Exiting\n')
+                    sys.exit(0)
 
             print("\nData files found")
             print(f"Trained model:\t{trained_model}")
