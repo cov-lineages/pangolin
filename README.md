@@ -67,7 +67,12 @@ and you should see the versions of <strong>pangolin</strong>, and <strong>pangoL
 
 > Note: Even if you have previously installed <strong>pangolin</strong>, as it is being worked on intensively, we recommend you check for updates before running.
 
-To update:
+To update pangolin, pangoLEARN, and lineages automatically to the latest stable release:
+
+1. ``conda activate pangolin``
+2. ``pangolin --update``
+
+Alternatively, this can be done manually:
 
 1. ``conda activate pangolin``
 2. ``git pull`` \

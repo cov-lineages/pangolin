@@ -1,0 +1,41 @@
+name: Docker push
+# This builds the docker image and pushes it to DockerHub
+# Runs on cov-lineages/pangolin repo releases
+# and push event to 'dev' branch (PR merges)
+on:
+  push:
+    branches:
+      - dev
+  release:
+    types: [published]
+
+jobs:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    # Only run for the cov-lineages/pangolin repo, for releases and merged PRs
+    if: ${{ github.repository == 'cov-lineages/pangolin' }}
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Build new docker image
+        run: docker build --no-cache . -t covlineages/pangolin:latest
+
+      - name: Push Docker image to DockerHub (dev)
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker tag covlineages/pangolin:latest covlineages/pangolin:dev
+          docker push covlineages/pangolin:dev
+
+      - name: Push Docker image to DockerHub (release)
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push covlineages/pangolin:latest
+          docker tag covlineages/pangolin:latest covlineages/pangolin:${{ github.event.release.tag_name }}
+          docker push covlineages/pangolin:${{ github.event.release.tag_name }}
