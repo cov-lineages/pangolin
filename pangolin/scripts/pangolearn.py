@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
@@ -137,7 +138,8 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	idList.append(referenceId)
 
 	# create a data from from the seqList
-	df = pd.DataFrame(rows, columns=columns).astype('uint8')
+	d = np.array(rows, np.uint8)
+	df = pd.DataFrame(d, columns=columns)
 
 	predictions = loaded_model.predict_proba(df)
 
