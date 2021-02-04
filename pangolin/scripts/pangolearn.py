@@ -13,6 +13,8 @@ import joblib
 import argparse
 import os
 
+import json, sys
+
 def parse_args():
 	parser = argparse.ArgumentParser(description='pangoLEARN.')
 	parser.add_argument("--header-file", action="store", type=str, dest="header_file")
@@ -111,8 +113,14 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 # loading the list of headers the model needs.
 model_headers = joblib.load(args.header_file)
 indiciesToKeep = model_headers[1:]
+with open("/tmp/model_headers.csv", "w") as f:
+	print("\n".join(map(str,indiciesToKeep)), file=f)
 
 referenceSeq = findReferenceSeq()
+# possible nucleotide symbols
+categories = ['-','A', 'C', 'G', 'T']
+columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
+refRow = {f"{i}_{c}": 1 for i,c in zip(indiciesToKeep, encodeSeq(referenceSeq, indiciesToKeep))}
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
@@ -125,30 +133,17 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 	))
 
+	rows = [{f"{i}_{c}": 1 for i,c in zip(indiciesToKeep, row)} for row in seqList]
 	# the reference seq must be added to everry block to make sure that the 
 	# spots in the reference have Ns are in the dataframe to guarentee that 
 	# the correct number of columns is created when get_dummies is called
+	rows.append(refRow)
 	idList.append(referenceId)
-	seqList.append(encodeSeq(referenceSeq, indiciesToKeep))
 
 	# create a data from from the seqList
-	df = pd.DataFrame(seqList, columns=indiciesToKeep)
-
-	# possible nucleotide symbols
-	categories = ['A', 'C', 'G', 'T', '-']
-
-	# add extra rows to ensure all of the categories are represented, as otherwise
-	# not enough columns will be created when we call get_dummies
-	extra_rows = [[i] * len(indiciesToKeep) for i in categories]
-	df = pd.concat([df, pd.DataFrame(extra_rows, columns = indiciesToKeep)], ignore_index=True)
-
-	# get one-hot encoding
-	df = pd.get_dummies(df, columns=indiciesToKeep)
-
-	headers = list(df)
-
-	# get rid of the fake data we just added
-	df.drop(df.tail(len(categories)).index,inplace=True)
+	df = pd.DataFrame.from_records(rows, columns=columns)
+	df.fillna(0, inplace=True)
+	df = df.astype('uint8')
 
 	predictions = loaded_model.predict_proba(df)
 
