@@ -13,8 +13,6 @@ import joblib
 import argparse
 import os
 
-import json, sys
-
 def parse_args():
 	parser = argparse.ArgumentParser(description='pangoLEARN.')
 	parser.add_argument("--header-file", action="store", type=str, dest="header_file")
@@ -113,8 +111,6 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 # loading the list of headers the model needs.
 model_headers = joblib.load(args.header_file)
 indiciesToKeep = model_headers[1:]
-with open("/tmp/model_headers.csv", "w") as f:
-	print("\n".join(map(str,indiciesToKeep)), file=f)
 
 referenceSeq = findReferenceSeq()
 # possible nucleotide symbols
