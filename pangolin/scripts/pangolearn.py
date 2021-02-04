@@ -139,9 +139,8 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 
 	# add extra rows to ensure all of the categories are represented, as otherwise
 	# not enough columns will be created when we call get_dummies
-	for i in categories:
-		line = [i] * len(indiciesToKeep)
-		df.loc[len(df)] = line
+	extra_rows = [[i] * len(indiciesToKeep) for i in categories]
+	df = pd.concat([df, pd.DataFrame(extra_rows, columns = indiciesToKeep)], ignore_index=True)
 
 	# get one-hot encoding
 	df = pd.get_dummies(df, columns=indiciesToKeep)
