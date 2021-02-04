@@ -111,7 +111,7 @@ rule pangolearn:
         # should output a csv file with no headers but with columns similar to:
         # "taxon,lineage,SH-alrt,UFbootstrap"
         """
-        pangolearn.py --header-file {input.header:q} --model-file {input.model:q} --reference-file {input.reference:q} --fasta {input.fasta} -o {output[0]}
+        pangolearn.py --header-file {input.header:q} --model-file {input.model:q} --reference-file {input.reference:q} --fasta {input.fasta:q} -o {output[0]:q}
         """
 
 rule add_failed_seqs:
