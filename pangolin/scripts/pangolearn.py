@@ -116,7 +116,7 @@ referenceSeq = findReferenceSeq()
 # possible nucleotide symbols
 categories = ['-','A', 'C', 'G', 'T']
 columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
-refRow = {f"{i}_{c}": 1 for i,c in zip(indiciesToKeep, encodeSeq(referenceSeq, indiciesToKeep))}
+refRow = [r==c for r in encodeSeq(referenceSeq, indiciesToKeep) for c in categories]
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
@@ -129,7 +129,7 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 	))
 
-	rows = [{f"{i}_{c}": 1 for i,c in zip(indiciesToKeep, row)} for row in seqList]
+	rows = [[r==c for r in row for c in categories] for row in seqList]
 	# the reference seq must be added to everry block to make sure that the 
 	# spots in the reference have Ns are in the dataframe to guarentee that 
 	# the correct number of columns is created when get_dummies is called
@@ -137,9 +137,7 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	idList.append(referenceId)
 
 	# create a data from from the seqList
-	df = pd.DataFrame.from_records(rows, columns=columns)
-	df.fillna(0, inplace=True)
-	df = df.astype('uint8')
+	df = pd.DataFrame(rows, columns=columns).astype('uint8')
 
 	predictions = loaded_model.predict_proba(df)
 
