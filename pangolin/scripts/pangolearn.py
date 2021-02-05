@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
@@ -113,6 +114,10 @@ model_headers = joblib.load(args.header_file)
 indiciesToKeep = model_headers[1:]
 
 referenceSeq = findReferenceSeq()
+# possible nucleotide symbols
+categories = ['-','A', 'C', 'G', 'T']
+columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
+refRow = [r==c for r in encodeSeq(referenceSeq, indiciesToKeep) for c in categories]
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
@@ -125,30 +130,16 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 	))
 
+	rows = [[r==c for r in row for c in categories] for row in seqList]
 	# the reference seq must be added to everry block to make sure that the 
 	# spots in the reference have Ns are in the dataframe to guarentee that 
 	# the correct number of columns is created when get_dummies is called
+	rows.append(refRow)
 	idList.append(referenceId)
-	seqList.append(encodeSeq(referenceSeq, indiciesToKeep))
 
 	# create a data from from the seqList
-	df = pd.DataFrame(seqList, columns=indiciesToKeep)
-
-	# possible nucleotide symbols
-	categories = ['A', 'C', 'G', 'T', '-']
-
-	# add extra rows to ensure all of the categories are represented, as otherwise
-	# not enough columns will be created when we call get_dummies
-	extra_rows = [[i] * len(indiciesToKeep) for i in categories]
-	df = pd.concat([df, pd.DataFrame(extra_rows, columns = indiciesToKeep)], ignore_index=True)
-
-	# get one-hot encoding
-	df = pd.get_dummies(df, columns=indiciesToKeep)
-
-	headers = list(df)
-
-	# get rid of the fake data we just added
-	df.drop(df.tail(len(categories)).index,inplace=True)
+	d = np.array(rows, np.uint8)
+	df = pd.DataFrame(d, columns=columns)
 
 	predictions = loaded_model.predict_proba(df)
 
