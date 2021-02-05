@@ -35,22 +35,10 @@ def make_objects(background_data, lineages_present):
     lineages_to_taxa = defaultdict(list)
     lin_obj_dict = {}
 
-    with open(background_data,newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            name = row["sequence_name"]
-            lin_string = row["lineage"]
-            date = row["sample_date"]
-            country = row["country"]
-            
-            tax_name = f"{name}|{country}|{date}"
-
-            if lin_string in lineages_present:
-                new_taxon = classes.taxon(tax_name, lin_string)
-                taxa.append(new_taxon)
-                
-                lineages_to_taxa[lin_string].append(new_taxon)
-
+    background_df = pd.read_csv(background_data).query("lineage in @lineages_present")
+    background_df['taxa'] = background_df.apply(lambda r: classes.taxon(f"{r['sequence_name']}|{r['country']}|{r['sample_date']}", r['lineage']), axis=1)
+    lineages_to_taxa = background_df.groupby("lineage")["taxa"].apply(list).to_dict()
+    taxa = list(background_df['taxa'])
 
     for lin, taxa in lineages_to_taxa.items():
         l_o = classes.lineage(lin, taxa)
