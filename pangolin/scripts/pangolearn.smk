@@ -3,6 +3,7 @@
 import csv
 from Bio import SeqIO
 import os
+import pangofunks as pfunk
 
 ##### Configuration #####
 
@@ -326,6 +327,7 @@ rule overwrite:
                         writer.writerow(new_row)
                     else:
                         writer.writerow(row)
+        print(pfunk.green(f"Output file written to:") + f"{output.csv}")
                         
 rule report_results:
     input:

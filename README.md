@@ -25,7 +25,7 @@
   * [SNPs associated with a given lineage](#snps-associated-with-a-given-lineage)
   * [Source data](#source-data)
   * [Authors](#authors)
-  * [Citing <strong>pangolin</strong>](#citing-pangolin)
+  * [Citing pangolin](#citing-pangolin)
   * [References](#references)
 
 
