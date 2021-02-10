@@ -47,6 +47,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--min-length', action="store", default=10000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 10000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
+    parser.add_argument("-t","--threads",action="store",help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
@@ -117,7 +118,8 @@ def main(sysargs = sys.argv[1:]):
         print(pfunk.green(f"--no-temp:") + "all intermediate files will be written to {outdir}")
         tempdir = outdir
 
-
+    if args.threads:
+        print(pfunk.cyan(f"\n--threads flag used, but threading not currently supported. Continuing with one thread."))
 
     """
     QC steps:

@@ -21,7 +21,6 @@ setup(name='pangolin',
       package_data={"pangolin":["data/*"]},
       install_requires=[
             "biopython>=1.70",
-            "pytools==2020.1",
             'pandas>=1.0.1',
             "wheel>=0.34",
             'joblib>=0.11',
