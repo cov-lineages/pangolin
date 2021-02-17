@@ -65,44 +65,30 @@ rule parse_paf:
                 else:
                     unmapped.write(f"{record.id},failed to map\n")
                     
-
-rule minimap2_to_reference:
+rule align_to_reference:
     input:
         fasta = rules.parse_paf.output.fasta,
         reference = config["reference_fasta"]
-    output:
-        sam = os.path.join(config["tempdir"],"reference_mapped.sam")
-    log:
-        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
-    shell:
-        """
-        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} -o {output.sam:q} &> {log}
-        """
-
-rule datafunk_trim_and_pad:
-    input:
-        sam = rules.minimap2_to_reference.output.sam,
-        reference = config["reference_fasta"]
     params:
-        trim_start = config["trim_start"],
-        trim_end = config["trim_end"],
-        insertions = os.path.join(config["tempdir"],"insertions.txt")
+        trim_start = 265,
+        trim_end = 29674
     output:
         fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
+    log:
+        os.path.join(config["outdir"], "logs/minimap2_sam.log")
     shell:
         """
-        datafunk sam_2_fasta \
-          -s {input.sam:q} \
-          -r {input.reference:q} \
-          -o {output.fasta:q} \
-          -t [{params.trim_start}:{params.trim_end}] \
-          --pad \
-          --log-inserts 
+        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
+        gofasta sam toMultiAlign \
+            --reference {input.reference:q} \
+            --trimstart {params.trim_start} \
+            --trimend {params.trim_end} \
+            --pad > {output.fasta:q}
         """
 
 rule pangolearn:
     input:
-        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        fasta = rules.align_to_reference.output.fasta,
         model = config["trained_model"],
         header = config["header_file"],
         reference = config["reference_fasta"]
@@ -154,7 +140,7 @@ rule add_failed_seqs:
 
 rule type_variants_b117:
     input:
-        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        fasta = rules.align_to_reference.output.fasta,
         variants = config["b117_variants"],
         reference = config["reference_fasta"]
     output:
@@ -171,7 +157,7 @@ rule type_variants_b117:
 
 rule type_variants_b1351:
     input:
-        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        fasta = rules.align_to_reference.output.fasta,
         variants = config["b1351_variants"],
         reference = config["reference_fasta"]
     output:
@@ -188,7 +174,7 @@ rule type_variants_b1351:
 
 rule type_variants_p2:
     input:
-        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        fasta = rules.align_to_reference.output.fasta,
         variants = config["p2_variants"],
         reference = config["reference_fasta"]
     output:
@@ -206,7 +192,7 @@ rule type_variants_p2:
 
 rule type_variants_p1:
     input:
-        fasta = rules.datafunk_trim_and_pad.output.fasta,
+        fasta = rules.align_to_reference.output.fasta,
         variants = config["p1_variants"],
         reference = config["reference_fasta"]
     output:

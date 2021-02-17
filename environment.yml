@@ -9,7 +9,7 @@ dependencies:
   - pip=19.3.1
   - python=3.7
   - snakemake-minimal=5.13
+  - gofasta
   - pip:
     - pandas==1.0.1
-    - git+https://github.com/cov-ert/datafunk.git
     - git+https://github.com/cov-lineages/pangoLEARN.git
