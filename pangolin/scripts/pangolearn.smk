@@ -88,7 +88,7 @@ rule datafunk_trim_and_pad:
         trim_end = config["trim_end"],
         insertions = os.path.join(config["tempdir"],"insertions.txt")
     output:
-        fasta = os.path.join(config["tempdir"],"post_qc_query.aligned.fasta")
+        fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
     shell:
         """
         datafunk sam_2_fasta \
@@ -327,8 +327,9 @@ rule overwrite:
                         writer.writerow(new_row)
                     else:
                         writer.writerow(row)
-        print(pfunk.green(f"Output file written to:") + f"{output.csv}")
-                        
+        print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
+        if config["alignment_out"]:
+            print(pfunk.green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
 rule report_results:
     input:
         csv = config["outfile"],

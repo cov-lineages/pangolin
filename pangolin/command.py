@@ -39,6 +39,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
+    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
     parser.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
@@ -97,6 +98,7 @@ def main(sysargs = sys.argv[1:]):
     else:
         outdir = cwd
 
+
     outfile = ""
     if args.outfile:
         outfile = os.path.join(outdir, args.outfile)
@@ -117,6 +119,14 @@ def main(sysargs = sys.argv[1:]):
     if args.no_temp:
         print(pfunk.green(f"--no-temp:") + "all intermediate files will be written to {outdir}")
         tempdir = outdir
+
+    if args.alignment:
+        align_dir = outdir
+        alignment_out = True
+    else:
+        align_dir = tempdir
+        alignment_out = False
+
 
     if args.threads:
         print(pfunk.cyan(f"\n--threads flag used, but threading not currently supported. Continuing with one thread."))
@@ -175,6 +185,8 @@ def main(sysargs = sys.argv[1:]):
         "outdir":outdir,
         "outfile":outfile,
         "tempdir":tempdir,
+        "aligndir":align_dir,
+        "alignment_out": alignment_out,
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
