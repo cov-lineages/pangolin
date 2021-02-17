@@ -20,6 +20,14 @@ if config.get("lineages_csv"):
 else:
     config["lineages_csv"]=""
 
+if config.get("usher_protobuf"):
+    print("Using UShER as inference engine with tree " + config["usher_protobuf"])
+else:
+    config["usher_protobuf"]=""
+if not config.get("threads"):
+    config["threads"]=""
+
+ruleorder: use_usher > overwrite
 
 if config["lineages_csv"] != "":
     rule all:
@@ -353,4 +361,35 @@ rule report_results:
         -p {input.csv:q} \
         -b {input.lineages_csv:q} \
         -o {output:q} 
+        """
+
+rule use_usher:
+    input:
+        fasta = rules.align_to_reference.output.fasta,
+        reference = config["reference_fasta"],
+        usher_protobuf = config["usher_protobuf"]
+    params:
+        designation_version = config["pango_version"],
+        pangolin_version = config["pangolin_version"],
+        tempdir = config["tempdir"],
+        threads = config["threads"],
+        version = config["pangoLEARN_version"],
+        vcf = os.path.join(config["tempdir"], "sequences.aln.vcf"),
+    output:
+        csv = config["outfile"]
+    shell:
+        """
+        faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf}
+        if [ -z "{params.threads}" ]; then
+            T=""
+        else
+            T="-T {params.threads}"
+        fi
+        echo usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir}
+        usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir} &> usher.log
+        echo "taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
+        awk -F'\t' -v OFS=, '{{ print $1, $NF, "0.0", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", ""; }}' \
+            clades.txt >> {output.csv}
+        echo ""
+        echo "Output written to {output.csv}"
         """
