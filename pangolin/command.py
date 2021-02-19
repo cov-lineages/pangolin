@@ -197,6 +197,17 @@ def main(sysargs = sys.argv[1:]):
     data_dir = ""
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
+        version = "Unknown"
+        for r,d,f in os.walk(data_dir):
+            for fn in f:
+                if fn == "__init__.py":
+                    print("Found __init__.py")
+                    with open(os.path.join(r, fn),"r") as fr:
+                        for l in fr:
+                            if l.startswith("__version__"):
+                                l = l.rstrip("\n")
+                                version = l.rstrip("\n").split("=")[1]
+        config["pangoLEARN_version"] = version
 
     if not args.datadir:
         pangoLEARN_dir = pangoLEARN.__path__[0]
