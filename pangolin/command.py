@@ -206,7 +206,9 @@ def main(sysargs = sys.argv[1:]):
                         for l in fr:
                             if l.startswith("__version__"):
                                 l = l.rstrip("\n")
-                                version = l.rstrip("\n").split("=")[1]
+                                version = l.split('=')[1]
+                                version = version.replace('"',"").replace(" ","")
+                                print("pangoLEARN version",version)
         config["pangoLEARN_version"] = version
 
     if not args.datadir:
