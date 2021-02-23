@@ -300,6 +300,13 @@ rule overwrite:
                         new_row["lineage"] = "P.2"
 
                         writer.writerow(new_row)
+                    elif row["lineage"] =="P.2" and row["taxon"] not in p2:
+                        new_row = row
+                        
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.1.28"
+
+                        writer.writerow(new_row)
                     elif row["taxon"] in p1:
                         new_row = row
                         
@@ -309,6 +316,13 @@ rule overwrite:
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
                         new_row["lineage"] = "P.1"
+
+                        writer.writerow(new_row)
+                    elif row["lineage"] =="P.1" and row["taxon"] not in p1:
+                        new_row = row
+                        
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
                     else:
