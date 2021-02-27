@@ -1,0 +1,5 @@
+/build
+/dist
+/pangolin.egg-info
+__pycache__
+.envrc
