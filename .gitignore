@@ -1,0 +1,9 @@
+/build
+/dist
+/pangolin.egg-info
+/logs
+__pycache__
+/*.csv
+/*.fasta
+.envrc
+.vscode
