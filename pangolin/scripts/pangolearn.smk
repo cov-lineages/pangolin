@@ -207,13 +207,32 @@ rule type_variants_p1:
         --append-genotypes
         """
 
+rule type_variants_b12142:
+    input:
+        fasta = rules.align_to_reference.output.fasta,
+        variants = config["b12142_variants"],
+        reference = config["reference_fasta"]
+    output:
+        variants = os.path.join(config["tempdir"],"variants_b12142.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
+
+
 rule overwrite:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
         b117_variants = rules.type_variants_b117.output.variants,
         b1351_variants = rules.type_variants_b1351.output.variants,
         p2_variants = rules.type_variants_p2.output.variants,
-        p1_variants = rules.type_variants_p1.output.variants
+        p1_variants = rules.type_variants_p1.output.variants,
+        b12142_variants = rules.type_variants_b12142.output.variants
     output:
         csv = config["outfile"]
     run:
@@ -241,6 +260,12 @@ rule overwrite:
             for row in reader:
                 if int(row["alt_count"]) > 4 and int(row["ref_count"])<4:
                     p2[row["query"]] = row["alt_count"]
+        b12142 = {}
+        with open(input.b12142_variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 1:
+                    b12142[row["query"]] = row["alt_count"]
 
         with open(output.csv, "w") as fw:
             # "taxon,lineage,probability,pangoLEARN_version,status,note" 
@@ -325,6 +350,16 @@ rule overwrite:
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
+                    elif row["lineage"] == "B.1.214":
+                        new_row = row
+                        if row["taxon"] in b12142:
+                            new_row["probability"] = "1.0"
+                            new_row["lineage"] = "B.1.214.2"
+                            snps = b12142[row["taxon"]]
+                            note = f"{snps}/5 B.1.214.2 SNPs"
+                            writer.writerow(new_row)
+                        else:
+                            writer.writerow(row)
                     else:
                         writer.writerow(row)
         print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
