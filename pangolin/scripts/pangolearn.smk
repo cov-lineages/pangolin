@@ -295,7 +295,7 @@ rule overwrite:
                         new_row["lineage"] = "B.1.1.7"
 
                         writer.writerow(new_row)
-                    elif row["lineage"] =="B.1.351" and row["taxon"] not in b1351:
+                    elif row["lineage"].startswith("B.1.351") and row["taxon"] not in b1351:
                         new_row = row
                         
                         new_row["probability"] = "1.0"
@@ -303,7 +303,7 @@ rule overwrite:
 
                         writer.writerow(new_row)
                         
-                    elif row["taxon"] in b1351 and not row["lineage"].startswith("B.1.351."):
+                    elif row["taxon"] in b1351:
                         new_row = row
                         
                         snps = b1351[row["taxon"]]
