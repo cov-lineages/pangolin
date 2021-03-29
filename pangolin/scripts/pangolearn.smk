@@ -207,6 +207,24 @@ rule type_variants_p1:
         --append-genotypes
         """
 
+rule type_variants_p3:
+    input:
+        fasta = rules.align_to_reference.output.fasta,
+        variants = config["p3_variants"],
+        reference = config["reference_fasta"]
+    output:
+        variants = os.path.join(config["tempdir"],"variants_p3.csv")
+    shell:
+        """
+        type_variants.py \
+        --fasta-in {input.fasta:q} \
+        --variants-config {input.variants:q} \
+        --reference {input.reference:q} \
+        --variants-out {output.variants:q} \
+        --append-genotypes
+        """
+
+
 rule type_variants_b12142:
     input:
         fasta = rules.align_to_reference.output.fasta,
@@ -230,6 +248,7 @@ rule overwrite:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
         b117_variants = rules.type_variants_b117.output.variants,
         b1351_variants = rules.type_variants_b1351.output.variants,
+        p3_variants = rules.type_variants_p3.output.variants,
         p2_variants = rules.type_variants_p2.output.variants,
         p1_variants = rules.type_variants_p1.output.variants,
         b12142_variants = rules.type_variants_b12142.output.variants
@@ -260,6 +279,12 @@ rule overwrite:
             for row in reader:
                 if int(row["alt_count"]) > 4 and int(row["ref_count"])<4:
                     p2[row["query"]] = row["alt_count"]
+        p3 = {}
+        with open(input.p3_variants, "r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if int(row["alt_count"]) > 8 and int(row["ref_count"])<4:
+                    p3[row["query"]] = row["alt_count"]
         b12142 = {}
         with open(input.b12142_variants, "r") as f:
             reader = csv.DictReader(f)
@@ -344,6 +369,23 @@ rule overwrite:
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.1" and row["taxon"] not in p1:
+                        new_row = row
+                        
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "B.1.1.28"
+
+                        writer.writerow(new_row)
+                    elif row["taxon"] in p3:
+                        new_row = row
+                        snps = p3[row["taxon"]]
+                        note = f"{snps}/12 P.3 (B.1.1.28.3) SNPs"
+
+                        new_row["note"] = note
+                        new_row["probability"] = "1.0"
+                        new_row["lineage"] = "P.3"
+
+                        writer.writerow(new_row)
+                    elif row["lineage"] =="P.3" and row["taxon"] not in p3:
                         new_row = row
                         
                         new_row["probability"] = "1.0"
