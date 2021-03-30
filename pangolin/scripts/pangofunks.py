@@ -66,3 +66,23 @@ def yellow(text):
 
 def bold_underline(text):
     return BOLD + UNDERLINE + text + END_FORMATTING
+
+
+def check_installs():
+    go_fasta_check = os.system("gofasta sam -h")
+    
+    if not go_fasta_check == 0:
+        sys.stderr.write(cyan('Error: Missing dependency `gofasta`.')+'\nPlease update your pangolin environment or install gofasta with `conda install gofasta -c bioconda`\n')
+        sys.exit(-1)
+
+    minimap2_check = os.system("minimap2 -h")
+    
+    if not minimap2_check == 0:
+        sys.stderr.write(cyan('Error: Missing dependency `minimap2`.')+'\nPlease update your pangolin environment\n')
+        sys.exit(-1)
+
+    snakemake_check = os.system("snakemake --version")
+
+    if not snakemake_check == 0:
+        sys.stderr.write(cyan('Error: Missing dependency `snakemake-minimal`.')+'\nPlease update your pangolin environment\n')
+        sys.exit(-1)
