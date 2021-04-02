@@ -71,7 +71,7 @@ def main(sysargs = sys.argv[1:]):
         print(pfunk.green("Found the snakefile"))
 
     pfunk.check_installs()
-    
+
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
     if len(args.query) > 1:
@@ -274,8 +274,6 @@ def main(sysargs = sys.argv[1:]):
     variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.3.csv')
     config["p3_variants"] = variants_file
 
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.214.2.csv')
-    config["b12142_variants"] = variants_file
 
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv
