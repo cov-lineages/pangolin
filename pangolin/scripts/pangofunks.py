@@ -75,7 +75,7 @@ def check_installs():
         sys.stderr.write(cyan('Error: Missing dependency `gofasta`.')+'\nPlease update your pangolin environment or install gofasta with `conda install gofasta -c bioconda`\n')
         sys.exit(-1)
 
-    minimap2_check = os.system("minimap2 -h")
+    minimap2_check = os.system("minimap2 --version")
     
     if not minimap2_check == 0:
         sys.stderr.write(cyan('Error: Missing dependency `minimap2`.')+'\nPlease update your pangolin environment\n')
