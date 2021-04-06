@@ -8,7 +8,7 @@
 
 <strong>Full pangolin documentation found at [cov-lineages.org](https://cov-lineages.org/pangolin.html)</strong>
 
-<strong>Find the pangolin web application [here](https://pangolin.cog-uk.io/), thanks to the Centre for Genomic Pathogen and Surveillance!<strong>
+<strong>Find the pangolin web application [here](https://pangolin.cog-uk.io/), thanks to the Centre for Genomic Pathogen and Surveillance!</strong>
 
 ## Quick links
   * [Full documentation](https://cov-lineages.org/pangolin.html)
