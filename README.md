@@ -170,8 +170,7 @@ Legacy phylogenetics output example:
 | Virus5      | None      | 0       | 0       | 2020-04-27 | fail    |   N_content:0.80 |
 | Virus6      | None      | 0       | 0       | 2020-04-27 | fail    |   seq_len:0 |
 
-Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference).
-
+Resources for interpreting the aLRT and UFbootstrap output can be found [here](http://www.iqtree.org/doc/Tutorial#assessing-branch-supports-with-single-branch-tests) and [here](http://www.iqtree.org/doc/Command-Reference). Status "passed_qc" means the query sequence was >10,000bp and N_content <0.50.
 
 ### pangoLEARN description
 <p><strong>pangoLEARN</strong> is an alternative algorithm for lineage assignment, which uses machine learning, that is implemented as of <strong>pangolin 2.0</strong>. Benefits of the new algorithm include a major speed up, as the phylogenetic approach was struggling to scale with the increase in number of lineages needing to be represented in the guide tree, and that this new approach takes into account all of the diversity present within a lineage rather than just selecting a representative few. The consequences of this approach mean that for large lineages, we have improved our recall and precision significantly and we are continuing to develop more sophisticated approaches to machine learning for lineage assignment.</p>
