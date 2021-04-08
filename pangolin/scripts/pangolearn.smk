@@ -287,7 +287,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = b117[row["taxon"]]
-                        note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref. and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -306,7 +306,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = b1351[row["taxon"]]
-                        note = f'{snps}/9 B.1.351 SNPs ({snps["ref"]} ref. and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/9 B.1.351 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -317,7 +317,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = p2[row["taxon"]]
-                        note = f'{snps}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref. and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -335,7 +335,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = p1[row["taxon"]]
-                        note = f'{snps}/17 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref. and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/17 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -352,7 +352,7 @@ rule overwrite:
                     elif row["taxon"] in p3:
                         new_row = row
                         snps = p3[row["taxon"]]
-                        note = f'{snps}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref. and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
