@@ -74,14 +74,14 @@ def check_installs():
 
     if missing:
         if len(missing)==1:
-            sys.stderr.write(cyan(f'Error: Missing dependency `{missing[0]}`.')+'\nPlease update your civet environment.\n')
+            sys.stderr.write(cyan(f'Error: Missing dependency `{missing[0]}`.')+'\nPlease update your pangolin environment.\n')
             sys.exit(-1)
         else:
             dependencies = ""
             for i in missing:
                 dependencies+=f"\t- {i}\n"
 
-            sys.stderr.write(cyan(f'Error: Missing dependencies.')+f'\n{dependencies}Please update your civet environment.\n')
+            sys.stderr.write(cyan(f'Error: Missing dependencies.')+f'\n{dependencies}Please update your pangolin environment.\n')
             sys.exit(-1)
     else:
         print(green("All dependencies satisfied."))
