@@ -1,6 +1,5 @@
 
 #!/usr/bin/env python3
-
 import os
 import argparse
 import csv 
@@ -12,6 +11,9 @@ import tempfile
 import pkg_resources
 import yaml
 import subprocess
+import subprocess
+
+import importlib
 
 END_FORMATTING = '\033[0m'
 BOLD = '\033[1m'
@@ -22,35 +24,6 @@ YELLOW = '\033[93m'
 CYAN = '\u001b[36m'
 DIM = '\033[2m'
 
-
-def colour(text, text_colour):
-    bold_text = 'bold' in text_colour
-    text_colour = text_colour.replace('bold', '')
-    underline_text = 'underline' in text_colour
-    text_colour = text_colour.replace('underline', '')
-    text_colour = text_colour.replace('_', '')
-    text_colour = text_colour.replace(' ', '')
-    text_colour = text_colour.lower()
-    if 'red' in text_colour:
-        coloured_text = RED
-    elif 'green' in text_colour:
-        coloured_text = GREEN
-    elif 'yellow' in text_colour:
-        coloured_text = YELLOW
-    elif 'dim' in text_colour:
-        coloured_text = DIM
-    elif 'cyan' in text_colour:
-        coloured_text = 'cyan'
-    else:
-        coloured_text = ''
-    if bold_text:
-        coloured_text += BOLD
-    if underline_text:
-        coloured_text += UNDERLINE
-    if not coloured_text:
-        return text
-    coloured_text += text + END_FORMATTING
-    return coloured_text
 
 def red(text):
     return RED + text + END_FORMATTING
@@ -67,22 +40,51 @@ def yellow(text):
 def bold_underline(text):
     return BOLD + UNDERLINE + text + END_FORMATTING
 
+def which(dependency):
+    try:
+        subprocess.check_output(["which", dependency])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+def check_module(module, missing):
+    try:
+        importlib.import_module(module)
+    except ImportError:
+        missing.append(module)
+
+def check_this_dependency(dependency,missing):
+    check = which(dependency)
+
+    if not check:
+        missing.append(dependency)
 
 def check_installs():
-    go_fasta_check = os.system("gofasta sam -h")
-    
-    if not go_fasta_check == 0:
-        sys.stderr.write(cyan('Error: Missing dependency `gofasta`.')+'\nPlease update your pangolin environment or install gofasta with `conda install gofasta -c bioconda`\n')
-        sys.exit(-1)
 
-    minimap2_check = os.system("minimap2 --version")
-    
-    if not minimap2_check == 0:
-        sys.stderr.write(cyan('Error: Missing dependency `minimap2`.')+'\nPlease update your pangolin environment\n')
-        sys.exit(-1)
+    missing = []
 
-    snakemake_check = os.system("snakemake --version")
+    dependency_list = ["gofasta","minimap2","snakemake"]
+    module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN"]
 
-    if not snakemake_check == 0:
-        sys.stderr.write(cyan('Error: Missing dependency `snakemake-minimal`.')+'\nPlease update your pangolin environment\n')
-        sys.exit(-1)
+    for dependency in dependency_list:
+        check_this_dependency(dependency, missing)
+
+    for module in module_list:
+        check_module(module, missing)
+
+    if missing:
+        if len(missing)==1:
+            sys.stderr.write(cyan(f'Error: Missing dependency `{missing[0]}`.')+'\nPlease update your civet environment.\n')
+            sys.exit(-1)
+        else:
+            dependencies = ""
+            for i in missing:
+                dependencies+=f"\t- {i}\n"
+
+            sys.stderr.write(cyan(f'Error: Missing dependencies.')+f'\n{dependencies}Please update your civet environment.\n')
+            sys.exit(-1)
+    else:
+        print(green("All dependencies satisfied."))
+
+
+# check_installs()
