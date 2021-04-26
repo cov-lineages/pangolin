@@ -240,31 +240,31 @@ rule overwrite:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 4 and int(row["ref_count"])<6:
-                    b117[row["query"]] = row["alt_count"]
+                    b117[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
         b1351 = {}
         with open(input.b1351_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 4 and int(row["ref_count"])<2:
-                    b1351[row["query"]] = row["alt_count"]
+                    b1351[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
         p1 = {}
         with open(input.p1_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 10:
-                    p1[row["query"]] = row["alt_count"]
+                    p1[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
         p2 = {}
         with open(input.p2_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 4 and int(row["ref_count"])<4:
-                    p2[row["query"]] = row["alt_count"]
+                    p2[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
         p3 = {}
         with open(input.p3_variants, "r") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if int(row["alt_count"]) > 8 and int(row["ref_count"])<4:
-                    p3[row["query"]] = row["alt_count"]
+                    p3[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
 
         with open(output.csv, "w") as fw:
             # "taxon,lineage,probability,pangoLEARN_version,status,note" 
@@ -287,7 +287,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = b117[row["taxon"]]
-                        note = f"{snps}/17 B.1.1.7 SNPs"
+                        note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -306,7 +306,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = b1351[row["taxon"]]
-                        note = f"{snps}/9 B.1.351 SNPs"
+                        note = f'{snps["alt"]}/9 B.1.351 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -317,7 +317,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = p2[row["taxon"]]
-                        note = f"{snps}/5 P.2 (B.1.1.28.2) SNPs"
+                        note = f'{snps["alt"]}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -335,7 +335,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = p1[row["taxon"]]
-                        note = f"{snps}/17 P.1 (B.1.1.28.1) SNPs"
+                        note = f'{snps["alt"]}/17 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
@@ -352,7 +352,7 @@ rule overwrite:
                     elif row["taxon"] in p3:
                         new_row = row
                         snps = p3[row["taxon"]]
-                        note = f"{snps}/12 P.3 (B.1.1.28.3) SNPs"
+                        note = f'{snps["alt"]}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["probability"] = "1.0"
