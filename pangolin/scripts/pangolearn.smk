@@ -50,6 +50,7 @@ rule align_to_reference:
             --reference {input.reference:q} \
             --trimstart {params.trim_start} \
             --trimend {params.trim_end} \
+            --trim \
             --pad > {output.fasta:q}
         """
 
