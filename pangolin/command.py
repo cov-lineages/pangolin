@@ -147,6 +147,7 @@ def main(sysargs = sys.argv[1:]):
     for record in SeqIO.parse(query, "fasta"):
         # replace spaces in sequence headers with underscores
         record.description = record.description.replace(' ', '_')
+        record.id = record.description
         if "," in record.id:
             record.id=record.id.replace(",","_")
 
