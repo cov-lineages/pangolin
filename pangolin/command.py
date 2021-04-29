@@ -15,7 +15,11 @@ import json
 import os
 import joblib
 import pangoLEARN
-
+try:
+    from pangoLEARN import PANGO_VERSION
+except:
+    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-04-28')
+    sys.exit(-1)
 import custom_logger as custom_logger
 import log_handler_handle as lh
 import pangofunks as pfunk
@@ -67,8 +71,6 @@ def main(sysargs = sys.argv[1:]):
     if not os.path.exists(snakefile):
         sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
         sys.exit(-1)
-    else:
-        print(pfunk.green("Found the snakefile"))
 
     pfunk.check_installs()
 
@@ -119,7 +121,7 @@ def main(sysargs = sys.argv[1:]):
         tempdir = temporary_directory.name
 
     if args.no_temp:
-        print(pfunk.green(f"--no-temp:") + "all intermediate files will be written to {outdir}")
+        print(pfunk.green(f"--no-temp:") + f"all intermediate files will be written to {outdir}")
         tempdir = outdir
 
     if args.alignment:
@@ -144,7 +146,7 @@ def main(sysargs = sys.argv[1:]):
     run = []
     for record in SeqIO.parse(query, "fasta"):
         # replace spaces in sequence headers with underscores
-        record.id = record.description.replace(' ', '_')
+        record.description = record.description.replace(' ', '_')
         if "," in record.id:
             record.id=record.id.replace(",","_")
 
@@ -192,7 +194,8 @@ def main(sysargs = sys.argv[1:]):
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
-        "pangoLEARN_version":pangoLEARN.__version__
+        "pangoLEARN_version":pangoLEARN.__version__,
+        "pango_version":PANGO_VERSION
         }
 
     # find the data

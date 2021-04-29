@@ -30,44 +30,10 @@ else:
     rule all:
         input:
             config["outfile"]
-
-rule minimap2_check_distance:
-    input:
-        fasta = config["query_fasta"],
-        reference = config["reference_fasta"]
-    output:
-        paf = os.path.join(config["tempdir"],"reference_mapped.paf")
-    log:
-        os.path.join(config["tempdir"], "logs/minimap2_check.log")
-    shell:
-        """
-        minimap2 -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} -o {output.paf:q} &> {log}
-        """
-
-rule parse_paf:
-    input:
-        paf = rules.minimap2_check_distance.output.paf,
-        fasta = config["query_fasta"],
-    output:
-        fasta = os.path.join(config["tempdir"], "mappable.fasta"),
-        mapfail = os.path.join(config["tempdir"],"mapfail.csv")
-    run:
-        mapped = []
-        with open(input.paf, "r") as f:
-            for l in f:
-                tokens = l.rstrip("\n").split('\t')
-                mapped.append(tokens[0])
-        unmapped = open(output.mapfail, "w")
-        with open(output.fasta, 'w') as fw:
-            for record in SeqIO.parse(input.fasta,"fasta"):
-                if record.id in mapped:
-                    fw.write(f">{record.description}\n{record.seq}\n")
-                else:
-                    unmapped.write(f"{record.id},failed to map\n")
                     
 rule align_to_reference:
     input:
-        fasta = rules.parse_paf.output.fasta,
+        fasta = config["query_fasta"],
         reference = config["reference_fasta"]
     params:
         trim_start = 265,
@@ -75,11 +41,12 @@ rule align_to_reference:
     output:
         fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
     log:
-        os.path.join(config["outdir"], "logs/minimap2_sam.log")
+        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
+        minimap2 -a -x asm20 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
         gofasta sam toMultiAlign \
+            -t {workflow.cores} \
             --reference {input.reference:q} \
             --trimstart {params.trim_start} \
             --trimend {params.trim_end} \
@@ -105,21 +72,24 @@ rule add_failed_seqs:
     input:
         qcpass= os.path.join(config["tempdir"],"lineage_report.pass_qc.csv"),
         qcfail= config["qc_fail"],
-        mapfail = rules.parse_paf.output.mapfail
+        qc_pass_fasta = config["query_fasta"]
     params:
-        version = config["pangoLEARN_version"]
+        version = config["pangoLEARN_version"],
+        designation_version = config["pango_version"]
     output:
         csv= os.path.join(config["tempdir"],"pangolearn_assignments.csv")
     run:
-        fw = open(output[0],"w")
-        fw.write("taxon,lineage,probability,pangoLEARN_version,status,note\n")
 
+        fw = open(output[0],"w")
+        fw.write("taxon,lineage,conflict,pangoLEARN_version,pango_version,status,note\n")
+        passed = []
         with open(input.qcpass, "r") as f:
             for l in f:
                 l=l.rstrip('\n')
                 name,lineage,support = l.split(",")
-                support = round(float(support), 2)
-                fw.write(f"{name},{lineage},{support},{params.version},passed_qc,\n")
+                support = 1 - round(float(support), 2)
+                fw.write(f"{name},{lineage},{support},{params.version},{params.designation_version},passed_qc,\n")
+                passed.append(name)
 
         for record in SeqIO.parse(input.qcfail,"fasta"):
             desc_list = record.description.split(" ")
@@ -128,13 +98,11 @@ rule add_failed_seqs:
                 if i.startswith("fail="):
                     note = i.lstrip("fail=")
             # needs to mirror the structure of the output from pangolearn
-            fw.write(f"{record.id},None,0,{params.version},fail,{note}\n")
+            fw.write(f"{record.id},None,0,{params.version},{params.designation_version},fail,{note}\n")
         
-        with open(input.mapfail,"r") as f:
-            for l in f:
-                l = l.rstrip("\n")
-                name,fail = l.split(",")
-                fw.write(f"{name},None,0,{params.version},fail,{fail}\n")
+        for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
+            if record.id not in passed:
+                fw.write(f"{name},None,0,{params.version},{params.designation_version},fail,failed_to_map\n")
 
         fw.close()
 
@@ -278,7 +246,7 @@ rule overwrite:
                     if row["lineage"] =="B.1.1.7" and row["taxon"] not in b117:
                         new_row = row
                         
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.1"
 
                         writer.writerow(new_row)
@@ -290,14 +258,14 @@ rule overwrite:
                         note = f"{snps}/17 B.1.1.7 SNPs"
 
                         new_row["note"] = note
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.1.7"
 
                         writer.writerow(new_row)
                     elif row["lineage"].startswith("B.1.351") and row["taxon"] not in b1351:
                         new_row = row
                         
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1"
 
                         writer.writerow(new_row)
@@ -309,7 +277,7 @@ rule overwrite:
                         note = f"{snps}/9 B.1.351 SNPs"
 
                         new_row["note"] = note
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.351"
 
                         writer.writerow(new_row)
@@ -320,14 +288,14 @@ rule overwrite:
                         note = f"{snps}/5 P.2 (B.1.1.28.2) SNPs"
 
                         new_row["note"] = note
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "P.2"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.2" and row["taxon"] not in p2:
                         new_row = row
                         
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
@@ -338,14 +306,14 @@ rule overwrite:
                         note = f"{snps}/17 P.1 (B.1.1.28.1) SNPs"
 
                         new_row["note"] = note
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "P.1"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.1" and row["taxon"] not in p1:
                         new_row = row
                         
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
@@ -355,14 +323,14 @@ rule overwrite:
                         note = f"{snps}/12 P.3 (B.1.1.28.3) SNPs"
 
                         new_row["note"] = note
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "P.3"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.3" and row["taxon"] not in p3:
                         new_row = row
                         
-                        new_row["probability"] = "1.0"
+                        new_row["conflict"] = "0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
