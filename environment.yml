@@ -7,8 +7,8 @@ dependencies:
   - biopython=1.74
   - minimap2>=2.16
   - pip=19.3.1
-  - python=3.7
-  - snakemake-minimal=5.13
+  - python>=3.7
+  - snakemake-minimal>=5.13
   - gofasta
   - pip:
     - pandas==1.0.1
