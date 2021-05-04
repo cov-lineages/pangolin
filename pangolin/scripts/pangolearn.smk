@@ -304,7 +304,7 @@ rule overwrite:
                         new_row = row
                         
                         snps = p1[row["taxon"]]
-                        note = f'{snps["alt"]}/17 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                        note = f'{snps["alt"]}/16 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
                         new_row["conflict"] = "0"
