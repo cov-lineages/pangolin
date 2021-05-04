@@ -44,7 +44,7 @@ rule align_to_reference:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm20 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
+        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
         gofasta sam toMultiAlign \
             -t {workflow.cores} \
             --reference {input.reference:q} \
@@ -103,7 +103,7 @@ rule add_failed_seqs:
         
         for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
             if record.id not in passed:
-                fw.write(f"{name},None,0,{params.version},{params.designation_version},fail,failed_to_map\n")
+                fw.write(f"{record.id},None,0,{params.version},{params.designation_version},fail,failed_to_map\n")
 
         fw.close()
 
