@@ -196,6 +196,7 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "pangoLEARN_version":pangoLEARN.__version__,
+        "pangolin_version":__version__,
         "pango_version":PANGO_VERSION
         }
 

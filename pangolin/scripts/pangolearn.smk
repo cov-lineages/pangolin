@@ -76,20 +76,21 @@ rule add_failed_seqs:
         qc_pass_fasta = config["query_fasta"]
     params:
         version = config["pangoLEARN_version"],
-        designation_version = config["pango_version"]
+        designation_version = config["pango_version"],
+        pangolin_version = config["pangolin_version"]
     output:
         csv= os.path.join(config["tempdir"],"pangolearn_assignments.csv")
     run:
 
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,conflict,pangoLEARN_version,pango_version,status,note\n")
+        fw.write("taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
         passed = []
         with open(input.qcpass, "r") as f:
             for l in f:
                 l=l.rstrip('\n')
                 name,lineage,support = l.split(",")
                 support = 1 - round(float(support), 2)
-                fw.write(f"{name},{lineage},{support},{params.version},{params.designation_version},passed_qc,\n")
+                fw.write(f"{name},{lineage},{support},{params.pangolin_version},{params.version},{params.designation_version},passed_qc,\n")
                 passed.append(name)
 
         for record in SeqIO.parse(input.qcfail,"fasta"):
@@ -99,11 +100,11 @@ rule add_failed_seqs:
                 if i.startswith("fail="):
                     note = i.lstrip("fail=")
             # needs to mirror the structure of the output from pangolearn
-            fw.write(f"{record.id},None,0,{params.version},{params.designation_version},fail,{note}\n")
+            fw.write(f"{record.id},None,0,{params.pangolin_version},{params.version},{params.designation_version},fail,{note}\n")
         
         for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
             if record.id not in passed:
-                fw.write(f"{record.id},None,0,{params.version},{params.designation_version},fail,failed_to_map\n")
+                fw.write(f"{record.id},None,0,{params.pangolin_version},{params.version},{params.designation_version},fail,failed_to_map\n")
 
         fw.close()
 
