@@ -44,14 +44,14 @@ rule align_to_reference:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 -t {workflow.cores} {input.reference:q} {input.fasta:q} | \
+        minimap2 -a -x asm5 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' | \
         gofasta sam toMultiAlign \
             -t {workflow.cores} \
             --reference {input.reference:q} \
             --trimstart {params.trim_start} \
             --trimend {params.trim_end} \
             --trim \
-            --pad > {output.fasta:q}
+            --pad > '{output.fasta}'
         """
 
 rule pangolearn:
