@@ -167,14 +167,14 @@ def main(sysargs = sys.argv[1:]):
 
     if run == []:
         with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,probability,pangoLEARN_version,status,note\n")
+            fw.write("taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             for record in do_not_run:
                 desc = record.description.split(" ")
                 reason = ""
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,0,{pangoLEARN.__version__},fail,{reason}\n")
+                fw.write(f"{record.id},None,NA,{__version__},{pangoLEARN.__version__},PANGO_VERSION,fail,{reason}\n")
         print(pfunk.cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 
