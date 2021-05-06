@@ -248,7 +248,7 @@ rule overwrite:
                     if row["lineage"] =="B.1.1.7" and row["taxon"] not in b117:
                         new_row = row
                         
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.1"
 
                         writer.writerow(new_row)
@@ -260,14 +260,14 @@ rule overwrite:
                         note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.1.7"
 
                         writer.writerow(new_row)
                     elif row["lineage"].startswith("B.1.351") and row["taxon"] not in b1351:
                         new_row = row
                         
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1"
 
                         writer.writerow(new_row)
@@ -279,7 +279,7 @@ rule overwrite:
                         note = f'{snps["alt"]}/9 B.1.351 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.351"
 
                         writer.writerow(new_row)
@@ -290,14 +290,14 @@ rule overwrite:
                         note = f'{snps["alt"]}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "P.2"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.2" and row["taxon"] not in p2:
                         new_row = row
                         
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
@@ -308,14 +308,14 @@ rule overwrite:
                         note = f'{snps["alt"]}/16 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "P.1"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.1" and row["taxon"] not in p1:
                         new_row = row
                         
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
@@ -325,14 +325,14 @@ rule overwrite:
                         note = f'{snps["alt"]}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
                         new_row["note"] = note
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "P.3"
 
                         writer.writerow(new_row)
                     elif row["lineage"] =="P.3" and row["taxon"] not in p3:
                         new_row = row
                         
-                        new_row["conflict"] = "0"
+                        new_row["conflict"] = "0.0"
                         new_row["lineage"] = "B.1.1.28"
 
                         writer.writerow(new_row)
