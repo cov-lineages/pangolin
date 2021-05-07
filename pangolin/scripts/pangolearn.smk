@@ -88,7 +88,7 @@ rule add_failed_seqs:
         with open(input.qcpass, "r") as f:
             for l in f:
                 l=l.rstrip('\n')
-                name,lineage,support = l.split(",")
+                name,lineage,support,imputation_score,non_zero_ids,non_zero_scores = l.split(",")
                 support = 1 - round(float(support), 2)
                 fw.write(f"{name},{lineage},{support},{params.pangolin_version},{params.version},{params.designation_version},passed_qc,\n")
                 passed.append(name)
