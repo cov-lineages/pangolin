@@ -63,8 +63,8 @@ def check_installs():
 
     missing = []
 
-    dependency_list = ["gofasta","minimap2","snakemake"]
-    module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN"]
+    dependency_list = ["gofasta","minimap2","snakemake","usher"]
+    module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]
 
     for dependency in dependency_list:
         check_this_dependency(dependency, missing)

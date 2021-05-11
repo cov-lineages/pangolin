@@ -57,6 +57,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-t","--threads",action="store",help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
 
     if len(sysargs)<1:
@@ -169,14 +170,14 @@ def main(sysargs = sys.argv[1:]):
 
     if run == []:
         with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            fw.write("taxon,lineage,voc_scorpio,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             for record in do_not_run:
                 desc = record.description.split(" ")
                 reason = ""
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,NA,{__version__},{pangoLEARN.__version__},PANGO_VERSION,fail,{reason}\n")
+                fw.write(f"{record.id},None,,NA,NA,PLEARN-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
         print(pfunk.cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 

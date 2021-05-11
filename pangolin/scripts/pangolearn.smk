@@ -33,11 +33,13 @@ if config["lineages_csv"] != "":
     rule all:
         input:
             config["outfile"],
-            os.path.join(config["outdir"],"global_lineage_information.csv")
+            os.path.join(config["outdir"],"global_lineage_information.csv"),
+            os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
 else:
     rule all:
         input:
-            config["outfile"]
+            config["outfile"],
+            os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
                     
 rule align_to_reference:
     input:
@@ -72,7 +74,7 @@ rule pangolearn:
         os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
     shell:
         # should output a csv file with no headers but with columns similar to:
-        # "taxon,lineage,SH-alrt,UFbootstrap"
+        # f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
         """
         pangolearn.py --header-file {input.header:q} --model-file {input.model:q} --reference-file {input.reference:q} --fasta {input.fasta:q} -o {output[0]:q}
         """
@@ -83,7 +85,7 @@ rule add_failed_seqs:
         qcfail= config["qc_fail"],
         qc_pass_fasta = config["query_fasta"]
     params:
-        version = config["pangoLEARN_version"],
+        pangolearn_version = config["pangoLEARN_version"],
         designation_version = config["pango_version"],
         pangolin_version = config["pangolin_version"]
     output:
@@ -91,15 +93,28 @@ rule add_failed_seqs:
     run:
 
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+        fw.write("taxon,lineage,voc_scorpio,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
         passed = []
+        version = f"PLEARN-{params.designation_version}"
         with open(input.qcpass, "r") as f:
-            for l in f:
-                l=l.rstrip('\n')
-                name,lineage,support,imputation_score,non_zero_ids,non_zero_scores = l.split(",")
-                support = 1 - round(float(support), 2)
-                fw.write(f"{name},{lineage},{support},{params.pangolin_version},{params.version},{params.designation_version},passed_qc,\n")
-                passed.append(name)
+            reader = csv.DictReader(f)
+
+            for row in reader:
+                note = ''
+
+                support =  1 - round(float(row["score"]), 2)
+                
+                non_zero_ids = row["non_zero_ids"].split(";")
+                if len(non_zero_ids) > 1:
+                    note = f"Alt assignments: {row['non_zero_ids']},{row['non_zero_scores']}"
+                
+                if row["designated"]:
+                    version = f"PANGO-{params.designation_version}"
+                else:
+                    version = f"PLEARN-{params.designation_version}"
+
+                fw.write(f"{row['taxon']},{row['prediction']},,{support},{row['imputation_score']},{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},passed_qc,{note}\n")
+                passed.append(row['taxon'])
 
         for record in SeqIO.parse(input.qcfail,"fasta"):
             desc_list = record.description.split(" ")
@@ -108,141 +123,70 @@ rule add_failed_seqs:
                 if i.startswith("fail="):
                     note = i.lstrip("fail=")
             # needs to mirror the structure of the output from pangolearn
-            fw.write(f"{record.id},None,0,{params.pangolin_version},{params.version},{params.designation_version},fail,{note}\n")
+            
+            #"taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n"
+            fw.write(f"{record.id},None,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,{note}\n")
         
+
+
         for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
             if record.id not in passed:
-                fw.write(f"{record.id},None,0,{params.pangolin_version},{params.version},{params.designation_version},fail,failed_to_map\n")
+                fw.write(f"{record.id},None,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,failed_to_map\n")
 
         fw.close()
 
-rule type_variants_b117:
+rule scorpio:
     input:
         fasta = rules.align_to_reference.output.fasta,
-        variants = config["b117_variants"],
-        reference = config["reference_fasta"]
     output:
-        variants = os.path.join(config["tempdir"],"variants_b117.csv")
+        report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
     shell:
         """
-        type_variants.py \
-        --fasta-in {input.fasta:q} \
-        --variants-config {input.variants:q} \
-        --reference {input.reference:q} \
-        --variants-out {output.variants:q} \
-        --append-genotypes
-        """
-
-rule type_variants_b1351:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-        variants = config["b1351_variants"],
-        reference = config["reference_fasta"]
-    output:
-        variants = os.path.join(config["tempdir"],"variants_b1351.csv")
-    shell:
-        """
-        type_variants.py \
-        --fasta-in {input.fasta:q} \
-        --variants-config {input.variants:q} \
-        --reference {input.reference:q} \
-        --variants-out {output.variants:q} \
-        --append-genotypes
-        """
-
-rule type_variants_p2:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-        variants = config["p2_variants"],
-        reference = config["reference_fasta"]
-    output:
-        variants = os.path.join(config["tempdir"],"variants_p2.csv")
-    shell:
-        """
-        type_variants.py \
-        --fasta-in {input.fasta:q} \
-        --variants-config {input.variants:q} \
-        --reference {input.reference:q} \
-        --variants-out {output.variants:q} \
-        --append-genotypes
-        """
-
-
-rule type_variants_p1:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-        variants = config["p1_variants"],
-        reference = config["reference_fasta"]
-    output:
-        variants = os.path.join(config["tempdir"],"variants_p1.csv")
-    shell:
-        """
-        type_variants.py \
-        --fasta-in {input.fasta:q} \
-        --variants-config {input.variants:q} \
-        --reference {input.reference:q} \
-        --variants-out {output.variants:q} \
-        --append-genotypes
-        """
-
-rule type_variants_p3:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-        variants = config["p3_variants"],
-        reference = config["reference_fasta"]
-    output:
-        variants = os.path.join(config["tempdir"],"variants_p3.csv")
-    shell:
-        """
-        type_variants.py \
-        --fasta-in {input.fasta:q} \
-        --variants-config {input.variants:q} \
-        --reference {input.reference:q} \
-        --variants-out {output.variants:q} \
-        --append-genotypes
+        scorpio classify -i {input.fasta:q} -o {output.report:q} 
         """
 
 rule overwrite:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
-        b117_variants = rules.type_variants_b117.output.variants,
-        b1351_variants = rules.type_variants_b1351.output.variants,
-        p3_variants = rules.type_variants_p3.output.variants,
-        p2_variants = rules.type_variants_p2.output.variants,
-        p1_variants = rules.type_variants_p1.output.variants
+        scorpio_voc_report = rules.scorpio.output.report
     output:
         csv = config["outfile"]
     run:
-        b117 = {}
-        with open(input.b117_variants, "r") as f:
+        # b117 = {}
+        # with open(input.b117_variants, "r") as f:
+        #     reader = csv.DictReader(f)
+        #     for row in reader:
+        #         if int(row["alt_count"]) > 4 and int(row["ref_count"])<6:
+        #             b117[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+        # b1351 = {}
+        # with open(input.b1351_variants, "r") as f:
+        #     reader = csv.DictReader(f)
+        #     for row in reader:
+        #         if int(row["alt_count"]) > 4 and int(row["ref_count"])<2:
+        #             b1351[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+        # p1 = {}
+        # with open(input.p1_variants, "r") as f:
+        #     reader = csv.DictReader(f)
+        #     for row in reader:
+        #         if int(row["alt_count"]) > 10:
+        #             p1[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+        # p2 = {}
+        # with open(input.p2_variants, "r") as f:
+        #     reader = csv.DictReader(f)
+        #     for row in reader:
+        #         if int(row["alt_count"]) > 4 and int(row["ref_count"])<4:
+        #             p2[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+        # p3 = {}
+        # with open(input.p3_variants, "r") as f:
+        #     reader = csv.DictReader(f)
+        #     for row in reader:
+        #         if int(row["alt_count"]) > 8 and int(row["ref_count"])<4:
+        #             p3[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+        voc_dict = {}
+        with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if int(row["alt_count"]) > 4 and int(row["ref_count"])<6:
-                    b117[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
-        b1351 = {}
-        with open(input.b1351_variants, "r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if int(row["alt_count"]) > 4 and int(row["ref_count"])<2:
-                    b1351[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
-        p1 = {}
-        with open(input.p1_variants, "r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if int(row["alt_count"]) > 10:
-                    p1[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
-        p2 = {}
-        with open(input.p2_variants, "r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if int(row["alt_count"]) > 4 and int(row["ref_count"])<4:
-                    p2[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
-        p3 = {}
-        with open(input.p3_variants, "r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if int(row["alt_count"]) > 8 and int(row["ref_count"])<4:
-                    p3[row["query"]] = {'alt':row["alt_count"], 'ref':row["ref_count"], 'oth':row["other_count"]}
+                voc_dict[row["query"]] = row["constellations"]
 
         with open(output.csv, "w") as fw:
             # "taxon,lineage,probability,pangoLEARN_version,status,note" 
@@ -253,99 +197,104 @@ rule overwrite:
                 writer.writeheader()
 
                 for row in reader:
-                    if row["lineage"] =="B.1.1.7" and row["taxon"] not in b117:
-                        new_row = row
+                    new_row = row
+                    if row["taxon"] in voc_dict:
+                        new_row["voc_scorpio"] = voc_dict[row["taxon"]]
+                    writer.writerow(new_row)
+
+                    # if row["lineage"] =="B.1.1.7" and row["taxon"] not in b117:
+                    #     new_row = row
                         
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.1"
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.1"
 
-                        writer.writerow(new_row)
+                    #     writer.writerow(new_row)
 
-                    elif row["taxon"] in b117:
-                        new_row = row
+                    # elif row["taxon"] in b117:
+                    #     new_row = row
                         
-                        snps = b117[row["taxon"]]
-                        note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                    #     snps = b117[row["taxon"]]
+                    #     note = f'{snps["alt"]}/17 B.1.1.7 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
-                        new_row["note"] = note
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.1.7"
+                    #     new_row["note"] = note
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.1.7"
 
-                        writer.writerow(new_row)
-                    elif row["lineage"].startswith("B.1.351") and row["taxon"] not in b1351:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["lineage"].startswith("B.1.351") and row["taxon"] not in b1351:
+                    #     new_row = row
                         
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1"
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1"
 
-                        writer.writerow(new_row)
+                    #     writer.writerow(new_row)
                         
-                    elif row["taxon"] in b1351:
-                        new_row = row
+                    # elif row["taxon"] in b1351:
+                    #     new_row = row
                         
-                        snps = b1351[row["taxon"]]
-                        note = f'{snps["alt"]}/9 B.1.351 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                    #     snps = b1351[row["taxon"]]
+                    #     note = f'{snps["alt"]}/9 B.1.351 SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
-                        new_row["note"] = note
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.351"
+                    #     new_row["note"] = note
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.351"
 
-                        writer.writerow(new_row)
-                    elif row["taxon"] in p2:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["taxon"] in p2:
+                    #     new_row = row
                         
-                        snps = p2[row["taxon"]]
-                        note = f'{snps["alt"]}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                    #     snps = p2[row["taxon"]]
+                    #     note = f'{snps["alt"]}/5 P.2 (B.1.1.28.2) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
-                        new_row["note"] = note
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "P.2"
+                    #     new_row["note"] = note
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "P.2"
 
-                        writer.writerow(new_row)
-                    elif row["lineage"] =="P.2" and row["taxon"] not in p2:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["lineage"] =="P.2" and row["taxon"] not in p2:
+                    #     new_row = row
                         
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.1.28"
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.1.28"
 
-                        writer.writerow(new_row)
-                    elif row["taxon"] in p1:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["taxon"] in p1:
+                    #     new_row = row
                         
-                        snps = p1[row["taxon"]]
-                        note = f'{snps["alt"]}/16 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                    #     snps = p1[row["taxon"]]
+                    #     note = f'{snps["alt"]}/16 P.1 (B.1.1.28.1) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
-                        new_row["note"] = note
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "P.1"
+                    #     new_row["note"] = note
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "P.1"
 
-                        writer.writerow(new_row)
-                    elif row["lineage"] =="P.1" and row["taxon"] not in p1:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["lineage"] =="P.1" and row["taxon"] not in p1:
+                    #     new_row = row
                         
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.1.28"
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.1.28"
 
-                        writer.writerow(new_row)
-                    elif row["taxon"] in p3:
-                        new_row = row
-                        snps = p3[row["taxon"]]
-                        note = f'{snps["alt"]}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
+                    #     writer.writerow(new_row)
+                    # elif row["taxon"] in p3:
+                    #     new_row = row
+                    #     snps = p3[row["taxon"]]
+                    #     note = f'{snps["alt"]}/12 P.3 (B.1.1.28.3) SNPs ({snps["ref"]} ref and {snps["oth"]} other)'
 
-                        new_row["note"] = note
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "P.3"
+                    #     new_row["note"] = note
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "P.3"
 
-                        writer.writerow(new_row)
-                    elif row["lineage"] =="P.3" and row["taxon"] not in p3:
-                        new_row = row
+                    #     writer.writerow(new_row)
+                    # elif row["lineage"] =="P.3" and row["taxon"] not in p3:
+                    #     new_row = row
                         
-                        new_row["conflict"] = "0"
-                        new_row["lineage"] = "B.1.1.28"
+                    #     new_row["conflict"] = "0"
+                    #     new_row["lineage"] = "B.1.1.28"
 
-                        writer.writerow(new_row)
-                    else:
-                        writer.writerow(row)
+                    #     writer.writerow(new_row)
+                    # else:
+                    #     writer.writerow(row)
         print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:
             print(pfunk.green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
@@ -387,9 +336,10 @@ rule use_usher:
         fi
         echo usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir}
         usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir} &> usher.log
-        echo "taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
-        awk -F'\t' -v OFS=, '{{ print $1, $NF, "0.0", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", ""; }}' \
+        echo "taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
+        awk -F'\t' -v OFS=, '{{ print $1, $NF, "NA", "NA", "PUSHER-{params.designation_version}", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", "UShER inference"; }}' \
             clades.txt >> {output.csv}
         echo ""
         echo "Output written to {output.csv}"
         """
+#"taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n"

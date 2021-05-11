@@ -157,7 +157,7 @@ loaded_model = joblib.load(args.model_file)
 
 # write predictions to a file
 f = open(args.outfile, "w")
-
+f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
 for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	print("processing block of {} sequences {}".format(
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -181,8 +181,8 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		maxScore = 0
 		maxIndex = -1
 
-		nonZeroIds = [];
-		nonZeroScores = [];
+		nonZeroIds = []
+		nonZeroScores = []
 
 		# get the max probability score and its assosciated index
 		for i in range(len(predictions[index])):
@@ -201,7 +201,7 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
 
 		if seqId != referenceId:
-			f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "\n")
+			f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n")
 
 f.close()
 
