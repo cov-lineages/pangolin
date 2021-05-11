@@ -170,7 +170,7 @@ def main(sysargs = sys.argv[1:]):
 
     if run == []:
         with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,voc_scorpio,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            fw.write("taxon,lineage,scorpio_call,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             for record in do_not_run:
                 desc = record.description.split(" ")
                 reason = ""
