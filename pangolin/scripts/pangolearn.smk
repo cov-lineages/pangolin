@@ -93,7 +93,7 @@ rule add_failed_seqs:
     run:
 
         fw = open(output[0],"w")
-        fw.write("taxon,lineage,scorpio_call,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+        fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
         passed = []
         version = f"PLEARN-{params.designation_version}"
         with open(input.qcpass, "r") as f:
@@ -113,7 +113,7 @@ rule add_failed_seqs:
                 else:
                     version = f"PLEARN-{params.designation_version}"
 
-                fw.write(f"{row['taxon']},{row['prediction']},,{support},{row['imputation_score']},{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},passed_qc,{note}\n")
+                fw.write(f"{row['taxon']},{row['prediction']},{support},{row['imputation_score']},,,,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},passed_qc,{note}\n")
                 passed.append(row['taxon'])
 
         for record in SeqIO.parse(input.qcfail,"fasta"):
@@ -125,13 +125,13 @@ rule add_failed_seqs:
             # needs to mirror the structure of the output from pangolearn
             
             #"taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n"
-            fw.write(f"{record.id},None,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,{note}\n")
+            fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,{note}\n")
         
 
 
         for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
             if record.id not in passed:
-                fw.write(f"{record.id},None,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,failed_to_map\n")
+                fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{params.pangolin_version},{params.pangolearn_version},{params.designation_version},fail,failed_to_map\n")
 
         fw.close()
 
@@ -140,9 +140,18 @@ rule scorpio:
         fasta = rules.align_to_reference.output.fasta,
     output:
         report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
+    threads:
+        workflow.cores
+    log:
+        os.path.join(config["tempdir"], "logs/scorpio.log")
     shell:
         """
-        scorpio classify -i {input.fasta:q} -o {output.report:q} -n B.1.1.7 B.1.351 P.1 --output-counts
+        scorpio classify \
+        -i {input.fasta:q} \
+        -o {output.report:q} \
+        -t {workflow.cores} \
+        -n B.1.1.7 \
+        --long > {log}
         """
 
 rule overwrite:
@@ -156,7 +165,8 @@ rule overwrite:
         with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                voc_dict[row["query"]] = row["constellations"]
+                if row["constellations"] != "":
+                    voc_dict[row["query"]] = row
 
         with open(output.csv, "w") as fw:
 
@@ -169,8 +179,14 @@ rule overwrite:
                 for row in reader:
                     new_row = row
                     if row["taxon"] in voc_dict:
-                        new_row["scorpio_call"] = voc_dict[row["taxon"]]
+                        scorpio_call_info = voc_dict[row["taxon"]]
+                        new_row["scorpio_call"] = scorpio_call_info["constellations"]
+                        new_row["scorpio_support"] = scorpio_call_info["support"]
+                        new_row["scorpio_conflict"] = scorpio_call_info["conflict"]
+                        new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
                     writer.writerow(new_row)
+
+
 
         print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:
@@ -199,24 +215,30 @@ rule use_usher:
         designation_version = config["pango_version"],
         pangolin_version = config["pangolin_version"],
         tempdir = config["tempdir"],
-        threads = config["threads"],
         version = config["pangoLEARN_version"],
-        vcf = os.path.join(config["tempdir"], "sequences.aln.vcf"),
+        vcf = os.path.join(config["tempdir"], "sequences.aln.vcf")
+    threads: workflow.cores
     output:
-        csv = config["outfile"]
+        txt = os.path.join(config["tempdir"], "clades.txt")
+    log:
+        os.path.join(config["tempdir"], "logs/usher.log")
     shell:
         """
         faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf}
-        if [ -z "{params.threads}" ]; then
-            T=""
-        else
-            T="-T {params.threads}"
-        fi
-        echo usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir}
-        usher -i {input.usher_protobuf:q} -v {params.vcf} $T -d {params.tempdir} &> usher.log
-        echo "taxon,lineage,scorpio_call,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
-        awk -F'\t' -v OFS=, '{{ print $1, $NF,"NA" , "NA", "NA", "PUSHER-{params.designation_version}", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", "UShER inference"; }}' \
-            clades.txt >> {output.csv}
+        usher -i {input.usher_protobuf:q} -v {params.vcf} -T {workflow.cores} -d {params.tempdir} &> {log}
+        """
+
+rule usher_to_report:
+    input:
+        rules.use_usher.output.txt
+    output:
+        config["outfile"]
+    shell:
+        """
+        echo "taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
+
+         awk -F'\t' -v OFS=, '{{ print $1, $NF,"NA","NA", "PUSHER-{params.designation_version}", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", "UShER inference"; }}' \
+            {input.txt} >> {output.csv}
         echo ""
         echo "Output written to {output.csv}"
         """
