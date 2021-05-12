@@ -27,7 +27,7 @@ else:
 if not config.get("threads"):
     config["threads"]=""
 
-ruleorder: use_usher > overwrite
+ruleorder: usher_to_report > overwrite
 
 if config["lineages_csv"] != "":
     rule all:
@@ -212,10 +212,6 @@ rule use_usher:
         reference = config["reference_fasta"],
         usher_protobuf = config["usher_protobuf"]
     params:
-        designation_version = config["pango_version"],
-        pangolin_version = config["pangolin_version"],
-        tempdir = config["tempdir"],
-        version = config["pangoLEARN_version"],
         vcf = os.path.join(config["tempdir"], "sequences.aln.vcf")
     threads: workflow.cores
     output:
@@ -225,14 +221,18 @@ rule use_usher:
     shell:
         """
         faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf}
-        usher -i {input.usher_protobuf:q} -v {params.vcf} -T {workflow.cores} -d {params.tempdir} &> {log}
+        usher -i {input.usher_protobuf:q} -v {params.vcf} -T {workflow.cores} -d {config[tempdir]} &> {log}
         """
 
 rule usher_to_report:
     input:
-        rules.use_usher.output.txt
+        txt = rules.use_usher.output.txt
+    params:
+        designation_version = config["pango_version"],
+        pangolin_version = config["pangolin_version"],
+        version = config["pangoLEARN_version"]
     output:
-        config["outfile"]
+        csv = config["outfile"]
     shell:
         """
         echo "taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
