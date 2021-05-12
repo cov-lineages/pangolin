@@ -226,19 +226,33 @@ rule use_usher:
 
 rule usher_to_report:
     input:
-        txt = rules.use_usher.output.txt
+        txt = rules.use_usher.output.txt,
+        scorpio_voc_report = rules.scorpio.output.report
     params:
         designation_version = config["pango_version"],
-        pangolin_version = config["pangolin_version"],
-        version = config["pangoLEARN_version"]
+        pangolin_version = config["pangolin_version"]
     output:
         csv = config["outfile"]
-    shell:
-        """
-        echo "taxon,lineage,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note" > {output.csv}
+    run:
+        voc_dict = {}
+        with open(input.scorpio_voc_report,"r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["constellations"] != "":
+                    voc_dict[row["query"]] = row
 
-         awk -F'\t' -v OFS=, '{{ print $1, $NF,"NA","NA", "PUSHER-{params.designation_version}", "{params.pangolin_version}", "{params.version}", "{params.designation_version}", "passed_qc", "UShER inference"; }}' \
-            {input.txt} >> {output.csv}
-        echo ""
-        echo "Output written to {output.csv}"
-        """
+        with open(output.csv, "w") as fw:
+            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+
+            with open(input.txt, "r") as f:
+                for l in f:
+                    name,lineage = l.rstrip("\n").split("\t")
+                    scorpio_call_info,scorpio_call,scorpio_support,scorpio_conflict,note='','','','',''
+                    if name in voc_dict:
+                        scorpio_call_info = voc_dict[name]
+                        scorpio_call = scorpio_call_info["constellations"]
+                        scorpio_support = scorpio_call_info["support"]
+                        scorpio_conflict = scorpio_call_info["conflict"]
+                        note = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
+                    fw.write(f"{name},{lineage},NA,NA,{scorpio_call_info},{scorpio_call},{scorpio_support},{scorpio_conflict},PUSHER-{params.designation_version},{params.pangolin_version},{config['pangoLEARN_version']},{params.designation_version},passed_qc,UShER inference; {note}")
+        print("Output written to {output.csv}")
