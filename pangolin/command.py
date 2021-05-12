@@ -54,7 +54,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
-    parser.add_argument("-t","--threads",action="store",help="Number of threads")
+    parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
@@ -124,7 +124,7 @@ def main(sysargs = sys.argv[1:]):
         tempdir = temporary_directory.name
 
     if args.no_temp:
-        print(pfunk.green(f"--no-temp:") + f"all intermediate files will be written to {outdir}")
+        print(pfunk.green(f"--no-temp: ") + f"all intermediate files will be written to {outdir}")
         tempdir = outdir
 
     if args.alignment:
@@ -133,10 +133,6 @@ def main(sysargs = sys.argv[1:]):
     else:
         align_dir = tempdir
         alignment_out = False
-
-
-    if args.threads:
-        print(pfunk.cyan(f"\n--threads flag used, but threading not currently supported. Continuing with one thread."))
 
     """
     QC steps:
@@ -170,14 +166,14 @@ def main(sysargs = sys.argv[1:]):
 
     if run == []:
         with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,scorpio_call,conflict,ambiguity_score,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             for record in do_not_run:
                 desc = record.description.split(" ")
                 reason = ""
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,,NA,NA,PLEARN-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+                fw.write(f"{record.id},None,NA,NA,,NA,NA,PLEARN-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
         print(pfunk.cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 
@@ -200,7 +196,8 @@ def main(sysargs = sys.argv[1:]):
         "qc_fail":qc_fail,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
-        "pango_version":PANGO_VERSION
+        "pango_version":PANGO_VERSION,
+        "threads":args.threads
         }
 
     # find the data
@@ -272,8 +269,6 @@ def main(sysargs = sys.argv[1:]):
         print(pfunk.green("\nData files found"))
         if use_usher:
             print(f"UShER tree:\t{usher_protobuf}")
-            if args.threads:
-                config["threads"] = args.threads
         else:
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
@@ -320,12 +315,12 @@ def main(sysargs = sys.argv[1:]):
             print(pfunk.green(k), config[k])
 
         status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                        workdir=tempdir,config=config, cores=1,lock=False
+                                        workdir=tempdir,config=config, cores=args.threads,lock=False
                                         )
     else:
         logger = custom_logger.Logger()
         status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=tempdir,
-                                    config=config, cores=1,lock=False,quiet=True,log_handler=logger.log_handler
+                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
                                     )
 
     if status: # translate "success" into shell exit code of 0
