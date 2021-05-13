@@ -50,7 +50,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
     parser.add_argument('--usher', action="store_true",help="Use UShER model instead of default pangoLEARN")
     parser.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
-    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
+    parser.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
     parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
@@ -124,7 +124,7 @@ def main(sysargs = sys.argv[1:]):
         tempdir = temporary_directory.name
 
     if args.no_temp:
-        print(pfunk.green(f"--no-temp: ") + f"all intermediate files will be written to {outdir}")
+        print(pfunk.green(f"\n--no-temp: ") + f"all intermediate files will be written to {outdir}\n")
         tempdir = outdir
 
     if args.alignment:
@@ -143,7 +143,13 @@ def main(sysargs = sys.argv[1:]):
 
     do_not_run = []
     run = []
+    total_input = 0
+    print(pfunk.green("** Sequence QC **"))
+    fmt = "{:<30}\t{:>25}\t{:<10}\n"
+
+    print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
     for record in SeqIO.parse(query, "fasta"):
+        total_input +=1
         # replace spaces in sequence headers with underscores
         record.description = record.description.replace(' ', '_')
         record.id = record.description
@@ -153,16 +159,21 @@ def main(sysargs = sys.argv[1:]):
         if len(record) <args.minlen:
             record.description = record.description + f" fail=seq_len:{len(record)}"
             do_not_run.append(record)
-            print(record.id, "\tsequence too short")
+            print(fmt.format(record.id, "Seq too short", len(record)))
+            # print(record.id, "\t\tsequence too short")
         else:
             num_N = str(record.seq).upper().count("N")
             prop_N = round((num_N)/len(record.seq), 2)
             if prop_N > args.maxambig:
                 record.description = record.description + f" fail=N_content:{prop_N}"
                 do_not_run.append(record)
-                print(f"{record.id}\thas an N content of {prop_N}")
+                print(fmt.format(record.id, "N content too high", prop_N))
+                # print("{record.id} | has an N content of {prop_N}")
             else:
                 run.append(record)
+
+    print(pfunk.green("\nNumber of sequences detected: ") + f"{total_input}")
+    print(pfunk.green("Total passing QC: ") + f"{len(run)}")
 
     if run == []:
         with open(outfile, "w") as fw:
@@ -221,7 +232,7 @@ def main(sysargs = sys.argv[1:]):
     if not args.datadir:
         pangoLEARN_dir = pangoLEARN.__path__[0]
         data_dir = os.path.join(pangoLEARN_dir,"data")
-    print(f"Looking in {data_dir} for data files...")
+    # print(f"Looking in {data_dir} for data files...")
     trained_model = ""
     header_file = ""
     lineages_csv = ""
@@ -253,7 +264,7 @@ def main(sysargs = sys.argv[1:]):
         if args.decompress:
             prev_size = os.path.getsize(trained_model)
 
-            print("Decompressing model and header files")
+            print("Decompressing model and header files.")
             model = joblib.load(trained_model)
             joblib.dump(model, trained_model, compress=0)
             headers = joblib.load(header_file)
@@ -266,7 +277,7 @@ def main(sysargs = sys.argv[1:]):
                 print(pfunk.cyan(f'Error: failed to decompress model. Exiting\n'))
                 sys.exit(0)
 
-        print(pfunk.green("\nData files found"))
+        print(pfunk.green("\nData files found:"))
         if use_usher:
             print(f"UShER tree:\t{usher_protobuf}")
         else:
@@ -278,22 +289,6 @@ def main(sysargs = sys.argv[1:]):
 
     reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
     config["reference_fasta"] = reference_fasta
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.1.7.csv')
-    config["b117_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
-    config["b1351_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.1.csv')
-    config["p1_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.2.csv')
-    config["p2_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.3.csv')
-    config["p3_variants"] = variants_file
-
 
     if args.panGUIlin:
         config["lineages_csv"]=lineages_csv

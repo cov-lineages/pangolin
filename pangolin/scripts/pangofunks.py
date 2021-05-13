@@ -84,7 +84,7 @@ def check_installs():
             sys.stderr.write(cyan(f'Error: Missing dependencies.')+f'\n{dependencies}Please update your pangolin environment.\n')
             sys.exit(-1)
     else:
-        print(green("All dependencies satisfied."))
+        print(green("All dependencies satisfied.\n"))
 
 
 # check_installs()
