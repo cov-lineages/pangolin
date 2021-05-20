@@ -63,14 +63,16 @@ def main():
     parser.add_argument('--panGUIlin', action='store_true', help="Run web-app version of pangolin",
                         dest="panGUIlin")
     parser.add_argument("--verbose", action="store_true", help="Print lots of stuff to screen")
-    parser.add_argument("-t","--threads", action="store", help="Number of threads")
-    parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
-    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",
+    parser.add_argument("-t", "--threads", action="store", help="Number of threads")
+    parser.add_argument("-v", "--version", action='version', version=f"pangolin {__version__}")
+    parser.add_argument("-pv", "--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",
                         help="show pangoLEARN's version number and exit")
     parser.add_argument("--update", action='store_true', default=False,
                         help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
-    parser.add_argument("--gzip", action="store_true", help="Query files are gzip-compressed.")
-    parser.add_argument("--xz", action="store_true", help="Query files are xz-compressed.")
+
+    compression = parser.add_mutually_exclusive_group()
+    compression.add_argument("--gzip", action="store_true", help="Query files are gzip-compressed.")
+    compression.add_argument("--xz", action="store_true", help="Query files are xz-compressed.")
 
     if len(sys.argv) == 1:
         parser.print_help()
