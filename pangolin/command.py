@@ -27,6 +27,7 @@ import pangofunks as pfunk
 import pkg_resources
 from Bio import SeqIO
 import gzip
+import lzma  # Python 3.3+
 
 from . import _program
 
@@ -69,6 +70,7 @@ def main():
     parser.add_argument("--update", action='store_true', default=False,
                         help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
     parser.add_argument("--gzip", action="store_true", help="Query files are gzip-compressed.")
+    parser.add_argument("--xz", action="store_true", help="Query files are xz-compressed.")
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -158,6 +160,8 @@ def main():
     if args.gzip:
         # user says input FASTA file is gzip-compressed, use gzip module to stream text to SeqIO
         query = gzip.open(query, 'rt')  # replace file path (str) with handle
+    if args.xz:
+        query = lzma.open(query, 'rt')
 
     for record in SeqIO.parse(query, "fasta"):
         # replace spaces in sequence headers with underscores
