@@ -84,7 +84,7 @@ def encodeSeq(seq, indiciesToKeep):
 
 	score = 0
 
-	if nonimputed != 0:
+	if nonimputed != 0 and imputed < nonimputed:
 		score = 1 - (imputed/nonimputed)
 
 	return dataLine, score
