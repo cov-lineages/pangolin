@@ -108,6 +108,7 @@ rule add_failed_seqs:
                 for row in reader:
                     version = f"PANGO-{config['pango_version']}"
                     fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    passed.append(row['taxon'])
                     
             with open(input.qcpass, "r") as f:
                 reader = csv.DictReader(f)
@@ -245,7 +246,7 @@ rule usher_to_report:
                 for row in reader:
                     version = f"PANGO-{config['pango_version']}"
                     fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
-                
+                    passed.append(row['taxon'])
             with open(input.txt, "r") as f:
                 for l in f:
                     name,lineage = l.rstrip("\n").split("\t")
