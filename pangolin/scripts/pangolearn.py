@@ -32,6 +32,8 @@ referenceFile = args.reference_file
 referenceSeq = ""
 referenceId = "reference"
 
+imputationScores = dict()
+
 def findReferenceSeq():
 	currentSeq = ""
 
@@ -49,23 +51,43 @@ def clean(x, loc):
 	x = x.upper()
 
 	if x == 'T' or x == 'A' or x == 'G' or x == 'C' or x == '-':
-		return x
+		return x, False
 
 	if x == 'U':
-		return 'T'
+		return 'T', False
 
 	# replace ambiguity with the reference seq value
-	return referenceSeq[loc]
+
+	if referenceSeq[loc] == x:
+		return referenceSeq[loc], False
+
+	return referenceSeq[loc], True
 
 
 # generates data line
 def encodeSeq(seq, indiciesToKeep):
 	dataLine = []
+	imputed = 0
+	nonimputed = 0
+
 	for i in indiciesToKeep:
 		if i < len(seq):
-			dataLine.extend(clean(seq[i], i))
+			cleaned, imputed = clean(seq[i], i)
 
-	return dataLine
+			dataLine.extend(cleaned)
+
+			if(imputed):
+				imputed = imputed + 1
+			else:
+				nonimputed = nonimputed + 1
+
+
+	score = 0
+
+	if nonimputed != 0 and imputed < nonimputed:
+		score = 1 - (imputed/nonimputed)
+
+	return dataLine, score
 
 
 # reads in the two data files
@@ -88,8 +110,12 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 					if currentSeq:
 						# yield sequence as one-hot encoded vector
 						idList.append(seqid)
-						seqList.append(encodeSeq(currentSeq, indiciesToKeep))
+
+						finalSeq, imputationScore = encodeSeq(currentSeq, indiciesToKeep)
+						seqList.append(finalSeq)
 						currentSeq = ""
+
+						imputationScores[seqid] = imputationScore
 
 					# this is a fasta line designating an id, but we don't want to keep the >
 					seqid = line.strip('>')
@@ -104,7 +130,9 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 
 		# gotta get the last one
 		idList.append(seqid)
-		seqList.append(encodeSeq(currentSeq, indiciesToKeep))
+		finalSeq, imputationScore = encodeSeq(currentSeq, indiciesToKeep)
+		seqList.append(finalSeq)
+		imputationScores[seqid] = imputationScore
 
 	yield idList, seqList
 
@@ -117,14 +145,19 @@ referenceSeq = findReferenceSeq()
 # possible nucleotide symbols
 categories = ['-','A', 'C', 'G', 'T']
 columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
-refRow = [r==c for r in encodeSeq(referenceSeq, indiciesToKeep) for c in categories]
+
+
+
+rs, score = encodeSeq(referenceSeq, indiciesToKeep)
+
+refRow = [r==c for r in rs for c in categories]
 
 print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 loaded_model = joblib.load(args.model_file)
 
 # write predictions to a file
 f = open(args.outfile, "w")
-
+f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
 for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 	print("processing block of {} sequences {}".format(
 		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
@@ -148,18 +181,27 @@ for idList, seqList in readInAndFormatData(args.sequences_file, indiciesToKeep):
 		maxScore = 0
 		maxIndex = -1
 
+		nonZeroIds = []
+		nonZeroScores = []
+
 		# get the max probability score and its assosciated index
 		for i in range(len(predictions[index])):
 			if predictions[index][i] > maxScore:
 				maxScore = predictions[index][i]
 				maxIndex = i
 
+				nonZeroScores.append(predictions[index][i])
+				nonZeroIds.append(loaded_model.classes_[i])
+
 		score = maxScore
 		prediction = loaded_model.classes_[maxIndex]
 		seqId = idList[index]
 
+		nonZeroIds = ";".join(nonZeroIds)
+		nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
+
 		if seqId != referenceId:
-			f.write(seqId + "," + prediction + "," + str(score) + "\n")
+			f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n")
 
 f.close()
 

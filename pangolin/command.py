@@ -12,24 +12,28 @@ from tempfile import gettempdir
 import tempfile
 import pprint
 import json
+import gzip
+import lzma
 import os
 import joblib
 import pangoLEARN
 try:
     from pangoLEARN import PANGO_VERSION
 except:
-    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-04-28')
+    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-05-27')
     sys.exit(-1)
-import custom_logger as custom_logger
-import log_handler_handle as lh
-import pangofunks as pfunk
+
+
+from pangolin.utils import dependency_checks
+from pangolin.utils import data_install_checks
+
+import pangolin.utils.custom_logger as custom_logger
+from pangolin.utils.log_colours import green,cyan,red
 
 import pkg_resources
 from Bio import SeqIO
 
-
 from . import _program
-
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
@@ -41,20 +45,22 @@ def main(sysargs = sys.argv[1:]):
     usage='''pangolin <query> [options]''')
 
     parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
+    parser.add_argument('--usher', action="store_true",help="Use UShER model instead of default pangoLEARN")
+    parser.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
+    parser.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
-    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
-    parser.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    parser.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing a fasta alignment and guide tree")
     parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
-    parser.add_argument('--max-ambig', action="store", default=0.5, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.5",dest="maxambig")
-    parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
-    parser.add_argument('--panGUIlin', action='store_true',help="Run web-app version of pangolin",dest="panGUIlin")
     parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
-    parser.add_argument("-t","--threads",action="store",help="Number of threads")
+    parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
 
     if len(sysargs)<1:
@@ -66,50 +72,44 @@ def main(sysargs = sys.argv[1:]):
 
     if args.update:
         update(__version__, pangoLEARN.__version__)
-
-    snakefile = os.path.join(thisdir, 'scripts','pangolearn.smk')
-    if not os.path.exists(snakefile):
-        sys.stderr.write('Error: cannot find Snakefile at {}\n'.format(snakefile))
-        sys.exit(-1)
-
-    pfunk.check_installs()
+    
+    dependency_checks.check_dependencies()
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
     if len(args.query) > 1:
-        print(pfunk.cyan(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only"))
+        print(cyan(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only"))
         parser.print_help()
         sys.exit(-1)
     else:
         # find the query fasta
         query = os.path.join(cwd, args.query[0])
         if not os.path.exists(query):
-            sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
+            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
+                                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                ' for detailed instructions.\n')
             sys.exit(-1)
         else:
-            print(pfunk.green(f"The query file is:") + f"{query}")
+            print(green(f"The query file is:") + f"{query}")
 
         # default output dir
-    outdir = ''
+
     if args.outdir:
         outdir = os.path.join(cwd, args.outdir)
         if not os.path.exists(outdir):
             try:
                 os.mkdir(outdir)
             except:
-                sys.stderr.write(pfunk.cyan(f'Error: cannot create directory:') + f"{outdir}")
+                sys.stderr.write(cyan(f'Error: cannot create directory:') + f"{outdir}")
                 sys.exit(-1)
     else:
         outdir = cwd
 
-
-    outfile = ""
     if args.outfile:
         outfile = os.path.join(outdir, args.outfile)
     else:
         outfile = os.path.join(outdir, "lineage_report.csv")
 
-    tempdir = ''
     if args.tempdir:
         to_be_dir = os.path.join(cwd, args.tempdir)
         if not os.path.exists(to_be_dir):
@@ -121,7 +121,7 @@ def main(sysargs = sys.argv[1:]):
         tempdir = temporary_directory.name
 
     if args.no_temp:
-        print(pfunk.green(f"--no-temp:") + f"all intermediate files will be written to {outdir}")
+        print(green(f"\n--no-temp: ") + f"all intermediate files will be written to {outdir}\n")
         tempdir = outdir
 
     if args.alignment:
@@ -130,10 +130,6 @@ def main(sysargs = sys.argv[1:]):
     else:
         align_dir = tempdir
         alignment_out = False
-
-
-    if args.threads:
-        print(pfunk.cyan(f"\n--threads flag used, but threading not currently supported. Continuing with one thread."))
 
     """
     QC steps:
@@ -144,7 +140,20 @@ def main(sysargs = sys.argv[1:]):
 
     do_not_run = []
     run = []
+    total_input = 0
+    print(green("** Sequence QC **"))
+    fmt = "{:<30}\t{:>25}\t{:<10}\n"
+
+    print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
+
+    file_ending = query.split(".")[-1]
+    if file_ending in ["gz","gzip","tgz"]:
+        query = gzip.open(query, 'rt')
+    elif file_ending in ["xz","lzma"]:
+        query = lzma.open(query, 'rt')
+
     for record in SeqIO.parse(query, "fasta"):
+        total_input +=1
         # replace spaces in sequence headers with underscores
         record.description = record.description.replace(' ', '_')
         record.id = record.description
@@ -154,28 +163,33 @@ def main(sysargs = sys.argv[1:]):
         if len(record) <args.minlen:
             record.description = record.description + f" fail=seq_len:{len(record)}"
             do_not_run.append(record)
-            print(record.id, "\tsequence too short")
+            print(fmt.format(record.id, "Seq too short", len(record)))
+            # print(record.id, "\t\tsequence too short")
         else:
             num_N = str(record.seq).upper().count("N")
             prop_N = round((num_N)/len(record.seq), 2)
             if prop_N > args.maxambig:
                 record.description = record.description + f" fail=N_content:{prop_N}"
                 do_not_run.append(record)
-                print(f"{record.id}\thas an N content of {prop_N}")
+                print(fmt.format(record.id, "N content too high", prop_N))
+                # print("{record.id} | has an N content of {prop_N}")
             else:
                 run.append(record)
 
+    print(green("\nNumber of sequences detected: ") + f"{total_input}")
+    print(green("Total passing QC: ") + f"{len(run)}")
+
     if run == []:
         with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,conflict,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             for record in do_not_run:
                 desc = record.description.split(" ")
                 reason = ""
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,NA,{__version__},{pangoLEARN.__version__},PANGO_VERSION,fail,{reason}\n")
-        print(pfunk.cyan(f'Note: no query sequences have passed the qc\n'))
+                fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+        print(cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 
     post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
@@ -195,13 +209,19 @@ def main(sysargs = sys.argv[1:]):
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
+        "verbose":args.verbose,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
-        "pango_version":PANGO_VERSION
+        "pango_version":PANGO_VERSION,
+        "threads":args.threads
         }
 
+    data_install_checks.check_install(config)
+    snakefile = data_install_checks.get_snakefile(thisdir)
+
+    dependency_checks.set_up_verbosity(config)
+
     # find the data
-    data_dir = ""
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
         version = "Unknown"
@@ -218,13 +238,22 @@ def main(sysargs = sys.argv[1:]):
                                 print("pangoLEARN version",version)
         config["pangoLEARN_version"] = version
 
-    if not args.datadir:
+    else:
         pangoLEARN_dir = pangoLEARN.__path__[0]
         data_dir = os.path.join(pangoLEARN_dir,"data")
-    print(f"Looking in {data_dir} for data files...")
+    # print(f"Looking in {data_dir} for data files...")
     trained_model = ""
     header_file = ""
-    lineages_csv = ""
+    designated_hash=""
+    use_usher = args.usher
+    if args.usher_protobuf:
+        usher_protobuf = os.path.join(cwd, args.usher_protobuf)
+        if not os.path.exists(usher_protobuf):
+            sys.stderr.write('Error: cannot find --usher-tree file at {}\n'.format(usher_protobuf))
+            sys.exit(-1)
+        use_usher = True
+    else:
+        usher_protobuf = ""
 
     for r,d,f in os.walk(data_dir):
         for fn in f:
@@ -232,78 +261,61 @@ def main(sysargs = sys.argv[1:]):
                 header_file = os.path.join(r, fn)
             elif fn == "decisionTree_v1.joblib":
                 trained_model = os.path.join(r, fn)
-            elif fn == "lineages.metadata.csv":
-                lineages_csv = os.path.join(r, fn)
-    if trained_model=="" or header_file==""  or lineages_csv=="":
-        print(pfunk.cyan("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions."""))
+            elif fn =="lineages.hash.csv":
+                designated_hash = os.path.join(r, fn)
+            elif fn == "lineageTree.pb" and usher_protobuf == "":
+                usher_protobuf = os.path.join(r, fn)
+    if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
+        (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
+        print(cyan("""pangoLEARN version should be >= 2021-05-27. \n
+Appropriate data files not found from the installed pangoLEARN repo. 
+Please see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
         exit(1)
     else:
         if args.decompress:
             prev_size = os.path.getsize(trained_model)
 
-            print("Decompressing model and header files")
+            print("Decompressing model and header files.")
             model = joblib.load(trained_model)
             joblib.dump(model, trained_model, compress=0)
             headers = joblib.load(header_file)
             joblib.dump(headers, header_file, compress=0)
 
             if os.path.getsize(trained_model) >= prev_size:
-                print(pfunk.green(f'Success! Decompressed the model file. Exiting\n'))
+                print(green(f'Success! Decompressed the model file. Exiting\n'))
                 sys.exit(0)
             else:
-                print(pfunk.cyan(f'Error: failed to decompress model. Exiting\n'))
+                print(cyan(f'Error: failed to decompress model. Exiting\n'))
                 sys.exit(0)
 
-        print(pfunk.green("\nData files found"))
-        print(f"Trained model:\t{trained_model}")
-        print(f"Header file:\t{header_file}")
-        print(f"Lineages csv:\t{lineages_csv}")
+        print(green("\nData files found:"))
+        if use_usher:
+            print(f"UShER tree:\t{usher_protobuf}")
+            print(f"Designated hash:\t{designated_hash}")
+        else:
+            print(f"Trained model:\t{trained_model}")
+            print(f"Header file:\t{header_file}")
+            print(f"Designated hash:\t{designated_hash}")
+            
         config["trained_model"] = trained_model
         config["header_file"] = header_file
+        config["designated_hash"] = designated_hash
 
-    reference_fasta = pkg_resources.resource_filename('pangolin', 'data/reference.fasta')
-    config["reference_fasta"] = reference_fasta
+    if use_usher:
+        config["usher_protobuf"] = usher_protobuf
 
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.1.7.csv')
-    config["b117_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_b.1.351.csv')
-    config["b1351_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.1.csv')
-    config["p1_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.2.csv')
-    config["p2_variants"] = variants_file
-
-    variants_file = pkg_resources.resource_filename('pangolin', 'data/config_p.3.csv')
-    config["p3_variants"] = variants_file
-
-
-    if args.panGUIlin:
-        config["lineages_csv"]=lineages_csv
-
-
-    if args.verbose:
-        quiet_mode = False
-        config["log_string"] = ""
-    else:
-        quiet_mode = True
-        lh_path = os.path.realpath(lh.__file__)
-        config["log_string"] = f"--quiet --log-handler-script {lh_path} "
-
-    if args.verbose:
-        print(pfunk.green("\n**** CONFIG ****"))
+    if config['verbose']:
+        print(green("\n**** CONFIG ****"))
         for k in sorted(config):
-            print(pfunk.green(k), config[k])
+            print(green(k), config[k])
 
         status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                        workdir=tempdir,config=config, cores=1,lock=False
+                                        workdir=tempdir,config=config, cores=args.threads,lock=False
                                         )
     else:
         logger = custom_logger.Logger()
         status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=tempdir,
-                                    config=config, cores=1,lock=False,quiet=True,log_handler=logger.log_handler
+                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=config["log_api"]
                                     )
 
     if status: # translate "success" into shell exit code of 0
@@ -330,7 +342,7 @@ def update(pangolin_version, pangoLEARN_version):
     # we want to just continue running
     for dependency, version in [('pangolin', pangolin_version),
                                 ('pangoLEARN', pangoLEARN_version)]:
-        latest_release = request.urlopen(\
+        latest_release = request.urlopen(
             f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
         latest_release = json.load(latest_release)
         latest_release = LooseVersion(latest_release[0]['tag_name'])

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 """ 
 Adapted from snakemake source code
 __author__ = "Johannes Köster"
@@ -263,11 +263,8 @@ class Logger:
                 if value != omit:
                     return "".format(item, valueformat(value))
 
-            yield "{}{} {}:".format(
-                "local" if msg["local"] else "",
-                "checkpoint" if msg["is_checkpoint"] else "rule",
-                msg["name"],
-            )
+            yield ""
+            
             for item in ["input", "output", "log"]:
                 fmt = format_item(item, omit=[], valueformat=", ".join)
                 if fmt != None:
@@ -292,79 +289,47 @@ class Logger:
 
         def indent(item):
             if msg.get("indent"):
-                return "    " + item
+                return ""
             else:
-                return item
+                return ""
 
         def timestamp():
             self.logger.info(indent("[{}]".format(time.asctime())))
         
         level = msg["level"]
         if level == "job_error":
-            timestamp()
-            # self.logger.error(indent("Error in {}:".format(msg["name"])))
-            
-            # if msg["log"]:
-            #     self.logger.error(
-            #         indent(
-            #             "    log: {} (check log file(s) for error message)".format(
-            #                 ", ".join(msg["log"])
-            #             )
-            #         )
-            #     )
-            # if msg["conda_env"]:
-            #     self.logger.error(indent("    conda-env: {}".format(msg["conda_env"])))
-            # if msg["shellcmd"]:
-            #     self.logger.error(
-            #         indent(
-            #             "Error: the following command exited with an error\n{}".format(
-            #                 msg["shellcmd"]
-            #             )
-            #         )
-            #     )
+            pass
+            # timestamp()
 
-            for item in msg["aux"].items():
-                self.logger.error(indent("    {}: {}".format(*item)))
+            # for item in msg["aux"].items():
+            #     self.logger.error(indent("    {}: {}".format(*item)))
 
-            if self.show_failed_logs and msg["log"]:
-                for f in msg["log"]:
-                    try:
-                        self.logger.error("Logfile {}:\n{}".format(f, open(f).read()))
-                    except FileNotFoundError:
-                        self.logger.error("Logfile {} not found.".format(f))
+            # if self.show_failed_logs and msg["log"]:
+            #     for f in msg["log"]:
+            #         try:
+            #             self.logger.error("Logfile {}:\n{}".format(f, open(f).read()))
+            #         except FileNotFoundError:
+            #             self.logger.error("Logfile {} not found.".format(f))
 
             self.logger.error("")
         elif level == "group_error":
-            timestamp()
-            self.logger.error("Error in group job {}:".format(msg["groupid"]))
+            pass
         else:
             if level == "error":
-                # self.logger.error(msg["msg"])
                 pass
             elif level == "debug":
-                self.logger.debug(msg["msg"])
+                pass
             elif level == "job_finished" and not self.quiet:
-                timestamp()
-                self.logger.info("Finished job {}.".format(msg["jobid"]))
                 pass
             elif level == "d3dag":
-                print(json.dumps({"nodes": msg["nodes"], "links": msg["edges"]}))
+                pass
             elif level == "dag_debug":
                 if self.debug_dag:
                     if "file" in msg:
-                        # self.logger.warning(
-                        #     "file {file}:\n    {msg}\n{exception}".format(
-                        #         file=msg["file"],
-                        #         msg=msg["msg"],
-                        #         exception=textwrap.indent(
-                        #             str(msg["exception"]), "    "
-                        #         ),
-                        #     )
-                        # )
                         pass
                     else:
-                        job = msg["job"]
-
+                        # job = msg["job"]
+                        pass
             self.last_msg_was_job_info = True
 
 
@@ -379,11 +344,8 @@ def format_dict(dict_like, omit_keys=[], omit_values=[]):
         raise ValueError(
             "bug: format_dict applied to something neither a dict nor a Namedlist"
         )
-    return ", ".join(
-        "{}={}".format(name, str(value))
-        for name, value in items
-        if name not in omit_keys and value not in omit_values
-    )
+    return ""
+    
 
 
 format_resources = partial(format_dict, omit_keys={"_cores", "_nodes"})
@@ -391,7 +353,7 @@ format_wildcards = partial(format_dict, omit_values={DYNAMIC_FILL})
 
 
 def format_resource_names(resources, omit_resources="_cores _nodes".split()):
-    return ", ".join(name for name in resources if name not in omit_resources)
+    return ""
 
 
 logger = Logger()
