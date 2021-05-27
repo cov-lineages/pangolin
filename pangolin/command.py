@@ -18,7 +18,7 @@ import pangoLEARN
 try:
     from pangoLEARN import PANGO_VERSION
 except:
-    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-04-28')
+    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-05-27')
     sys.exit(-1)
 
 
@@ -236,6 +236,7 @@ def main(sysargs = sys.argv[1:]):
     # print(f"Looking in {data_dir} for data files...")
     trained_model = ""
     header_file = ""
+    designated_hash=""
     use_usher = args.usher
     if args.usher_protobuf:
         usher_protobuf = os.path.join(cwd, args.usher_protobuf)
@@ -252,11 +253,13 @@ def main(sysargs = sys.argv[1:]):
                 header_file = os.path.join(r, fn)
             elif fn == "decisionTree_v1.joblib":
                 trained_model = os.path.join(r, fn)
+            elif fn =="lineages.hash.csv":
+                designated_hash = os.path.join(r, fn)
             elif fn == "lineageTree.pb" and usher_protobuf == "":
                 usher_protobuf = os.path.join(r, fn)
-    if ((use_usher and usher_protobuf == "") or
-        (not use_usher and (trained_model=="" or header_file==""))):
-        print(cyan("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions."""))
+    if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
+        (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
+        print(cyan("""pangoLEARN version should be >= 2021-05-27. \nAppropriate data files not found from the installed pangoLEARN repo.\nPlease see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
         exit(1)
     else:
         if args.decompress:
@@ -278,11 +281,15 @@ def main(sysargs = sys.argv[1:]):
         print(green("\nData files found:"))
         if use_usher:
             print(f"UShER tree:\t{usher_protobuf}")
+            print(f"Designated hash:\t{designated_hash}")
         else:
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
+            print(f"Designated hash:\t{designated_hash}")
+            
         config["trained_model"] = trained_model
         config["header_file"] = header_file
+        config["designated_hash"] = designated_hash
 
     if use_usher:
         config["usher_protobuf"] = usher_protobuf

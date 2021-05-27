@@ -3,7 +3,8 @@
 import csv
 from Bio import SeqIO
 import os
-import pangofunks as pfunk
+from pangolin.utils.log_colours import green,cyan,red
+from pangolin.utils.hash_functions import get_hash_string
 
 ##### Configuration #####
 
@@ -50,9 +51,33 @@ rule align_to_reference:
             --pad > '{output.fasta}'
         """
 
+rule hash_sequence_assign:
+    input:
+        fasta = rules.align_to_reference.output.fasta
+    output:
+        designated = os.path.join(config["tempdir"],"hash_assigned.csv"),
+        for_inference = os.path.join(config["tempdir"],"not_assigned.fasta")
+    run:
+        set_hash = {}
+        with open(config["designated_hash"],"r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                set_hash[row["seq_hash"]] = row["lineage"]
+        
+        with open(output.designated,"w") as fw:
+            fw.write("taxon,lineage\n")
+            with open(output.for_inference, "w") as fseq:
+                for record in SeqIO.parse(input.fasta, "fasta"):
+                    if record.id!="reference":
+                        hash_string = get_hash_string(record)
+                        if hash_string in set_hash:
+                            fw.write(f"{record.id},{set_hash[hash_string]}\n")
+                        else:
+                            fseq.write(f">{record.description}\n{record.seq}\n")
+
 rule pangolearn:
     input:
-        fasta = rules.align_to_reference.output.fasta,
+        fasta = rules.hash_sequence_assign.output.for_inference,
         model = config["trained_model"],
         header = config["header_file"],
         reference = config["reference_fasta"]
@@ -67,49 +92,52 @@ rule add_failed_seqs:
     input:
         qcpass= os.path.join(config["tempdir"],"lineage_report.pass_qc.csv"),
         qcfail= config["qc_fail"],
-        qc_pass_fasta = config["query_fasta"]
+        qc_pass_fasta = config["query_fasta"],
+        designated = rules.hash_sequence_assign.output.designated
     output:
         csv= os.path.join(config["tempdir"],"pangolearn_assignments.csv")
     run:
 
-        fw = open(output[0],"w")
-        fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-        passed = []
-        version = f"PLEARN-{config['pango_version']}"
-        with open(input.qcpass, "r") as f:
-            reader = csv.DictReader(f)
+        with open(output[0],"w") as fw:
+            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            passed = []
 
-            for row in reader:
-                note = ''
-
-                support =  1 - round(float(row["score"]), 2)
-                
-                non_zero_ids = row["non_zero_ids"].split(";")
-                if len(non_zero_ids) > 1:
-                    note = f"Alt assignments: {row['non_zero_ids']},{row['non_zero_scores']}"
-                
-                if row["designated"]:
+            with open(input.designated,"r") as f:
+                reader = csv.DictReader(f)
+                note = "Assigned from designation hash."
+                for row in reader:
                     version = f"PANGO-{config['pango_version']}"
-                else:
+                    fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    
+            with open(input.qcpass, "r") as f:
+                reader = csv.DictReader(f)
+
+                for row in reader:
+                    note = ''
+
+                    support =  1 - round(float(row["score"]), 2)
+                    
+                    non_zero_ids = row["non_zero_ids"].split(";")
+                    if len(non_zero_ids) > 1:
+                        note = f"Alt assignments: {row['non_zero_ids']},{row['non_zero_scores']}"
+                    
                     version = f"PLEARN-{config['pango_version']}"
 
-                fw.write(f"{row['taxon']},{row['prediction']},{support},{row['imputation_score']},,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
-                passed.append(row['taxon'])
+                    fw.write(f"{row['taxon']},{row['prediction']},{support},{row['imputation_score']},,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    passed.append(row['taxon'])
 
-        for record in SeqIO.parse(input.qcfail,"fasta"):
-            desc_list = record.description.split(" ")
-            note = ""
-            for i in desc_list:
-                if i.startswith("fail="):
-                    note = i.lstrip("fail=")
+            for record in SeqIO.parse(input.qcfail,"fasta"):
+                desc_list = record.description.split(" ")
+                note = ""
+                for i in desc_list:
+                    if i.startswith("fail="):
+                        note = i.lstrip("fail=")
 
-            fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
-        
-        for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
-            if record.id not in passed:
-                fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
-
-        fw.close()
+                fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
+            
+            for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
+                if record.id not in passed:
+                    fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
 rule scorpio:
     input:
@@ -133,10 +161,11 @@ rule scorpio:
 rule generate_report:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
-        scorpio_voc_report = rules.scorpio.output.report
+        scorpio_voc_report = rules.scorpio.output.report,
     output:
         csv = config["outfile"]
     run:
+        
         voc_dict = {}
         with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
@@ -162,15 +191,13 @@ rule generate_report:
                         new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
                     writer.writerow(new_row)
 
-
-
-        print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
+        print(green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:
-            print(pfunk.green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
+            print(green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
 
 rule use_usher:
     input:
-        fasta = rules.align_to_reference.output.fasta,
+        fasta = rules.hash_sequence_assign.output.for_inference,
         reference = config["reference_fasta"],
         usher_protobuf = config["usher_protobuf"]
     params:
@@ -191,6 +218,7 @@ rule usher_to_report:
     input:
         txt = rules.use_usher.output.txt,
         scorpio_voc_report = rules.scorpio.output.report,
+        designated = rules.hash_sequence_assign.output.designated,
         qcfail= config["qc_fail"],
         qc_pass_fasta = config["query_fasta"]
     output:
@@ -206,9 +234,18 @@ rule usher_to_report:
                 if row["constellations"] != "":
                     voc_dict[row["query"]] = row
 
+        
         ## Catching scorpio and usher output 
         with open(output.csv, "w") as fw:
             fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+
+            with open(input.designated,"r") as f:
+                reader = csv.DictReader(f)
+                note = "Assigned from designation hash."
+                for row in reader:
+                    version = f"PANGO-{config['pango_version']}"
+                    fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                
             with open(input.txt, "r") as f:
                 for l in f:
                     name,lineage = l.rstrip("\n").split("\t")
@@ -236,5 +273,6 @@ rule usher_to_report:
                 if record.id not in passed:
                     fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
-
-        print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
+        print(green(f"Output file written to: ") + f"{output.csv}")
+        if config["alignment_out"]:
+            print(green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
