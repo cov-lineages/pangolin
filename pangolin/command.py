@@ -45,11 +45,11 @@ def main(sysargs = sys.argv[1:]):
     usage='''pangolin <query> [options]''')
 
     parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
+    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
     parser.add_argument('--usher', action="store_true",help="Use UShER model instead of default pangoLEARN")
     parser.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
     parser.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
-    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
     parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
     parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")

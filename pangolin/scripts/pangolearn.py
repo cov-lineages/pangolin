@@ -12,6 +12,8 @@ from datetime import datetime
 import argparse
 import joblib
 import argparse
+from Bio import SeqIO
+import sys
 import os
 
 def parse_args():
@@ -136,6 +138,15 @@ def readInAndFormatData(sequencesFile, indiciesToKeep, blockSize=1000):
 
 	yield idList, seqList
 
+records = 0
+for record in SeqIO.parse(args.sequences_file,"fasta"):
+	records +=1
+if records ==0:
+	f = open(args.outfile, "w")
+	f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
+	f.close()
+	print("No sequences to assign with pangoLEARN.")
+	sys.exit(0)
 
 # loading the list of headers the model needs.
 model_headers = joblib.load(args.header_file)
