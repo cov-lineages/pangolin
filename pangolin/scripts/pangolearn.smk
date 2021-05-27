@@ -156,7 +156,6 @@ rule scorpio:
         -i {input.fasta:q} \
         -o {output.report:q} \
         -t {workflow.cores} \
-        -n B.1.1.7 \
         --long > {log}
         """
 
