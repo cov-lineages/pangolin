@@ -102,14 +102,16 @@ rule add_failed_seqs:
             fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
             passed = []
 
+            version = f"PANGO-{config['pango_version']}"
             with open(input.designated,"r") as f:
                 reader = csv.DictReader(f)
                 note = "Assigned from designation hash."
                 for row in reader:
-                    version = f"PANGO-{config['pango_version']}"
+                    
                     fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
 
+            version = f"PLEARN-{config['pango_version']}"
             with open(input.qcpass, "r") as f:
                 reader = csv.DictReader(f)
 
@@ -122,11 +124,10 @@ rule add_failed_seqs:
                     if len(non_zero_ids) > 1:
                         note = f"Alt assignments: {row['non_zero_ids']},{row['non_zero_scores']}"
                     
-                    version = f"PLEARN-{config['pango_version']}"
-
                     fw.write(f"{row['taxon']},{row['prediction']},{support},{row['imputation_score']},,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
-
+            
+            version = f"PANGO-{config['pango_version']}"
             for record in SeqIO.parse(input.qcfail,"fasta"):
                 desc_list = record.description.split(" ")
                 note = ""
@@ -227,7 +228,7 @@ rule usher_to_report:
     run:
         voc_dict = {}
         passed = []
-        version = f"PUSHER-{config['pango_version']}"
+        
 
         with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
@@ -235,18 +236,20 @@ rule usher_to_report:
                 if row["constellations"] != "":
                     voc_dict[row["query"]] = row
 
-        
         ## Catching scorpio and usher output 
         with open(output.csv, "w") as fw:
             fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-
+            
+            version = f"PANGO-{config['pango_version']}"
             with open(input.designated,"r") as f:
                 reader = csv.DictReader(f)
                 note = "Assigned from designation hash."
                 for row in reader:
-                    version = f"PANGO-{config['pango_version']}"
+                    
                     fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
+
+            version = f"PUSHER-{config['pango_version']}"
             with open(input.txt, "r") as f:
                 for l in f:
                     name,lineage = l.rstrip("\n").split("\t")
@@ -260,6 +263,7 @@ rule usher_to_report:
                     fw.write(f"{name},{lineage},,,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
                     passed.append(name)
 
+            version = f"PANGO-{config['pango_version']}"
             ## Catching sequences that failed qc in the report
             for record in SeqIO.parse(input.qcfail,"fasta"):
                 desc_list = record.description.split(" ")
