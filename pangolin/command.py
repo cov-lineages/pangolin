@@ -12,6 +12,8 @@ from tempfile import gettempdir
 import tempfile
 import pprint
 import json
+import gzip
+import lzma
 import os
 import joblib
 import pangoLEARN
@@ -83,13 +85,15 @@ def main(sysargs = sys.argv[1:]):
         # find the query fasta
         query = os.path.join(cwd, args.query[0])
         if not os.path.exists(query):
-            sys.stderr.write('Error: cannot find query (input) fasta file at {}\nPlease enter your fasta sequence file and refer to pangolin usage at:\nhttps://github.com/hCoV-2019/pangolin#usage\n for detailed instructions\n'.format(query))
+            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
+                                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                ' for detailed instructions.\n')
             sys.exit(-1)
         else:
             print(green(f"The query file is:") + f"{query}")
 
         # default output dir
-    outdir = ''
+
     if args.outdir:
         outdir = os.path.join(cwd, args.outdir)
         if not os.path.exists(outdir):
@@ -101,13 +105,11 @@ def main(sysargs = sys.argv[1:]):
     else:
         outdir = cwd
 
-    outfile = ""
     if args.outfile:
         outfile = os.path.join(outdir, args.outfile)
     else:
         outfile = os.path.join(outdir, "lineage_report.csv")
 
-    tempdir = ''
     if args.tempdir:
         to_be_dir = os.path.join(cwd, args.tempdir)
         if not os.path.exists(to_be_dir):
@@ -143,6 +145,13 @@ def main(sysargs = sys.argv[1:]):
     fmt = "{:<30}\t{:>25}\t{:<10}\n"
 
     print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
+
+    file_ending = query.split(".")[-1]
+    if file_ending in ["gz","gzip","tgz"]:
+        query = gzip.open(query, 'rt')
+    elif file_ending in ["xz","lzma"]:
+        query = lzma.open(query, 'rt')
+
     for record in SeqIO.parse(query, "fasta"):
         total_input +=1
         # replace spaces in sequence headers with underscores
@@ -179,7 +188,7 @@ def main(sysargs = sys.argv[1:]):
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,NA,NA,,NA,NA,PLEARN-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+                fw.write(f"{record.id},None,,,,,,PLEARN-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
         print(cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 
@@ -213,7 +222,6 @@ def main(sysargs = sys.argv[1:]):
     dependency_checks.set_up_verbosity(config)
 
     # find the data
-    data_dir = ""
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
         version = "Unknown"
@@ -230,7 +238,7 @@ def main(sysargs = sys.argv[1:]):
                                 print("pangoLEARN version",version)
         config["pangoLEARN_version"] = version
 
-    if not args.datadir:
+    else:
         pangoLEARN_dir = pangoLEARN.__path__[0]
         data_dir = os.path.join(pangoLEARN_dir,"data")
     # print(f"Looking in {data_dir} for data files...")
@@ -332,7 +340,7 @@ def update(pangolin_version, pangoLEARN_version):
     # we want to just continue running
     for dependency, version in [('pangolin', pangolin_version),
                                 ('pangoLEARN', pangoLEARN_version)]:
-        latest_release = request.urlopen(\
+        latest_release = request.urlopen(
             f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
         latest_release = json.load(latest_release)
         latest_release = LooseVersion(latest_release[0]['tag_name'])

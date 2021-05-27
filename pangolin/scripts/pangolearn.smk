@@ -107,9 +107,9 @@ rule add_failed_seqs:
                 note = "Assigned from designation hash."
                 for row in reader:
                     version = f"PANGO-{config['pango_version']}"
-                    fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
-                    
+
             with open(input.qcpass, "r") as f:
                 reader = csv.DictReader(f)
 
@@ -134,11 +134,11 @@ rule add_failed_seqs:
                     if i.startswith("fail="):
                         note = i.lstrip("fail=")
 
-                fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
+                fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
             
             for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
                 if record.id not in passed:
-                    fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
+                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
 rule scorpio:
     input:
@@ -245,7 +245,7 @@ rule usher_to_report:
                 note = "Assigned from designation hash."
                 for row in reader:
                     version = f"PANGO-{config['pango_version']}"
-                    fw.write(f"{row['taxon']},{row['lineage']},NA,NA,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
             with open(input.txt, "r") as f:
                 for l in f:
@@ -257,7 +257,7 @@ rule usher_to_report:
                         scorpio_support = scorpio_call_info["support"]
                         scorpio_conflict = scorpio_call_info["conflict"]
                         note = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
-                    fw.write(f"{name},{lineage},NA,NA,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},NA,{config['pango_version']},passed_qc,{note}\n")
+                    fw.write(f"{name},{lineage},,,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
                     passed.append(name)
 
             ## Catching sequences that failed qc in the report
@@ -268,11 +268,11 @@ rule usher_to_report:
                     if i.startswith("fail="):
                         note = i.lstrip("fail=")
 
-                fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
+                fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
             
             for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
                 if record.id not in passed:
-                    fw.write(f"{record.id},None,NA,NA,,NA,NA,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
+                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
         print(green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:
