@@ -15,27 +15,15 @@ if config.get("header_file"):
 
 ##### Target rules #####
 
-if config.get("lineages_csv"):
-    print("Going to run the global report summary.")
-else:
-    config["lineages_csv"]=""
-
 if not config.get("usher_protobuf"):
     config["usher_protobuf"]=""
 
 ruleorder: usher_to_report > generate_report
 
-if config["lineages_csv"] != "":
-    rule all:
-        input:
-            config["outfile"],
-            os.path.join(config["outdir"],"global_lineage_information.csv"),
-            os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
-else:
-    rule all:
-        input:
-            config["outfile"],
-            os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
+rule all:
+    input:
+        config["outfile"],
+        os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
                     
 rule align_to_reference:
     input:
@@ -179,20 +167,6 @@ rule generate_report:
         print(pfunk.green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:
             print(pfunk.green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
-
-rule report_results:
-    input:
-        csv = config["outfile"],
-        lineages_csv = config["lineages_csv"]
-    output:
-        os.path.join(config["outdir"],"global_lineage_information.csv")
-    shell:
-        """
-        report_results.py \
-        -p {input.csv:q} \
-        -b {input.lineages_csv:q} \
-        -o {output:q} 
-        """
 
 rule use_usher:
     input:

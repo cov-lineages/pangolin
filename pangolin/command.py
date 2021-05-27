@@ -236,7 +236,6 @@ def main(sysargs = sys.argv[1:]):
     # print(f"Looking in {data_dir} for data files...")
     trained_model = ""
     header_file = ""
-    lineages_csv = ""
     use_usher = args.usher
     if args.usher_protobuf:
         usher_protobuf = os.path.join(cwd, args.usher_protobuf)
@@ -253,12 +252,10 @@ def main(sysargs = sys.argv[1:]):
                 header_file = os.path.join(r, fn)
             elif fn == "decisionTree_v1.joblib":
                 trained_model = os.path.join(r, fn)
-            elif fn == "lineages.metadata.csv":
-                lineages_csv = os.path.join(r, fn)
             elif fn == "lineageTree.pb" and usher_protobuf == "":
                 usher_protobuf = os.path.join(r, fn)
     if ((use_usher and usher_protobuf == "") or
-        (not use_usher and (trained_model=="" or header_file==""  or lineages_csv==""))):
+        (not use_usher and (trained_model=="" or header_file==""))):
         print(cyan("""Check your environment, didn't find appropriate files from the pangoLEARN repo.\n Trained model must be installed, please see https://cov-lineages.org/pangolin.html for installation instructions."""))
         exit(1)
     else:
@@ -284,7 +281,6 @@ def main(sysargs = sys.argv[1:]):
         else:
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
-            print(f"Lineages csv:\t{lineages_csv}")
         config["trained_model"] = trained_model
         config["header_file"] = header_file
 
