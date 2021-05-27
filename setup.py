@@ -9,14 +9,7 @@ setup(name='pangolin',
       version=__version__,
       packages=find_packages(),
       scripts=['pangolin/scripts/pangolearn.smk',
-                'pangolin/scripts/pangolearn.py',
-                'pangolin/scripts/type_variants.py',
-                'pangolin/scripts/utils.py',
-                'pangolin/scripts/report_classes.py',
-                'pangolin/scripts/report_results.py',
-                "pangolin/scripts/custom_logger.py",
-                "pangolin/scripts/log_handler_handle.py",
-                "pangolin/scripts/pangofunks.py"
+                'pangolin/scripts/pangolearn.py'
                 ],
       package_data={"pangolin":["data/*"]},
       install_requires=[
