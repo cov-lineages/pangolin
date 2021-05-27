@@ -188,7 +188,7 @@ def main(sysargs = sys.argv[1:]):
                 for item in desc:
                     if item.startswith("fail="):
                         reason = item.split("=")[1]
-                fw.write(f"{record.id},None,,,,,,PANGO-{PANGO-VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+                fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
         print(cyan(f'Note: no query sequences have passed the qc\n'))
         sys.exit(0)
 
@@ -267,7 +267,9 @@ def main(sysargs = sys.argv[1:]):
                 usher_protobuf = os.path.join(r, fn)
     if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
         (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
-        print(cyan("""pangoLEARN version should be >= 2021-05-27. \nAppropriate data files not found from the installed pangoLEARN repo.\nPlease see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
+        print(cyan("""pangoLEARN version should be >= 2021-05-27. \n
+Appropriate data files not found from the installed pangoLEARN repo. 
+Please see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
         exit(1)
     else:
         if args.decompress:
