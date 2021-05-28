@@ -16,11 +16,20 @@ import gzip
 import lzma
 import os
 import joblib
+from pangolin.utils.log_colours import green,cyan,red
+
 import pangoLEARN
+
 try:
     from pangoLEARN import PANGO_VERSION
 except:
-    sys.stderr.write('Error: please update to pangoLEARN version >= 2021-05-27')
+    sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
+    sys.exit(-1)
+
+try:
+    import constellations
+except:
+    sys.stderr.write(cyan('Error: please install `constellations` dependency with\n`pip install git+git+https://github.com/cov-lineages/constellations.git.\n'))
     sys.exit(-1)
 
 
@@ -28,7 +37,6 @@ from pangolin.utils import dependency_checks
 from pangolin.utils import data_install_checks
 
 import pangolin.utils.custom_logger as custom_logger
-from pangolin.utils.log_colours import green,cyan,red
 
 import pkg_resources
 from Bio import SeqIO
@@ -61,7 +69,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
-    parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin and pangoLEARN, then exits")
+    parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
+    parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -71,8 +80,11 @@ def main(sysargs = sys.argv[1:]):
     args = parser.parse_args()
 
     if args.update:
-        update(__version__, pangoLEARN.__version__)
+        update(__version__, pangoLEARN.__version__, constellations.__version__)
     
+    if args.update_data:
+        update_data(pangoLEARN.__version__, constellations.__version__)
+
     dependency_checks.check_dependencies()
 
     # to enable not having to pass a query if running update
@@ -324,7 +336,7 @@ Please see https://cov-lineages.org/pangolin.html for installation and updating 
     return 1
 
 
-def update(pangolin_version, pangoLEARN_version):
+def update(pangolin_version, pangoLEARN_version, constellations_version):
     """
     Using the github releases API check for the latest current release
     of each pangolin and pangoLEARN
@@ -341,18 +353,24 @@ def update(pangolin_version, pangoLEARN_version):
     # flag if any element is update if everything is the latest release
     # we want to just continue running
     for dependency, version in [('pangolin', pangolin_version),
-                                ('pangoLEARN', pangoLEARN_version)]:
+                                ('pangoLEARN', pangoLEARN_version),
+                                ('constellations', constellations_version)]:
         latest_release = request.urlopen(
             f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
         latest_release = json.load(latest_release)
         latest_release = LooseVersion(latest_release[0]['tag_name'])
 
+        print(dependency, version, latest_release)
         # to match the tag names add a v to the pangolin internal version
         if dependency == 'pangolin':
             version = "v" + version
         # to match the tag names for pangoLEARN add data release
         elif dependency == 'pangoLEARN':
             version = version.replace(' ', ' data release ')
+        
+        elif dependency == 'constellations':
+            version = version.replace(' ', ' data release ')
+
 
         # convert to LooseVersion to have proper ordering of versions
         # this prevents someone using the latest commit/HEAD from being
@@ -374,6 +392,46 @@ def update(pangolin_version, pangoLEARN_version):
                     file=sys.stderr)
 
     sys.exit(0)
+
+def update_data(pangoLEARN_version,constellations_version):
+    for dependency, version in [('pangoLEARN', pangoLEARN_version),
+                                ('constellations', constellations_version)]:
+        latest_release = request.urlopen(
+            f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
+        latest_release = json.load(latest_release)
+        latest_release = LooseVersion(latest_release[0]['tag_name'])
+
+        print(dependency, version, latest_release)
+        # to match the tag names add a v to the pangolin internal version
+        if dependency == 'pangoLEARN':
+            version = version.replace(' ', ' data release ')
+        
+        elif dependency == 'constellations':
+            version = version.replace(' ', ' data release ')
+
+
+        # convert to LooseVersion to have proper ordering of versions
+        # this prevents someone using the latest commit/HEAD from being
+        # downgraded to the last stable release
+        version = LooseVersion(version)
+
+        if version < latest_release:
+            subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
+                            f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
+                            check=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+            print(f"{dependency} updated to {latest_release}", file=sys.stderr)
+        elif version > latest_release:
+            print(f"{dependency} ({version}) is newer than latest stable "
+                  f"release ({latest_release}), not updating.", file=sys.stderr)
+        else:
+            print(f"{dependency} already latest release ({latest_release})",
+                    file=sys.stderr)
+
+    sys.exit(0)
+
+
 
 if __name__ == '__main__':
     main()
