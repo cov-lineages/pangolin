@@ -30,7 +30,7 @@ except:
 try:
     import constellations
 except:
-    sys.stderr.write(cyan('Error: please install `constellations` dependency with\n`pip install git+git+https://github.com/cov-lineages/constellations.git.\n'))
+    sys.stderr.write(cyan('Error: please install `constellations` dependency with\n`pip install git+https://github.com/cov-lineages/constellations.git.\n'))
     sys.exit(-1)
 
 
