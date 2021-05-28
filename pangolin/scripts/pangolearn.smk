@@ -156,8 +156,7 @@ rule scorpio:
         -i {input.fasta:q} \
         -o {output.report:q} \
         -t {workflow.cores} \
-        -n B.1.1.7 B.1.351 P.1 \
-        --long > {log}
+        --long &> {log}
         """
 
 rule generate_report:

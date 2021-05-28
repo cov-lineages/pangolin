@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import pkg_resources
-from pangolin.utils import log_colours as colour
+from pangolin.utils.log_colours import green,cyan,red
 import sys
 import os
 
@@ -11,7 +11,7 @@ def package_data_check(filename,directory,key,config):
         data = pkg_resources.resource_filename('pangolin', package_datafile)
         config[key] = data
     except:
-        sys.stderr.write(colour.cyan(f'Error: Missing package data.')+f'\n\t- {filename}\nPlease install the latest pangolin version with `pangolin --update`.\n')
+        sys.stderr.write(cyan(f'Error: Missing package data.')+f'\n\t- {filename}\nPlease install the latest pangolin version with `pangolin --update`.\n')
         sys.exit(-1)
 
 def get_snakefile(thisdir):

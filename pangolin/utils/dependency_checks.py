@@ -2,7 +2,7 @@
 import subprocess
 import os
 import sys
-from pangolin.utils import log_colours as colour
+from pangolin.utils.log_colours import green,cyan,red
 import importlib
 
 import pangolin.utils.custom_logger as custom_logger
@@ -52,7 +52,7 @@ def check_dependencies():
             sys.stderr.write(cyan(f'Error: Missing dependencies.')+f'\n{dependencies}Please update your pangolin environment.\n')
             sys.exit(-1)
     else:
-        print(colour.green("All dependencies satisfied."))
+        print(green("All dependencies satisfied."))
 
 def set_up_verbosity(config):
     if config["verbose"]:
