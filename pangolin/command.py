@@ -19,6 +19,7 @@ import joblib
 from pangolin.utils.log_colours import green,cyan,red
 
 import pangoLEARN
+import scorpio
 
 try:
     from pangoLEARN import PANGO_VERSION
@@ -80,10 +81,15 @@ def main(sysargs = sys.argv[1:]):
     args = parser.parse_args()
 
     if args.update:
-        update(__version__, pangoLEARN.__version__, constellations.__version__)
-    
+        update({'pangolin': __version__,
+                'pangolearn': pangoLEARN.__version__,
+                'constellations': constellations.__version__,
+                'scorpio': scorpio.__version__})
+
     if args.update_data:
-        update_data(pangoLEARN.__version__, constellations.__version__)
+        update({'pangolearn': pangoLEARN.__version__,
+                'constellations': constellations.__version__})
+
 
     dependency_checks.check_dependencies()
 
@@ -280,7 +286,7 @@ def main(sysargs = sys.argv[1:]):
     if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
         (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
         print(cyan("""pangoLEARN version should be >= 2021-05-27. \n
-Appropriate data files not found from the installed pangoLEARN repo. 
+Appropriate data files not found from the installed pangoLEARN repo.
 Please see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
         exit(1)
     else:
@@ -308,7 +314,7 @@ Please see https://cov-lineages.org/pangolin.html for installation and updating 
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
             print(f"Designated hash:\t{designated_hash}")
-            
+
         config["trained_model"] = trained_model
         config["header_file"] = header_file
         config["designated_hash"] = designated_hash
@@ -336,41 +342,69 @@ Please see https://cov-lineages.org/pangolin.html for installation and updating 
     return 1
 
 
-def update(pangolin_version, pangoLEARN_version, constellations_version):
+def update(version_dictionary):
     """
     Using the github releases API check for the latest current release
-    of each pangolin and pangoLEARN
+    of the set of depdencies provided e.g., pangolin, scorpio, pangolearn and
+    constellations for complete --update and just pangolearn and constellations
+    for --update_data.
+
+    Dictionary keys must be one of pangolin, scorpio, pangolearn, or constellations
 
     Compare these to the currently running versions and if newer releases
     exist update to them accordingly (or do nothing if current).
     Afterwards, exit program safely with a 0 exit code.
 
-    pangolin_version: string containing the __version__ data for the currently
+    version_dictionary: dictionary keyed with dependency names and version for
+                        that dependency
+                        e.g.
+    {pangolin: string containing the __version__ data for the currently
                       running pangolin module
-    pangoLEARN_version: string containing the __version__ data for the imported
+    pangolearn: string containing the __version__ data for the imported
                        pangoLEARN data module
+    scorpio: string containing the __version__ data for the imported
+                       scorpio module
+    constellations: string containing the __version__ data for the imported
+                       constellations data module}
     """
     # flag if any element is update if everything is the latest release
     # we want to just continue running
-    for dependency, version in [('pangolin', pangolin_version),
-                                ('pangoLEARN', pangoLEARN_version),
-                                ('constellations', constellations_version)]:
-        latest_release = request.urlopen(
-            f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
+    for dependency, version in version_dictionary.items():
+
+        try:
+            latest_release = request.urlopen(
+                f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
+        # to catch and give a useful error message when people try to run this
+        # either update option on clusters without external connectivity
+        # or have exceeded the github API limit temporarily
+        # this may also catch genuine bugs when version and release tags diverge
+        # so if this is thrown and there is definitely connectivity then
+        # double check the version labels
+        except Exception as e:
+            sys.stderr.write(cyan("Unable to connect to reach github API "
+                                   "--update/--data_update requires internet "
+                                   "connectivity so may not work on certain "
+                                   "systems or if your IP has exceeded the "
+                                  f"5,000 request per hour limit\n{e}\n"))
+            sys.exit(-1)
+
         latest_release = json.load(latest_release)
         latest_release = LooseVersion(latest_release[0]['tag_name'])
 
-        print(dependency, version, latest_release)
+        #print(dependency, version, latest_release)
         # to match the tag names add a v to the pangolin internal version
-        if dependency == 'pangolin':
+        if dependency in ['pangolin', 'scorpio']:
             version = "v" + version
         # to match the tag names for pangoLEARN add data release
-        elif dependency == 'pangoLEARN':
+        elif dependency == 'pangolearn':
             version = version.replace(' ', ' data release ')
-        
+        # to match the tag names for the constellations data release
         elif dependency == 'constellations':
             version = version.replace(' ', ' data release ')
-
+        else:
+            raise ValueError("Dependency name for auto-update must be one "
+                             "of: 'pangolin', 'pangolearn', scorpio', "
+                             "'constellations'")
 
         # convert to LooseVersion to have proper ordering of versions
         # this prevents someone using the latest commit/HEAD from being
@@ -392,45 +426,6 @@ def update(pangolin_version, pangoLEARN_version, constellations_version):
                     file=sys.stderr)
 
     sys.exit(0)
-
-def update_data(pangoLEARN_version,constellations_version):
-    for dependency, version in [('pangoLEARN', pangoLEARN_version),
-                                ('constellations', constellations_version)]:
-        latest_release = request.urlopen(
-            f"https://api.github.com/repos/cov-lineages/{dependency}/releases")
-        latest_release = json.load(latest_release)
-        latest_release = LooseVersion(latest_release[0]['tag_name'])
-
-        print(dependency, version, latest_release)
-        # to match the tag names add a v to the pangolin internal version
-        if dependency == 'pangoLEARN':
-            version = version.replace(' ', ' data release ')
-        
-        elif dependency == 'constellations':
-            version = version.replace(' ', ' data release ')
-
-
-        # convert to LooseVersion to have proper ordering of versions
-        # this prevents someone using the latest commit/HEAD from being
-        # downgraded to the last stable release
-        version = LooseVersion(version)
-
-        if version < latest_release:
-            subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
-                            f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
-                            check=True,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL)
-            print(f"{dependency} updated to {latest_release}", file=sys.stderr)
-        elif version > latest_release:
-            print(f"{dependency} ({version}) is newer than latest stable "
-                  f"release ({latest_release}), not updating.", file=sys.stderr)
-        else:
-            print(f"{dependency} already latest release ({latest_release})",
-                    file=sys.stderr)
-
-    sys.exit(0)
-
 
 
 if __name__ == '__main__':
