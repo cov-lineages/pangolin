@@ -40,9 +40,9 @@ rule align_to_reference:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam} &> {log} 
+        minimap2 -a -x asm5 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
         gofasta sam toMultiAlign \
-            -s {params.sam} \
+            -s {params.sam:q} \
             -t {workflow.cores} \
             --reference {input.reference:q} \
             --trimstart {params.trim_start} \
@@ -156,7 +156,7 @@ rule scorpio:
         -i {input.fasta:q} \
         -o {output.report:q} \
         -t {workflow.cores} \
-        --long &> {log}
+        --long &> {log:q}
         """
 
 rule generate_report:
@@ -211,8 +211,8 @@ rule use_usher:
     shell:
         """
         echo "Using UShER as inference engine."
-        faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf}
-        usher -i {input.usher_protobuf:q} -v {params.vcf} -T {workflow.cores} -d {config[tempdir]} &> {log}
+        faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
+        usher -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
         """
 
 rule usher_to_report:

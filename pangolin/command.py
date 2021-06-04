@@ -18,8 +18,18 @@ import os
 import joblib
 from pangolin.utils.log_colours import green,cyan,red
 
-import pangoLEARN
-import scorpio
+try:
+    import pangoLEARN
+except:
+    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') + 
+    "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
+    sys.exit(-1)
+try:
+    import scorpio
+except:
+    sys.stderr.write(cyan('Error: please install `scorpio` with \n') + 
+    "pip install git+https://github.com/cov-lineages/scorpio.git")
+    sys.exit(-1)
 
 try:
     from pangoLEARN import PANGO_VERSION
@@ -30,7 +40,8 @@ except:
 try:
     import constellations
 except:
-    sys.stderr.write(cyan('Error: please install `constellations` dependency with\n`pip install git+https://github.com/cov-lineages/constellations.git.\n'))
+    sys.stderr.write(cyan('Error: please install `constellations` with \n') + 
+    "pip install git+https://github.com/cov-lineages/constellations.git")
     sys.exit(-1)
 
 
