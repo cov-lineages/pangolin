@@ -74,11 +74,11 @@ def encodeSeq(seq, indiciesToKeep):
 
 	for i in indiciesToKeep:
 		if i < len(seq):
-			cleaned, imputed = clean(seq[i], i)
+			cleaned, isImputed = clean(seq[i], i)
 
 			dataLine.extend(cleaned)
 
-			if(imputed):
+			if(isImputed):
 				imputed = imputed + 1
 			else:
 				nonimputed = nonimputed + 1
