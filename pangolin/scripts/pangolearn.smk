@@ -5,6 +5,7 @@ from Bio import SeqIO
 import os
 from pangolin.utils.log_colours import green,cyan,red
 from pangolin.utils.hash_functions import get_hash_string
+import pangolin.pangolearn.pangolearn as pangolearn
 
 ##### Configuration #####
 
@@ -83,10 +84,8 @@ rule pangolearn:
         reference = config["reference_fasta"]
     output:
         os.path.join(config["tempdir"],"lineage_report.pass_qc.csv")
-    shell:
-        """
-        pangolearn.py --header-file {input.header:q} --model-file {input.model:q} --reference-file {input.reference:q} --fasta {input.fasta:q} -o {output[0]:q}
-        """
+    run:
+        pangolearn.assign_lineage(input.header,input.model,input.reference,input.fasta,output[0])
 
 rule add_failed_seqs:
     input:
