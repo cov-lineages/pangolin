@@ -128,74 +128,74 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile)
 		f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
 		f.close()
 		print("No sequences to assign with pangoLEARN.")
-		sys.exit(0)
+	else:
 
-	# loading the list of headers the model needs.
-	model_headers = joblib.load(header_file)
-	indiciesToKeep = model_headers[1:]
+		# loading the list of headers the model needs.
+		model_headers = joblib.load(header_file)
+		indiciesToKeep = model_headers[1:]
 
-	referenceSeq = findReferenceSeq(reference_file)
-	# possible nucleotide symbols
-	categories = ['-','A', 'C', 'G', 'T']
-	columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
+		referenceSeq = findReferenceSeq(reference_file)
+		# possible nucleotide symbols
+		categories = ['-','A', 'C', 'G', 'T']
+		columns = [f"{i}_{c}" for i in indiciesToKeep for c in categories]
 
 
 
-	rs, score = encodeSeq(referenceSeq, referenceSeq, indiciesToKeep)
+		rs, score = encodeSeq(referenceSeq, referenceSeq, indiciesToKeep)
 
-	refRow = [r==c for r in rs for c in categories]
+		refRow = [r==c for r in rs for c in categories]
 
-	print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
-	loaded_model = joblib.load(model_file)
+		print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+		loaded_model = joblib.load(model_file)
 
-	# write predictions to a file
-	f = open(outfile, "w")
-	f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
-	for idList, seqList in readInAndFormatData(referenceSeq,imputationScores,sequences_file, indiciesToKeep):
-		print("processing block of {} sequences {}".format(
-			len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-		))
+		# write predictions to a file
+		f = open(outfile, "w")
+		f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
+		for idList, seqList in readInAndFormatData(referenceSeq,imputationScores,sequences_file, indiciesToKeep):
+			print("processing block of {} sequences {}".format(
+				len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+			))
 
-		rows = [[r==c for r in row for c in categories] for row in seqList]
-		# the reference seq must be added to everry block to make sure that the 
-		# spots in the reference have Ns are in the dataframe to guarentee that 
-		# the correct number of columns is created when get_dummies is called
-		rows.append(refRow)
-		idList.append(referenceId)
+			rows = [[r==c for r in row for c in categories] for row in seqList]
+			# the reference seq must be added to everry block to make sure that the 
+			# spots in the reference have Ns are in the dataframe to guarentee that 
+			# the correct number of columns is created when get_dummies is called
+			rows.append(refRow)
+			idList.append(referenceId)
 
-		# create a data from from the seqList
-		d = np.array(rows, np.uint8)
-		df = pd.DataFrame(d, columns=columns)
+			# create a data from from the seqList
+			d = np.array(rows, np.uint8)
+			df = pd.DataFrame(d, columns=columns)
 
-		predictions = loaded_model.predict_proba(df)
+			predictions = loaded_model.predict_proba(df)
 
-		for index in range(len(predictions)):
+			for index in range(len(predictions)):
 
-			maxScore = 0
-			maxIndex = -1
+				maxScore = 0
+				maxIndex = -1
 
-			nonZeroIds = []
-			nonZeroScores = []
+				nonZeroIds = []
+				nonZeroScores = []
 
-			# get the max probability score and its assosciated index
-			for i in range(len(predictions[index])):
-				if predictions[index][i] > maxScore:
-					maxScore = predictions[index][i]
-					maxIndex = i
+				# get the max probability score and its assosciated index
+				for i in range(len(predictions[index])):
+					if predictions[index][i] > maxScore:
+						maxScore = predictions[index][i]
+						maxIndex = i
 
-					nonZeroScores.append(predictions[index][i])
-					nonZeroIds.append(loaded_model.classes_[i])
+						nonZeroScores.append(predictions[index][i])
+						nonZeroIds.append(loaded_model.classes_[i])
 
-			score = maxScore
-			prediction = loaded_model.classes_[maxIndex]
-			seqId = idList[index]
+				score = maxScore
+				prediction = loaded_model.classes_[maxIndex]
+				seqId = idList[index]
 
-			nonZeroIds = ";".join(nonZeroIds)
-			nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
+				nonZeroIds = ";".join(nonZeroIds)
+				nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
 
-			if seqId != referenceId:
-				f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n")
+				if seqId != referenceId:
+					f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n")
 
-	f.close()
+		f.close()
 
 	print("complete " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
