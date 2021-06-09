@@ -211,8 +211,12 @@ rule use_usher:
     shell:
         """
         echo "Using UShER as inference engine."
-        faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
-        usher -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
+        if [ -s {input.fasta:q} ]; then
+            faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
+            usher -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
+        else
+            touch {output.txt:q}
+        fi
         """
 
 rule usher_to_report:
