@@ -214,6 +214,7 @@ rule use_usher:
             faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
             usher -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
         else
+            rm -f {output.txt:q}
             touch {output.txt:q}
         fi
         """
