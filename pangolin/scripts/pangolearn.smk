@@ -254,7 +254,24 @@ rule usher_to_report:
             version = f"PUSHER-{config['pango_version']}"
             with open(input.txt, "r") as f:
                 for l in f:
-                    name,lineage = l.rstrip("\n").split("\t")
+                    name,lineage_histogram = l.rstrip("\n").split("\t")
+                    if "*|" in lineage_histogram:
+                        lineage,histogram = lineage_histogram.split("*|")
+                        histo_list = [ i for i in histogram.split(",") if i ]
+                        conflict = 0.0
+                        if len(histo_list) > 1:
+                            for lin_counts in histo_list:
+                                if lin_counts.startswith(lineage+"("):
+                                    m = re.search('\(([0-9]+)/([0-9]+)\)', lin_counts)
+                                    if m:
+                                        place_count = int(m.group(1))
+                                        total = int(m.group(2))
+                                        conflict = (total - place_count) / total
+                        histogram_note = "Usher placements: " + " ".join(histo_list)
+                    else:
+                        lineage = lineage_histogram
+                        conflict = ""
+                        histogram_note = ""
                     scorpio_call_info,scorpio_call,scorpio_support,scorpio_conflict,note='','','','',''
                     if name in voc_dict:
                         scorpio_call_info = voc_dict[name]
@@ -262,7 +279,11 @@ rule usher_to_report:
                         scorpio_support = scorpio_call_info["support"]
                         scorpio_conflict = scorpio_call_info["conflict"]
                         note = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
-                    fw.write(f"{name},{lineage},,,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
+                        if histogram_note:
+                            note += f'; {histogram_note}'
+                    else:
+                        note = histogram_note
+                    fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
                     passed.append(name)
 
             version = f"PANGO-{config['pango_version']}"
