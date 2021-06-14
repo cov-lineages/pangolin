@@ -112,17 +112,25 @@ def main(sysargs = sys.argv[1:]):
                 'constellations': constellations.__version__,
                 'pango-designation': pango_designation.__version__})
 
-    if args.aliases:
-        pango_designation_dir = pango_designation.__path__[0]
-        for r, d, f in os.walk(pango_designation_dir):
-            for fn in f:
-                if fn == "alias_key.json":
-                    aliases = os.path.join(r, fn)
-                    with open(aliases, 'r') as handle:
-                        for line in handle:
-                            print(line.rstrip())
-                    sys.exit(0)
+    alias_file = None
+    pango_designation_dir = pango_designation.__path__[0]
+    for r, d, f in os.walk(pango_designation_dir):
+        for fn in f:
+            if fn == "alias_key.json":
+                alias_file = os.path.join(r, fn)
+    if not alias_file:
+        sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
+                         "pip install git+https://github.com/cov-lineages/pango-designation.git")
         sys.exit(-1)
+
+    if args.aliases:
+        with open(alias_file, 'r') as handle:
+            for line in handle:
+                print(line.rstrip())
+        sys.exit(0)
+
+
+
 
     dependency_checks.check_dependencies()
 
@@ -260,6 +268,7 @@ def main(sysargs = sys.argv[1:]):
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
+        "alias_file": alias_file,
         "verbose":args.verbose,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
