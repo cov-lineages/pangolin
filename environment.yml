@@ -4,13 +4,13 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - biopython>=1.74
+  - biopython=1.74
   - minimap2>=2.16
   - pip=19.3.1
   - python>=3.7
   - snakemake-minimal>=5.13
   - gofasta
-  - usher
+  - usher>=0.3.1
   - pip:
     - pandas==1.0.1
     - git+https://github.com/cov-lineages/pangoLEARN.git
