@@ -45,6 +45,12 @@ except:
     "pip install git+https://github.com/cov-lineages/constellations.git")
     sys.exit(-1)
 
+try:
+    import pango_designation
+except:
+    sys.stderr.write(cyan('Error: please install `pango_designation` with \n') +
+    "pip install git+https://github.com/cov-lineages/pango-designation.git")
+    sys.exit(-1)
 
 from pangolin.utils import dependency_checks
 from pangolin.utils import data_install_checks
