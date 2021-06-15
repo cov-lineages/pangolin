@@ -307,17 +307,31 @@ rule usher_to_report:
                 for l in f:
                     name,lineage_histogram = l.rstrip("\n").split("\t")
                     if "*|" in lineage_histogram:
+                        # example: A.28*|A.28(1/10),B.1(6/10),B.1.511(1/10),B.1.518(2/10)
                         lineage,histogram = lineage_histogram.split("*|")
                         histo_list = [ i for i in histogram.split(",") if i ]
                         conflict = 0.0
                         if len(histo_list) > 1:
+                            max_count = 0
+                            max_lineage = ""
+                            selected_count = 0
+                            total = 0
                             for lin_counts in histo_list:
-                                if lin_counts.startswith(lineage+"("):
-                                    m = re.search('\(([0-9]+)/([0-9]+)\)', lin_counts)
-                                    if m:
-                                        place_count = int(m.group(1))
-                                        total = int(m.group(2))
-                                        conflict = (total - place_count) / total
+                                m = re.match('([A-Z0-9.]+)\(([0-9]+)/([0-9]+)\)', lin_counts)
+                                if m:
+                                    lin, place_count, total = [m.group(1), int(m.group(2)), int(m.group(3))]
+                                    if place_count > max_count:
+                                        max_count = place_count
+                                        max_lineage = lin
+                                    if lin == lineage:
+                                        selected_count = place_count
+                            if selected_count < max_count:
+                                # The selected placement was not in the lineage with the plurality
+                                # of placements; go with the plurality.
+                                lineage = max_lineage
+                                conflict = (total - max_count) / total
+                            elif total > 0:
+                                conflict = (total - selected_count) / total
                         histogram_note = "Usher placements: " + " ".join(histo_list)
                     else:
                         lineage = lineage_histogram
