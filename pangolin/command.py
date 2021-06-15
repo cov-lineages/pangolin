@@ -24,6 +24,7 @@ except:
     sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') + 
     "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
     sys.exit(-1)
+
 try:
     import scorpio
 except:
@@ -44,6 +45,12 @@ except:
     "pip install git+https://github.com/cov-lineages/constellations.git")
     sys.exit(-1)
 
+try:
+    import pango_designation
+except:
+    sys.stderr.write(cyan('Error: please install `pango_designation` with \n') +
+    "pip install git+https://github.com/cov-lineages/pango-designation.git")
+    sys.exit(-1)
 
 from pangolin.utils import dependency_checks
 from pangolin.utils import data_install_checks
@@ -81,6 +88,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
+    parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
 
@@ -95,11 +103,33 @@ def main(sysargs = sys.argv[1:]):
         update({'pangolin': __version__,
                 'pangolearn': pangoLEARN.__version__,
                 'constellations': constellations.__version__,
-                'scorpio': scorpio.__version__})
+                'scorpio': scorpio.__version__,
+                'pango-designation': pango_designation.__version__
+                })
 
     if args.update_data:
         update({'pangolearn': pangoLEARN.__version__,
-                'constellations': constellations.__version__})
+                'constellations': constellations.__version__,
+                'pango-designation': pango_designation.__version__})
+
+    alias_file = None
+    pango_designation_dir = pango_designation.__path__[0]
+    for r, d, f in os.walk(pango_designation_dir):
+        for fn in f:
+            if fn == "alias_key.json":
+                alias_file = os.path.join(r, fn)
+    if not alias_file:
+        sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
+                         "pip install git+https://github.com/cov-lineages/pango-designation.git")
+        sys.exit(-1)
+
+    if args.aliases:
+        with open(alias_file, 'r') as handle:
+            for line in handle:
+                print(line.rstrip())
+        sys.exit(0)
+
+
 
 
     dependency_checks.check_dependencies()
@@ -238,6 +268,7 @@ def main(sysargs = sys.argv[1:]):
         "trim_start":265,   # where to pad to using datafunk
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
+        "alias_file": alias_file,
         "verbose":args.verbose,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
@@ -376,7 +407,10 @@ def update(version_dictionary):
     scorpio: string containing the __version__ data for the imported
                        scorpio module
     constellations: string containing the __version__ data for the imported
-                       constellations data module}
+                       constellations data module
+    pango-designation: string containing the __version__ data for the imported
+                       pango_designation data module}
+
     """
     # flag if any element is update if everything is the latest release
     # we want to just continue running
@@ -404,7 +438,7 @@ def update(version_dictionary):
 
         #print(dependency, version, latest_release)
         # to match the tag names add a v to the pangolin internal version
-        if dependency in ['pangolin', 'scorpio']:
+        if dependency in ['pangolin', 'scorpio', 'pango-designation']:
             version = "v" + version
         # to match the tag names for pangoLEARN add data release
         elif dependency == 'pangolearn':
@@ -415,7 +449,7 @@ def update(version_dictionary):
         else:
             raise ValueError("Dependency name for auto-update must be one "
                              "of: 'pangolin', 'pangolearn', scorpio', "
-                             "'constellations'")
+                             "'constellations', 'pango-designation'")
 
         # convert to LooseVersion to have proper ordering of versions
         # this prevents someone using the latest commit/HEAD from being

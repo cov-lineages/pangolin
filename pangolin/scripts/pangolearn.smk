@@ -15,6 +15,26 @@ if config.get("trained_model"):
 if config.get("header_file"):
     config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
 
+##### Utility functions #####
+
+def expand_alias(pango_lineage, alias_dict):
+    if not pango_lineage or pango_lineage == "":
+        return pango_lineage
+
+    lineage_parts = pango_lineage.split(".")
+    if lineage_parts[0].startswith('X'):
+        return pango_lineage
+    while lineage_parts[0] in alias_dict.keys():
+        if len(lineage_parts) > 1:
+            pango_lineage = alias_dict[lineage_parts[0]] + "." + ".".join(lineage_parts[1:])
+        else:
+            pango_lineage = alias_dict[lineage_parts[0]]
+        lineage_parts = pango_lineage.split(".")
+    if lineage_parts[0] not in ["A","B"]:
+        sys.exit("Pango lineage %s has no alias provided. Please update aliases JSON" %lineage_parts[0])
+    return pango_lineage
+
+
 ##### Target rules #####
 
 if not config.get("usher_protobuf"):
@@ -162,6 +182,7 @@ rule generate_report:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
         scorpio_voc_report = rules.scorpio.output.report,
+        alias_file = config["alias_file"]
     output:
         csv = config["outfile"]
     run:
@@ -172,6 +193,14 @@ rule generate_report:
             for row in reader:
                 if row["constellations"] != "":
                     voc_dict[row["query"]] = row
+
+        alias_dict = {}
+        with open(input.alias_file, "r") as read_file:
+            alias_dict = json.load(read_file)
+        if "A" in alias_dict:
+            del alias_dict["A"]
+        if "B" in alias_dict:
+            del alias_dict["B"]
 
         with open(output.csv, "w") as fw:
 
@@ -189,6 +218,17 @@ rule generate_report:
                         new_row["scorpio_support"] = scorpio_call_info["support"]
                         new_row["scorpio_conflict"] = scorpio_call_info["conflict"]
                         new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
+
+                        if "(" in new_row["scorpio_call"]:
+                            scorpio_lineage = new_row["scorpio_call"].split("(")[1].split("+")[0].split("-like")[0]
+                        else:
+                            scorpio_lineage = new_row["scorpio_call"].split("+")[0].split("-like")[0]
+                        expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
+                        expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
+                        if not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                            new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
+                            new_row['lineage'] = scorpio_lineage
+
                     writer.writerow(new_row)
 
         print(green(f"Output file written to: ") + f"{output.csv}")
@@ -225,7 +265,8 @@ rule usher_to_report:
         scorpio_voc_report = rules.scorpio.output.report,
         designated = rules.hash_sequence_assign.output.designated,
         qcfail= config["qc_fail"],
-        qc_pass_fasta = config["query_fasta"]
+        qc_pass_fasta = config["query_fasta"],
+        alias_file = config["alias_file"]
     output:
         csv = config["outfile"]
     run:
@@ -238,6 +279,15 @@ rule usher_to_report:
             for row in reader:
                 if row["constellations"] != "":
                     voc_dict[row["query"]] = row
+
+
+        alias_dict = {}
+        with open(input.alias_file, "r") as read_file:
+            alias_dict = json.load(read_file)
+        if "A" in alias_dict:
+            del alias_dict["A"]
+        if "B" in alias_dict:
+            del alias_dict["B"]
 
         ## Catching scorpio and usher output 
         with open(output.csv, "w") as fw:
@@ -280,6 +330,17 @@ rule usher_to_report:
                         scorpio_support = scorpio_call_info["support"]
                         scorpio_conflict = scorpio_call_info["conflict"]
                         note = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
+
+                        if "(" in scorpio_call:
+                            scorpio_lineage = scorpio_call.split("(")[1].split("+")[0].split("-like")[0]
+                        else:
+                            scorpio_lineage = scorpio_call.split("+")[0].split("-like")[0]
+                        expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
+                        expanded_pango_lineage = expand_alias(lineage, alias_dict)
+                        if not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                            note += f'; scorpio replaced lineage assignment {lineage}'
+                            lineage = scorpio_lineage
+
                         if histogram_note:
                             note += f'; {histogram_note}'
                     else:
