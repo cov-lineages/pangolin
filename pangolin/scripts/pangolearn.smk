@@ -18,7 +18,7 @@ if config.get("header_file"):
 ##### Utility functions #####
 
 def expand_alias(pango_lineage, alias_dict):
-    if not pango_lineage or pango_lineage == "":
+    if not pango_lineage or pango_lineage in ["None", None, ""]:
         return pango_lineage
 
     lineage_parts = pango_lineage.split(".")
