@@ -18,7 +18,7 @@ if config.get("header_file"):
 ##### Utility functions #####
 
 def expand_alias(pango_lineage, alias_dict):
-    if not pango_lineage or pango_lineage in ["None", None, ""]:
+    if not pango_lineage or pango_lineage in ["None", None, ""] or "/" in pango_lineage:
         return pango_lineage
 
     lineage_parts = pango_lineage.split(".")
@@ -31,7 +31,7 @@ def expand_alias(pango_lineage, alias_dict):
             pango_lineage = alias_dict[lineage_parts[0]]
         lineage_parts = pango_lineage.split(".")
     if lineage_parts[0] not in ["A","B"]:
-        sys.exit("Pango lineage %s has no alias provided. Please update aliases JSON" %lineage_parts[0])
+        return None
     return pango_lineage
 
 
