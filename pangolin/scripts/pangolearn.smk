@@ -224,7 +224,10 @@ rule generate_report:
                         else:
                             scorpio_lineage = new_row["scorpio_call"].split("+")[0].split("-like")[0]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
-                        expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
+                        if 'lineage' not in row:
+                            expanded_pango_lineage = "None"
+                        else:
+                            expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
                         if not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
                             new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                             new_row['lineage'] = scorpio_lineage
