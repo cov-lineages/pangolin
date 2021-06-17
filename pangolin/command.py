@@ -87,7 +87,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
-    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION}",help="show pango-designation version number and exit")
+    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training",help="show pango-designation version number used for training and exit")
     parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")

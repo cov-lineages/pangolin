@@ -18,8 +18,8 @@ if config.get("header_file"):
 ##### Utility functions #####
 
 def expand_alias(pango_lineage, alias_dict):
-    if not pango_lineage or pango_lineage == "":
-        return pango_lineage
+    if not pango_lineage or pango_lineage in ["None", None, ""] or "/" in pango_lineage:
+        return None
 
     lineage_parts = pango_lineage.split(".")
     if lineage_parts[0].startswith('X'):
@@ -31,7 +31,7 @@ def expand_alias(pango_lineage, alias_dict):
             pango_lineage = alias_dict[lineage_parts[0]]
         lineage_parts = pango_lineage.split(".")
     if lineage_parts[0] not in ["A","B"]:
-        sys.exit("Pango lineage %s has no alias provided. Please update aliases JSON" %lineage_parts[0])
+        return None
     return pango_lineage
 
 
@@ -225,7 +225,7 @@ rule generate_report:
                             scorpio_lineage = new_row["scorpio_call"].split("+")[0].split("-like")[0]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
-                        if not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                        if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
                             new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                             new_row['lineage'] = scorpio_lineage
 
@@ -351,7 +351,7 @@ rule usher_to_report:
                             scorpio_lineage = scorpio_call.split("+")[0].split("-like")[0]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         expanded_pango_lineage = expand_alias(lineage, alias_dict)
-                        if not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                        if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
 
