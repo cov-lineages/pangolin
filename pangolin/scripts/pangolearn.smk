@@ -175,6 +175,7 @@ rule scorpio:
         -i {input.fasta:q} \
         -o {output.report:q} \
         -t {workflow.cores} \
+        --output-counts \
         --long &> {log:q}
         """
 
