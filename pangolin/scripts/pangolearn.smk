@@ -176,6 +176,7 @@ rule scorpio:
         -o {output.report:q} \
         -t {workflow.cores} \
         --output-counts \
+        --pangolin \
         --long &> {log:q}
         """
 
@@ -220,10 +221,7 @@ rule generate_report:
                         new_row["scorpio_conflict"] = scorpio_call_info["conflict"]
                         new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
 
-                        if "(" in new_row["scorpio_call"]:
-                            scorpio_lineage = new_row["scorpio_call"].split("(")[1].split("+")[0].split("-like")[0]
-                        else:
-                            scorpio_lineage = new_row["scorpio_call"].split("+")[0].split("-like")[0]
+                        scorpio_lineage = scorpio_call_info["mrca_lineage"]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
                         if '/' not in scorpio_lineage:
@@ -347,10 +345,7 @@ rule usher_to_report:
                         scorpio_conflict = scorpio_call_info["conflict"]
                         note = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
 
-                        if "(" in scorpio_call:
-                            scorpio_lineage = scorpio_call.split("(")[1].split("+")[0].split("-like")[0]
-                        else:
-                            scorpio_lineage = scorpio_call.split("+")[0].split("-like")[0]
+                        scorpio_lineage = scorpio_call_info["mrca_lineage"]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         expanded_pango_lineage = expand_alias(lineage, alias_dict)
                         if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
