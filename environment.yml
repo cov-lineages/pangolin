@@ -17,4 +17,5 @@ dependencies:
     - git+https://github.com/cov-lineages/scorpio.git
     - git+https://github.com/cov-lineages/constellations.git
     - git+https://github.com/cov-lineages/pango-designation.git
+    - git+https://github.com/cov-lineages/pangolin.git
 
