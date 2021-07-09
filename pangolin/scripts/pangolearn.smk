@@ -219,7 +219,7 @@ rule generate_report:
                         new_row["scorpio_call"] = scorpio_call_info["constellations"]
                         new_row["scorpio_support"] = scorpio_call_info["support"]
                         new_row["scorpio_conflict"] = scorpio_call_info["conflict"]
-                        new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}'
+                        new_row["note"] = f'scorpio call: Alt alleles {scorpio_call_info["alt_count"]}; Ref alleles {scorpio_call_info["ref_count"]}; Amb alleles {scorpio_call_info["ambig_count"]}; Oth alleles {scorpio_call_info["other_count"]}'
 
                         scorpio_lineage = scorpio_call_info["mrca_lineage"]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
