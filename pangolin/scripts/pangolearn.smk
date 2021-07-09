@@ -177,6 +177,7 @@ rule scorpio:
         -t {workflow.cores} \
         --output-counts \
         --pangolin \
+        --list-incompatible \
         --long &> {log:q}
         """
 
@@ -226,6 +227,9 @@ rule generate_report:
                         expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
                         if '/' not in scorpio_lineage:
                             if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                                new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
+                                new_row['lineage'] = scorpio_lineage
+                            elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
                                 new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                                 new_row['lineage'] = scorpio_lineage
 
@@ -349,6 +353,9 @@ rule usher_to_report:
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         expanded_pango_lineage = expand_alias(lineage, alias_dict)
                         if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                            note += f'; scorpio replaced lineage assignment {lineage}'
+                            lineage = scorpio_lineage
+                        elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
 
