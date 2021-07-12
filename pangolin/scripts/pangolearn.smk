@@ -355,7 +355,7 @@ rule usher_to_report:
                         if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
-                        elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
+                        elif "incompatible_lineages" in scorpio_call_info and lineage in scorpio_call_info["incompatible_lineages"].split("|"):
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
 
