@@ -163,8 +163,6 @@ rule add_failed_seqs:
 rule scorpio:
     input:
         fasta = rules.align_to_reference.output.fasta,
-    params:
-        constellations_files = " ".join(config["constellations_files"])
     output:
         report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
     threads:
@@ -178,7 +176,6 @@ rule scorpio:
         -o {output.report:q} \
         -t {workflow.cores} \
         --output-counts \
-        --constellations {params.constellations_files} \
         --pangolin \
         --list-incompatible \
         --long &> {log:q}
