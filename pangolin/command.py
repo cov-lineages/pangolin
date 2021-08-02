@@ -125,6 +125,8 @@ def main(sysargs = sys.argv[1:]):
     # any files found in the datadir supercede the "built-in" modules. The assumption
     # here is that the datadir contains newer (user updated) data
     for r, _, f in itertools.chain.from_iterable(data_locations):
+        if r.endswith('/constellations') or r.endswith('/constellations/definitions'):
+            constellation_files = []  # only collect the constellations from the last directory found
         for fn in f:
             if r.endswith('/pango_designation') and fn == "alias_key.json":
                 alias_file = os.path.join(r, fn)
@@ -132,9 +134,8 @@ def main(sysargs = sys.argv[1:]):
                 pango_designation.__version__ = version_from_init(os.path.join(r, '__init__.py'))
             elif r.endswith('/constellations') and fn == '__init__.py':
                 constellations.__version__ = version_from_init(os.path.join(r, fn))
-        if (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
-            constellation_files = []  # only collect the constellations from the last directory found
-            constellation_files.append(os.path.join(r, fn))
+            elif (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
+                constellation_files.append(os.path.join(r, fn))
 
 
     if args.datadir:
@@ -317,7 +318,7 @@ def main(sysargs = sys.argv[1:]):
         "trim_end":29674,   # where to pad after using datafunk
         "qc_fail":qc_fail,
         "alias_file": alias_file,
-        "constellations_files": constellation_files,
+        "constellation_files": constellation_files,
         "verbose":args.verbose,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
