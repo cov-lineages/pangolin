@@ -2,16 +2,13 @@
 from pangolin import __version__
 import argparse
 import os.path
-import itertools
 import snakemake
-import shutil
 import sys
-import tarfile
 from urllib import request
 from distutils.version import LooseVersion
 import subprocess
 import json
-from tempfile import TemporaryDirectory, TemporaryFile, gettempdir, tempdir
+from tempfile import gettempdir
 import tempfile
 import pprint
 import json
@@ -67,16 +64,6 @@ from . import _program
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
-
-def version_from_init(init_file):
-    with open(init_file, "r") as fr:
-        for l in fr:
-            if l.startswith("__version__"):
-                l = l.rstrip("\n")
-                version = l.split('=')[1]
-                version = version.replace('"',"").replace(" ","")
-                break
-    return version
 
 def main(sysargs = sys.argv[1:]):
 
@@ -154,6 +141,7 @@ def main(sysargs = sys.argv[1:]):
         data_dir = os.path.join(pangoLEARN_dir,"data")
 
     # print(f"Looking in {data_dir} for data files...")
+
     if args.update:
         update({'pangolin': __version__,
                 'pangolearn': pangoLEARN.__version__,
@@ -165,8 +153,14 @@ def main(sysargs = sys.argv[1:]):
     if args.update_data:
         update({'pangolearn': pangoLEARN.__version__,
                 'constellations': constellations.__version__,
-                'pango-designation': pango_designation.__version__}, args.datadir)
+                'pango-designation': pango_designation.__version__})
 
+    alias_file = None
+    pango_designation_dir = pango_designation.__path__[0]
+    for r, d, f in os.walk(pango_designation_dir):
+        for fn in f:
+            if fn == "alias_key.json":
+                alias_file = os.path.join(r, fn)
     if not alias_file:
         sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
                          "pip install git+https://github.com/cov-lineages/pango-designation.git")
@@ -331,6 +325,27 @@ def main(sysargs = sys.argv[1:]):
 
     dependency_checks.set_up_verbosity(config)
 
+    # find the data
+    if args.datadir:
+        data_dir = os.path.join(cwd, args.datadir)
+        version = "Unknown"
+        for r,d,f in os.walk(data_dir):
+            for fn in f:
+                if fn == "__init__.py":
+                    print("Found __init__.py")
+                    with open(os.path.join(r, fn),"r") as fr:
+                        for l in fr:
+                            if l.startswith("__version__"):
+                                l = l.rstrip("\n")
+                                version = l.split('=')[1]
+                                version = version.replace('"',"").replace(" ","")
+                                print("pangoLEARN version",version)
+        config["pangoLEARN_version"] = version
+
+    else:
+        pangoLEARN_dir = pangoLEARN.__path__[0]
+        data_dir = os.path.join(pangoLEARN_dir,"data")
+    # print(f"Looking in {data_dir} for data files...")
     trained_model = ""
     header_file = ""
     designated_hash=""
@@ -413,7 +428,7 @@ Please see https://cov-lineages.org/pangolin.html for installation and updating 
     return 1
 
 
-def update(version_dictionary, data_dir=None):
+def update(version_dictionary):
     """
     Using the github releases API check for the latest current release
     of the set of depdencies provided e.g., pangolin, scorpio, pangolearn and
@@ -441,10 +456,6 @@ def update(version_dictionary, data_dir=None):
                        pango_designation data module}
 
     """
-    package_names = {'pangolearn': 'pangoLEARN',
-                     'pango-designation': 'pango_designation'
-                    }
-
     # flag if any element is update if everything is the latest release
     # we want to just continue running
     for dependency, version in version_dictionary.items():
@@ -467,7 +478,6 @@ def update(version_dictionary, data_dir=None):
             sys.exit(-1)
 
         latest_release = json.load(latest_release)
-        latest_release_tarball = latest_release[0]['tarball_url']
         latest_release = LooseVersion(latest_release[0]['tag_name'])
 
         #print(dependency, version, latest_release)
@@ -491,25 +501,11 @@ def update(version_dictionary, data_dir=None):
         version = LooseVersion(version)
 
         if version < latest_release:
-            if data_dir is not None:
-                # this path only gets followed when the user has --update_data and they
-                # have also specified a --datadir
-                with TemporaryDirectory() as tempdir:
-                    dependency_package = package_names.get(dependency, dependency)
-                    tarball_path = os.path.join(tempdir, 'tarball.tgz')
-                    open(tarball_path, 'wb').write(request.urlopen(latest_release_tarball).read())
-                    tf = tarfile.open(tarball_path)
-                    extracted_dir = tf.next().name
-                    tf.extractall(path=tempdir)
-                    tf.close()
-                    destination_directory = os.path.join(data_dir, dependency_package)
-                    shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
-            else:                  
-                subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
-                                f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
-                                check=True,
-                                stdout=subprocess.DEVNULL,
-                                stderr=subprocess.DEVNULL)
+            subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
+                            f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
+                            check=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
             print(f"{dependency} updated to {latest_release}", file=sys.stderr)
         elif version > latest_release:
             print(f"{dependency} ({version}) is newer than latest stable "
