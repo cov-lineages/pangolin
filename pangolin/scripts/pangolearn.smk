@@ -184,15 +184,33 @@ rule scorpio:
         --long &> {log:q}
         """
 
+rule get_constellations:
+    params:
+        constellation_files = " ".join(config["constellation_files"])
+    output:
+        list = os.path.join(config["tempdir"], "get_constellations.txt")
+    shell:
+        """
+        scorpio list \
+        --constellations {params.constellation_files} \
+        --pangolin > {output.list:q}
+        """
+
+
 rule generate_report:
     input:
         csv = os.path.join(config["tempdir"],"pangolearn_assignments.csv"),
         scorpio_voc_report = rules.scorpio.output.report,
+        constellations_list = rules.get_constellations.output.list,
         alias_file = config["alias_file"]
     output:
         csv = config["outfile"]
     run:
-        
+        voc_list = []
+        with open(input.constellations_list,"r") as f:
+            for line in f:
+                voc_list.append(line.rstrip())
+
         voc_dict = {}
         with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
@@ -235,7 +253,12 @@ rule generate_report:
                             elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
                                 new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                                 new_row['lineage'] = scorpio_lineage
-
+                    elif row['lineage'] in voc_list:
+                        # have no scorpio call but a pangolearn voc/vui call
+                        new_row['note'] += f'pangoLEARN lineage assignment {row["lineage"]} was not supported by scorpio'
+                        new_row['lineage'] = "None"
+                        new_row['conflict'] = ""
+                        new_row['ambiguity_score'] = ""
                     writer.writerow(new_row)
 
         print(green(f"Output file written to: ") + f"{output.csv}")
