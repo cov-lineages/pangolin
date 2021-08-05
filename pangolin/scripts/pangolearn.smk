@@ -34,6 +34,8 @@ def expand_alias(pango_lineage, alias_dict):
         return None
     return pango_lineage
 
+##### Report options #####
+UNASSIGNED_LINEAGE_REPORTED="None"
 
 ##### Target rules #####
 
@@ -158,7 +160,7 @@ rule add_failed_seqs:
             
             for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
                 if record.id not in passed:
-                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
+                    fw.write(f"{record.id},{UNASSIGNED_LINEAGE_REPORTED},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
 rule scorpio:
     input:
@@ -256,7 +258,7 @@ rule generate_report:
                     elif row['lineage'] in voc_list:
                         # have no scorpio call but a pangolearn voc/vui call
                         new_row['note'] += f'pangoLEARN lineage assignment {row["lineage"]} was not supported by scorpio'
-                        new_row['lineage'] = "None"
+                        new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
                         new_row['conflict'] = ""
                         new_row['ambiguity_score'] = ""
                     writer.writerow(new_row)
@@ -293,6 +295,7 @@ rule usher_to_report:
     input:
         txt = rules.use_usher.output.txt,
         scorpio_voc_report = rules.scorpio.output.report,
+        constellations_list = rules.get_constellations.output.list,
         designated = rules.hash_sequence_assign.output.designated,
         qcfail= config["qc_fail"],
         qc_pass_fasta = config["query_fasta"],
@@ -302,7 +305,11 @@ rule usher_to_report:
     run:
         voc_dict = {}
         passed = []
-        
+
+        voc_list = []
+        with open(input.constellations_list,"r") as f:
+            for line in f:
+                voc_list.append(line.rstrip())
 
         with open(input.scorpio_voc_report,"r") as f:
             reader = csv.DictReader(f)
@@ -387,6 +394,12 @@ rule usher_to_report:
 
                         if histogram_note:
                             note += f'; {histogram_note}'
+                    elif lineage in voc_list:
+                        # have no scorpio call but an usher voc/vui call
+                        note += f'usher lineage assignment {lineage} was not supported by scorpio'
+                        note += f'; {histogram_note}'
+                        lineage = UNASSIGNED_LINEAGE_REPORTED
+                        conflict = ""
                     else:
                         note = histogram_note
                     fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
