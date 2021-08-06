@@ -102,6 +102,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training",help="show pango-designation version number used for training and exit")
     parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
+    parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
 
@@ -319,6 +320,7 @@ def main(sysargs = sys.argv[1:]):
         "qc_fail":qc_fail,
         "alias_file": alias_file,
         "constellation_files": constellation_files,
+        "skip_designation_hash": args.skip_designation_hash,
         "verbose":args.verbose,
         "pangoLEARN_version":pangoLEARN.__version__,
         "pangolin_version":__version__,
