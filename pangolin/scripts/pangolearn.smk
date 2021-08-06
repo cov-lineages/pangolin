@@ -255,12 +255,17 @@ rule generate_report:
                             elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
                                 new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                                 new_row['lineage'] = scorpio_lineage
-                    elif row['lineage'] in voc_list:
-                        # have no scorpio call but a pangolearn voc/vui call
-                        new_row['note'] += f'pangoLEARN lineage assignment {row["lineage"]} was not supported by scorpio'
-                        new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
-                        new_row['conflict'] = ""
-                        new_row['ambiguity_score'] = ""
+                    else:
+                        expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
+                        while len(expanded_pango_lineage) > 3:
+                            if expanded_pango_lineage in voc_list:
+                                # have no scorpio call but a pangolearn voc/vui call
+                                new_row['note'] += f'pangoLEARN lineage assignment {row["lineage"]} was not supported by scorpio'
+                                new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
+                                new_row['conflict'] = ""
+                                new_row['ambiguity_score'] = ""
+                                break
+                            expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
                     writer.writerow(new_row)
 
         print(green(f"Output file written to: ") + f"{output.csv}")
@@ -394,14 +399,22 @@ rule usher_to_report:
 
                         if histogram_note:
                             note += f'; {histogram_note}'
-                    elif lineage in voc_list:
-                        # have no scorpio call but an usher voc/vui call
-                        note += f'usher lineage assignment {lineage} was not supported by scorpio'
-                        note += f'; {histogram_note}'
-                        lineage = UNASSIGNED_LINEAGE_REPORTED
-                        conflict = ""
                     else:
-                        note = histogram_note
+                        expanded_pango_lineage = expand_alias(lineage, alias_dict)
+                        lineage_unassigned = False
+                        while len(expanded_pango_lineage) > 3:
+                            if expanded_pango_lineage in voc_list:
+                                # have no scorpio call but an usher voc/vui call
+                                note += f'usher lineage assignment {lineage} was not supported by scorpio'
+                                note += f'; {histogram_note}'
+                                lineage = UNASSIGNED_LINEAGE_REPORTED
+                                conflict = ""
+                                lineage_unassigned = True
+                                break
+                            expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
+
+                        if not lineage_unassigned:
+                            note = histogram_note
                     fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
                     passed.append(name)
 
