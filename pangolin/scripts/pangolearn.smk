@@ -80,6 +80,8 @@ rule hash_sequence_assign:
     output:
         designated = os.path.join(config["tempdir"],"hash_assigned.csv"),
         for_inference = os.path.join(config["tempdir"],"not_assigned.fasta")
+    params:
+        skip_designation_hash = config["skip_designation_hash"]
     run:
         set_hash = {}
         with open(config["designated_hash"],"r") as f:
@@ -93,7 +95,7 @@ rule hash_sequence_assign:
                 for record in SeqIO.parse(input.fasta, "fasta"):
                     if record.id!="reference":
                         hash_string = get_hash_string(record)
-                        if hash_string in set_hash:
+                        if not params.skip_designation_hash and hash_string in set_hash:
                             fw.write(f"{record.id},{set_hash[hash_string]}\n")
                         else:
                             fseq.write(f">{record.description}\n{record.seq}\n")
