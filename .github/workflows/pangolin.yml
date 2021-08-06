@@ -23,8 +23,6 @@ jobs:
         run: pip install -e .
       - name: Check pangolin version
         run: pangolin --version
-      - name: Update versions of everythong
-        run: pangolin --update
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
 # add more tests here
