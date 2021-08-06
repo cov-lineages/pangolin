@@ -257,7 +257,7 @@ rule generate_report:
                                 new_row['lineage'] = scorpio_lineage
                     else:
                         expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
-                        while len(expanded_pango_lineage) > 3:
+                        while expanded_pango_lineage and len(expanded_pango_lineage) > 3:
                             if expanded_pango_lineage in voc_list:
                                 # have no scorpio call but a pangolearn voc/vui call
                                 new_row['note'] += f'pangoLEARN lineage assignment {row["lineage"]} was not supported by scorpio'
@@ -402,7 +402,7 @@ rule usher_to_report:
                     else:
                         expanded_pango_lineage = expand_alias(lineage, alias_dict)
                         lineage_unassigned = False
-                        while len(expanded_pango_lineage) > 3:
+                        while expanded_pango_lineage and len(expanded_pango_lineage) > 3:
                             if expanded_pango_lineage in voc_list:
                                 # have no scorpio call but an usher voc/vui call
                                 note += f'usher lineage assignment {lineage} was not supported by scorpio'
