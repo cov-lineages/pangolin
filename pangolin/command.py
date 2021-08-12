@@ -201,14 +201,15 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(-1)
     else:
         # find the query fasta
-        query = os.path.join(cwd, args.query[0])
-        if not os.path.exists(query):
-            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
-                                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                ' for detailed instructions.\n')
-            sys.exit(-1)
-        else:
-            print(green(f"The query file is:") + f"{query}")
+        if not args.decompress:
+            query = os.path.join(cwd, args.query[0])
+            if not os.path.exists(query):
+                sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
+                                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                    ' for detailed instructions.\n')
+                sys.exit(-1)
+            else:
+                print(green(f"The query file is:") + f"{query}")
 
         # default output dir
 
@@ -337,10 +338,10 @@ def main(sysargs = sys.argv[1:]):
             "threads":args.threads
             }
 
-    data_install_checks.check_install(config)
-    snakefile = data_install_checks.get_snakefile(thisdir)
+        data_install_checks.check_install(config)
+        snakefile = data_install_checks.get_snakefile(thisdir)
 
-    dependency_checks.set_up_verbosity(config)
+        dependency_checks.set_up_verbosity(config)
 
     trained_model = ""
     header_file = ""
