@@ -246,87 +246,87 @@ def main(sysargs = sys.argv[1:]):
     2) check N content
     3) write a file that contains just the seqs to run
     """
+    if not args.decompress:
+        do_not_run = []
+        run = []
+        total_input = 0
+        print(green("** Sequence QC **"))
+        fmt = "{:<30}\t{:>25}\t{:<10}\n"
 
-    do_not_run = []
-    run = []
-    total_input = 0
-    print(green("** Sequence QC **"))
-    fmt = "{:<30}\t{:>25}\t{:<10}\n"
+        print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
 
-    print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
+        file_ending = query.split(".")[-1]
+        if file_ending in ["gz","gzip","tgz"]:
+            query = gzip.open(query, 'rt')
+        elif file_ending in ["xz","lzma"]:
+            query = lzma.open(query, 'rt')
 
-    file_ending = query.split(".")[-1]
-    if file_ending in ["gz","gzip","tgz"]:
-        query = gzip.open(query, 'rt')
-    elif file_ending in ["xz","lzma"]:
-        query = lzma.open(query, 'rt')
+        for record in SeqIO.parse(query, "fasta"):
+            total_input +=1
+            # replace spaces in sequence headers with underscores
+            record.description = record.description.replace(' ', '_')
+            record.id = record.description
+            if "," in record.id:
+                record.id=record.id.replace(",","_")
 
-    for record in SeqIO.parse(query, "fasta"):
-        total_input +=1
-        # replace spaces in sequence headers with underscores
-        record.description = record.description.replace(' ', '_')
-        record.id = record.description
-        if "," in record.id:
-            record.id=record.id.replace(",","_")
-
-        if len(record) <args.minlen:
-            record.description = record.description + f" fail=seq_len:{len(record)}"
-            do_not_run.append(record)
-            print(fmt.format(record.id, "Seq too short", len(record)))
-            # print(record.id, "\t\tsequence too short")
-        else:
-            num_N = str(record.seq).upper().count("N")
-            prop_N = round((num_N)/len(record.seq), 2)
-            if prop_N > args.maxambig:
-                record.description = record.description + f" fail=N_content:{prop_N}"
+            if len(record) <args.minlen:
+                record.description = record.description + f" fail=seq_len:{len(record)}"
                 do_not_run.append(record)
-                print(fmt.format(record.id, "N content too high", prop_N))
-                # print("{record.id} | has an N content of {prop_N}")
+                print(fmt.format(record.id, "Seq too short", len(record)))
+                # print(record.id, "\t\tsequence too short")
             else:
-                run.append(record)
+                num_N = str(record.seq).upper().count("N")
+                prop_N = round((num_N)/len(record.seq), 2)
+                if prop_N > args.maxambig:
+                    record.description = record.description + f" fail=N_content:{prop_N}"
+                    do_not_run.append(record)
+                    print(fmt.format(record.id, "N content too high", prop_N))
+                    # print("{record.id} | has an N content of {prop_N}")
+                else:
+                    run.append(record)
 
-    print(green("\nNumber of sequences detected: ") + f"{total_input}")
-    print(green("Total passing QC: ") + f"{len(run)}")
+        print(green("\nNumber of sequences detected: ") + f"{total_input}")
+        print(green("Total passing QC: ") + f"{len(run)}")
 
-    if run == []:
-        with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-            for record in do_not_run:
-                desc = record.description.split(" ")
-                reason = ""
-                for item in desc:
-                    if item.startswith("fail="):
-                        reason = item.split("=")[1]
-                fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-        print(cyan(f'Note: no query sequences have passed the qc\n'))
-        sys.exit(0)
+        if run == []:
+            with open(outfile, "w") as fw:
+                fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+                for record in do_not_run:
+                    desc = record.description.split(" ")
+                    reason = ""
+                    for item in desc:
+                        if item.startswith("fail="):
+                            reason = item.split("=")[1]
+                    fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+            print(cyan(f'Note: no query sequences have passed the qc\n'))
+            sys.exit(0)
 
-    post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-    with open(post_qc_query,"w") as fw:
-        SeqIO.write(run, fw, "fasta")
-    qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-    with open(qc_fail,"w") as fw:
-        SeqIO.write(do_not_run, fw, "fasta")
+        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
+        with open(post_qc_query,"w") as fw:
+            SeqIO.write(run, fw, "fasta")
+        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
+        with open(qc_fail,"w") as fw:
+            SeqIO.write(do_not_run, fw, "fasta")
 
-    config = {
-        "query_fasta":post_qc_query,
-        "outdir":outdir,
-        "outfile":outfile,
-        "tempdir":tempdir,
-        "aligndir":align_dir,
-        "alignment_out": alignment_out,
-        "trim_start":265,   # where to pad to using datafunk
-        "trim_end":29674,   # where to pad after using datafunk
-        "qc_fail":qc_fail,
-        "alias_file": alias_file,
-        "constellation_files": constellation_files,
-        "skip_designation_hash": args.skip_designation_hash,
-        "verbose":args.verbose,
-        "pangoLEARN_version":pangoLEARN.__version__,
-        "pangolin_version":__version__,
-        "pango_version":PANGO_VERSION,
-        "threads":args.threads
-        }
+        config = {
+            "query_fasta":post_qc_query,
+            "outdir":outdir,
+            "outfile":outfile,
+            "tempdir":tempdir,
+            "aligndir":align_dir,
+            "alignment_out": alignment_out,
+            "trim_start":265,   # where to pad to using datafunk
+            "trim_end":29674,   # where to pad after using datafunk
+            "qc_fail":qc_fail,
+            "alias_file": alias_file,
+            "constellation_files": constellation_files,
+            "skip_designation_hash": args.skip_designation_hash,
+            "verbose":args.verbose,
+            "pangoLEARN_version":pangoLEARN.__version__,
+            "pangolin_version":__version__,
+            "pango_version":PANGO_VERSION,
+            "threads":args.threads
+            }
 
     data_install_checks.check_install(config)
     snakefile = data_install_checks.get_snakefile(thisdir)
