@@ -1,0 +1,46 @@
+{
+    "label": "Beta (B.1.351-like)",
+	"description": "Defining of lineage B.1.351",
+	"sources": [
+		"https://www.medrxiv.org/content/10.1101/2020.12.21.20248640v1"
+	],
+    "type": "variant", 
+    "variant": {
+		"Pango_lineages": [
+			"B.1.351"        
+		],
+	    "mrca_lineage": "B.1.351",
+		"PHE_label": "VOC-20DEC-02",
+		"WHO_label": "Beta",
+		"representative_genome": ""
+    },
+	"tags": [
+		"B.1.351",
+		"VOC-20DEC-02",
+		"VOC202012/02",
+		"Beta",
+		"501.V2",
+		"20H",
+		"GH"
+	],
+    "sites": [
+        "NSP2:T85I",
+        "ORF1ab:K1655N",
+        "ORF1ab:K3353R",
+        "S:D80A",
+        "S:D215G",
+        "S:E484K",
+        "S:N501Y",
+        "S:A701V",
+        "ORF3a:Q57H",
+        "ORF3a:S171L",
+        "E:P71L",
+        "N:T205I",
+        "del:22280:9",
+        "del:11287:9"
+    ],
+    "rules": {
+        "min_alt": 6,
+        "max_ref": 3
+    }
+}

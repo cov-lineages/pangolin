@@ -1,0 +1,28 @@
+{
+  "name": "furin-cleavage-site codons",
+  "prefix": "FCS_codons",
+  "description": "The furin cleavage site and its adjacent codons",
+  "sites": [ 
+    "nuc:T23600", 
+    "nuc:C23601", 
+    "nuc:T23602", 
+    "nuc:C23603", 
+    "nuc:C23604", 
+    "nuc:T23605", 
+    "nuc:C23606", 
+    "nuc:G23607", 
+    "nuc:G23608", 
+    "nuc:C23609", 
+    "nuc:G23610", 
+    "nuc:G23611", 
+    "nuc:G23612", 
+    "nuc:C23613", 
+    "nuc:A23614", 
+    "nuc:C23615", 
+    "nuc:G23616", 
+    "nuc:T23617", 
+    "nuc:A23618", 
+    "nuc:G23619", 
+    "nuc:T23620" 
+  ]  
+}

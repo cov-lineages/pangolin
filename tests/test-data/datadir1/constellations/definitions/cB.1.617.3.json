@@ -1,0 +1,43 @@
+{
+    "label": "B.1.617.3-like",
+    "description": "Defining constellation for lineage B.1.617.3",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/49"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.617.3"
+        ],
+	    "mrca_lineage": "B.1.617.3",
+        "PHE_label": "VUI-21APR-03",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.617.3",
+        "VUI-21APR-03"
+    ],
+    "sites": [
+        "nuc:C835T",
+        "nsp3:A1526V",
+        "nsp3:T1830I",
+        "nsp5:A194S",
+        "nsp6:A117V",
+        "nuc:C16293T",
+        "S:T19R",
+        "S:L452R",
+        "S:E484Q",
+        "S:P681R",
+        "S:D950N",
+        "nuc:T27384C",
+        "ORF7a:V82A",
+        "ORF8:T26I",
+        "N:P67S",
+        "N:R203M",
+        "N:D377Y"
+    ],
+    "rules": {
+        "min_alt": 9,
+        "max_ref": 3
+    }
+}

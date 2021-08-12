@@ -79,7 +79,6 @@ def version_from_init(init_file):
     return version
 
 def main(sysargs = sys.argv[1:]):
-
     parser = argparse.ArgumentParser(prog = _program,
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages',
     usage='''pangolin <query> [options]''')
@@ -112,7 +111,6 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(-1)
     else:
         args = parser.parse_args(sysargs)
-    args = parser.parse_args()
 
     # find the data
     if args.datadir is not None:

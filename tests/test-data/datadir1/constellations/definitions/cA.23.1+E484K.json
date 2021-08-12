@@ -1,0 +1,41 @@
+{
+    "label": "A.23.1-like+E484K",
+    "description": "This is a variant of cA.23.1 that additionally contains E484K.",
+    "sources": [
+        "https://doi.org/10.1101/2021.02.08.21251393"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "A.23.1"
+        ],
+	    "mrca_lineage": "A.23.1",
+        "PHE_label": "VUI-21FEB-01",
+        "representative_genome": ""
+    },
+    "tags": [
+        "A.23.1",
+        "VUI-21FEB-01",
+        "VUI202102/01"
+    ],
+    "sites": [
+        "nsp3:L741F",
+        "nsp6:M86I",
+        "nsp6:L98F",
+        "nsp6:M183I",
+        "S:R102I",
+        "S:F157L",
+        "S:V367F",
+        "S:E484K",
+        "S:Q613H",
+        "S:P681R",
+        "ORF8:L84S",
+        "ORF8:E92K",
+        "N:S202N"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3,
+        "S:E484K": "alt"
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "label": "B.1.623-like",
+    "description": "First detected in the UK in a traveller from Antigua.",
+    "sources": [
+        "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/968581/Variants_of_Concern_VOC_Technical_Briefing_7_England.pdf"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.623"
+        ],
+	    "mrca_lineage": "B.1.623",
+        "PHE_label": "VUI-21MAR-01",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.623",
+        "VUI-21MAR-01",
+        "VUI202103/01"
+    ],
+    "sites": [
+        "nsp3:G76S",
+        "nuc:T8704C",
+        "nuc:C8986T",
+        "nuc:G13617A",
+        "nsp13:G206C",
+        "nuc:C22388T",
+        "S:E484K",
+        "del:27922:34",
+        "nuc:A28272T"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3
+    }
+}

@@ -1,0 +1,47 @@
+{
+    "label": "Eta (B.1.525-like)",
+    "description": "This variant is a cluster of E484K containing genomes",
+    "sources": [
+        null
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.525"
+        ],
+	    "mrca_lineage": "B.1.525",
+        "PHE_label": "VUI-21FEB-03",
+        "WHO_label": "Eta",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.525",
+        "VUI-21FEB-03",
+        "VUI202102/03",
+        "Eta",
+        "G/484K.V3",
+        "20A"
+    ],
+    "sites": [
+        "nuc:C1498T",
+        "nuc:A1807G",
+        "nuc:T8593C",
+        "nuc:C9565T",
+        "nsp12:P323F",
+        "nuc:C18171T",
+        "nuc:A20724G",
+        "S:Q52R",
+        "S:E484K",
+        "S:Q677H",
+        "S:F888L",
+        "nuc:C24748T",
+        "E:L21F",
+        "M:I82T",
+        "nuc:A28699G",
+        "nuc:G29543T"
+    ],
+    "rules": {
+        "min_alt": 8,
+        "max_ref": 3
+    }
+}

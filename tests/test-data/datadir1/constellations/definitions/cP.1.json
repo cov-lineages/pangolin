@@ -1,0 +1,45 @@
+{
+    "label": "Gamma (P.1-like)",
+    "description": "Defining constellation for lineage P.1",
+    "sources": [
+        "https://virological.org/t/586",
+        "https://cov-lineages.org/global_report_P.1.html"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "P.1"
+        ],
+	    "mrca_lineage": "P.1",
+        "PHE_label": "VOC-21JAN-02",
+        "WHO_label": "Gamma",
+        "representative_genome": ""
+    },
+    "tags": [
+        "P.1",
+        "VOC-21JAN-02",
+        "VOC202101/02"
+    ],
+    "sites": [
+        "nuc:T733C",
+        "nuc:C2749T",
+        "ORF1ab:S1188L",
+        "ORF1ab:K1795Q",
+        "del:11287:9",
+        "nuc:C12778T",
+        "nuc:C13860T",
+        "S:T20N",
+        "S:P26S",
+        "S:K417T",
+        "S:E484K",
+        "S:N501Y",
+        "S:T1027I",
+        "ORF8:E92K",
+        "nuc:28262+AACA",
+        "N:P80R"
+    ],
+    "rules": {
+        "min_alt": 8,
+        "max_ref": 3
+    }
+}
