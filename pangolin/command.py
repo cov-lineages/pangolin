@@ -24,14 +24,14 @@ from pangolin.utils.log_colours import green,cyan,red
 try:
     import pangoLEARN
 except:
-    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') + 
+    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') +
     "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
     sys.exit(-1)
 
 try:
     import scorpio
 except:
-    sys.stderr.write(cyan('Error: please install `scorpio` with \n') + 
+    sys.stderr.write(cyan('Error: please install `scorpio` with \n') +
     "pip install git+https://github.com/cov-lineages/scorpio.git")
     sys.exit(-1)
 
@@ -44,7 +44,7 @@ except:
 try:
     import constellations
 except:
-    sys.stderr.write(cyan('Error: please install `constellations` with \n') + 
+    sys.stderr.write(cyan('Error: please install `constellations` with \n') +
     "pip install git+https://github.com/cov-lineages/constellations.git")
     sys.exit(-1)
 
@@ -102,8 +102,10 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training",help="show pango-designation version number used for training and exit")
     parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
+    parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
+    parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -181,6 +183,14 @@ def main(sysargs = sys.argv[1:]):
                 print(line.rstrip())
         sys.exit(0)
 
+    if args.all_versions:
+        print(f"pangolin: {__version__}\n"
+              f"pangolearn: {pangoLEARN.__version__}\n"
+              f"constellations: {constellations.__version__}\n"
+              f"scorpio: {scorpio.__version__}\n"
+              f"pango-designation: {pango_designation.__version__}")
+        sys.exit(0)
+
 
 
 
@@ -194,14 +204,15 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(-1)
     else:
         # find the query fasta
-        query = os.path.join(cwd, args.query[0])
-        if not os.path.exists(query):
-            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
-                                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                ' for detailed instructions.\n')
-            sys.exit(-1)
-        else:
-            print(green(f"The query file is:") + f"{query}")
+        if not args.decompress:
+            query = os.path.join(cwd, args.query[0])
+            if not os.path.exists(query):
+                sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
+                                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                    ' for detailed instructions.\n')
+                sys.exit(-1)
+            else:
+                print(green(f"The query file is:") + f"{query}")
 
         # default output dir
 
@@ -248,91 +259,92 @@ def main(sysargs = sys.argv[1:]):
     2) check N content
     3) write a file that contains just the seqs to run
     """
+    if not args.decompress:
+        do_not_run = []
+        run = []
+        total_input = 0
+        print(green("** Sequence QC **"))
+        fmt = "{:<30}\t{:>25}\t{:<10}\n"
 
-    do_not_run = []
-    run = []
-    total_input = 0
-    print(green("** Sequence QC **"))
-    fmt = "{:<30}\t{:>25}\t{:<10}\n"
+        print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
 
-    print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
+        file_ending = query.split(".")[-1]
+        if file_ending in ["gz","gzip","tgz"]:
+            query = gzip.open(query, 'rt')
+        elif file_ending in ["xz","lzma"]:
+            query = lzma.open(query, 'rt')
 
-    file_ending = query.split(".")[-1]
-    if file_ending in ["gz","gzip","tgz"]:
-        query = gzip.open(query, 'rt')
-    elif file_ending in ["xz","lzma"]:
-        query = lzma.open(query, 'rt')
+        for record in SeqIO.parse(query, "fasta"):
+            total_input +=1
+            # replace spaces in sequence headers with underscores
+            record.description = record.description.replace(' ', '_')
+            record.id = record.description
+            if "," in record.id:
+                record.id=record.id.replace(",","_")
 
-    for record in SeqIO.parse(query, "fasta"):
-        total_input +=1
-        # replace spaces in sequence headers with underscores
-        record.description = record.description.replace(' ', '_')
-        record.id = record.description
-        if "," in record.id:
-            record.id=record.id.replace(",","_")
-
-        if len(record) <args.minlen:
-            record.description = record.description + f" fail=seq_len:{len(record)}"
-            do_not_run.append(record)
-            print(fmt.format(record.id, "Seq too short", len(record)))
-            # print(record.id, "\t\tsequence too short")
-        else:
-            num_N = str(record.seq).upper().count("N")
-            prop_N = round((num_N)/len(record.seq), 2)
-            if prop_N > args.maxambig:
-                record.description = record.description + f" fail=N_content:{prop_N}"
+            if len(record) <args.minlen:
+                record.description = record.description + f" fail=seq_len:{len(record)}"
                 do_not_run.append(record)
-                print(fmt.format(record.id, "N content too high", prop_N))
-                # print("{record.id} | has an N content of {prop_N}")
+                print(fmt.format(record.id, "Seq too short", len(record)))
+                # print(record.id, "\t\tsequence too short")
             else:
-                run.append(record)
+                num_N = str(record.seq).upper().count("N")
+                prop_N = round((num_N)/len(record.seq), 2)
+                if prop_N > args.maxambig:
+                    record.description = record.description + f" fail=N_content:{prop_N}"
+                    do_not_run.append(record)
+                    print(fmt.format(record.id, "N content too high", prop_N))
+                    # print("{record.id} | has an N content of {prop_N}")
+                else:
+                    run.append(record)
 
-    print(green("\nNumber of sequences detected: ") + f"{total_input}")
-    print(green("Total passing QC: ") + f"{len(run)}")
+        print(green("\nNumber of sequences detected: ") + f"{total_input}")
+        print(green("Total passing QC: ") + f"{len(run)}")
 
-    if run == []:
-        with open(outfile, "w") as fw:
-            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-            for record in do_not_run:
-                desc = record.description.split(" ")
-                reason = ""
-                for item in desc:
-                    if item.startswith("fail="):
-                        reason = item.split("=")[1]
-                fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-        print(cyan(f'Note: no query sequences have passed the qc\n'))
-        sys.exit(0)
+        if run == []:
+            with open(outfile, "w") as fw:
+                fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+                for record in do_not_run:
+                    desc = record.description.split(" ")
+                    reason = ""
+                    for item in desc:
+                        if item.startswith("fail="):
+                            reason = item.split("=")[1]
+                    fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+            print(cyan(f'Note: no query sequences have passed the qc\n'))
+            sys.exit(0)
 
-    post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-    with open(post_qc_query,"w") as fw:
-        SeqIO.write(run, fw, "fasta")
-    qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-    with open(qc_fail,"w") as fw:
-        SeqIO.write(do_not_run, fw, "fasta")
+        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
+        with open(post_qc_query,"w") as fw:
+            SeqIO.write(run, fw, "fasta")
+        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
+        with open(qc_fail,"w") as fw:
+            SeqIO.write(do_not_run, fw, "fasta")
 
-    config = {
-        "query_fasta":post_qc_query,
-        "outdir":outdir,
-        "outfile":outfile,
-        "tempdir":tempdir,
-        "aligndir":align_dir,
-        "alignment_out": alignment_out,
-        "trim_start":265,   # where to pad to using datafunk
-        "trim_end":29674,   # where to pad after using datafunk
-        "qc_fail":qc_fail,
-        "alias_file": alias_file,
-        "constellation_files": constellation_files,
-        "verbose":args.verbose,
-        "pangoLEARN_version":pangoLEARN.__version__,
-        "pangolin_version":__version__,
-        "pango_version":PANGO_VERSION,
-        "threads":args.threads
-        }
+        config = {
+            "query_fasta":post_qc_query,
+            "outdir":outdir,
+            "outfile":outfile,
+            "tempdir":tempdir,
+            "aligndir":align_dir,
+            "alignment_out": alignment_out,
+            "trim_start":265,   # where to pad to using datafunk
+            "trim_end":29674,   # where to pad after using datafunk
+            "qc_fail":qc_fail,
+            "alias_file": alias_file,
+            "constellation_files": constellation_files,
+            "skip_designation_hash": args.skip_designation_hash,
+            "verbose":args.verbose,
+            "pangoLEARN_version":pangoLEARN.__version__,
+            "pangolin_version":__version__,
+            "pango_version":PANGO_VERSION,
+            "threads":args.threads
+            }
 
-    data_install_checks.check_install(config)
-    snakefile = data_install_checks.get_snakefile(thisdir)
+        data_install_checks.check_install(config)
+        snakefile = data_install_checks.get_snakefile(thisdir)
 
-    dependency_checks.set_up_verbosity(config)
+        dependency_checks.set_up_verbosity(config)
 
     trained_model = ""
     header_file = ""
@@ -507,7 +519,7 @@ def update(version_dictionary, data_dir=None):
                     tf.close()
                     destination_directory = os.path.join(data_dir, dependency_package)
                     shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
-            else:                  
+            else:
                 subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
                                 f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
                                 check=True,
