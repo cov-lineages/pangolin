@@ -1,0 +1,46 @@
+{
+    "label": "Theta (P.3-like)",
+    "description": "Defining constellation for lineage P.3",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/27",
+        "https://www.medrxiv.org/content/10.1101/2021.03.03.21252812v2"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "P.3"
+        ],
+	    "mrca_lineage": "P.3",
+        "PHE_label": "VUI-21MAR-02",
+        "WHO_label": "Theta",
+        "representative_genome": ""
+    },
+    "tags": [
+        "P.3",
+        "VUI-21MAR-02",
+        "VUI202103/02"
+    ],
+    "sites": [
+        "nsp3:D736G",
+        "nsp4:L438P",
+        "nsp6:D112E",
+        "nsp7:L71F",
+        "nsp13:A368V",
+        "del:21980:9",
+        "S:E484K",
+        "S:N501Y",
+        "S:P681H",
+        "S:E1092K",
+        "S:H1101Y",
+        "S:V1176F",
+        "ORF8:K2Q",
+        "nuc:C7564A",
+        "nuc:C12049T",
+        "nuc:T23341C",
+        "nuc:T24187A"
+    ],
+    "rules": {
+        "min_alt": 9,
+        "max_ref": 3
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "label": "Delta (B.1.617.2-like) +K417N",
+    "description": "Defining constellation for lineage B.1.617.2 with the addition of spike K417N",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/49"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "AY.1",
+            "AY.2",
+            "B.1.617.2"
+        ],
+	    "mrca_lineage": "B.1.617.2",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.617.2",
+        "K417N",
+        "VOC-21APR-02",
+        "VUI-21APR-02"
+    ],
+    "sites": [
+        "S:T19R",
+        "S:K417N",
+        "S:L452R",
+        "S:T478K",
+        "S:P681R",
+        "S:D950N",
+        "ORF3a:S26L",
+        "M:I82T",
+        "ORF7a:V82A",
+        "ORF7a:T120I",
+        "N:D63G",
+        "N:R203M",
+        "N:D377Y"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3,
+        "S:K417N": "alt"
+    }
+}

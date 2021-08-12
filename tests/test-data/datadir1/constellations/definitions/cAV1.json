@@ -1,0 +1,39 @@
+{
+	"label": "AV.1-like",
+	"description": "AV.1 lineage defining mutations",
+	"sources": [
+	],
+	"type": "variant",
+	"variant": {
+		"Pango_lineages": [
+			"AV.1"
+		],
+		"mrca_lineage": "AV.1",
+		"PHE_label": "VOC-20-DEC-01",
+		"representative_genome": ""
+	},
+	"tags": [
+		"AV.1"
+	],
+	"sites": [
+		"s:D80G",
+		"s:T95I",
+		"s:G142D",
+		"s:Y144-",
+		"s:N439K",
+		"s:E484K",
+		"s:D614G",
+		"s:P681H",
+		"s:I1130V",
+		"s:D1139H",
+		"M:A63T",
+		"M:H125Y",
+		"N:I157V",
+		"N:R203K",
+		"N:G204R"
+	],
+	"rules": {
+		"min_alt": 7,
+		"max_ref": 3
+	}
+}

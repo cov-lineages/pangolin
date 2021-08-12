@@ -1,0 +1,44 @@
+{
+    "label": "Lambda (C.37-like)",
+	"description": "C.37 lineage defining mutations",
+    "sources": [
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "C.37"
+        ],
+	    "mrca_lineage": "C.37",
+	    "WHO_label": "Lambda",
+        "representative_genome": ""
+    },
+    "tags": [
+        "Lambda",
+        "C.37"
+    ],
+    "sites": [
+		"nuc:T1246I",
+		"ORF1a:P2287S",
+		"ORF1a:F2387V",
+		"ORF1a:L3201P",
+		"ORF1a:T3255I",
+		"ORF1a:G3278S",
+		"ORF1a:SGF3675-",
+		"ORF1b:P314L",
+		"S:G75V",
+		"S:T76I",
+		"S:RSYLTPG246-",
+		"S:L452Q",
+		"S:F490S",
+		"S:D614G",
+		"S:T859N",
+		"N:P13L",
+		"N:R203K",
+		"N:G204R",
+		"N:G214C"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3
+    }
+}

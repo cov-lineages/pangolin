@@ -1,0 +1,50 @@
+{
+	"label": "Alpha (B.1.1.7-like)",
+	"description": "B.1.1.7 lineage defining mutations",
+	"sources": [
+		"https://virological.org/t/563"
+	],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.1.7"
+        ],
+	    "mrca_lineage": "B.1.1.7",
+        "PHE_label": "VOC-20-DEC-01",
+        "WHO_label": "Alpha",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.1.7",
+        "VOC 202012/01"
+    ],
+	"sites": [
+		"nuc:C913T",
+		"1ab:T1001I",
+		"1ab:A1708D",
+		"nuc:C5986T",
+		"1ab:I2230T",
+		"1ab:SGF3675-",
+		"nuc:C14676T",
+		"nuc:C15279T",
+		"nuc:T16176C",
+		"s:HV69-",
+		"s:Y144-",
+		"s:N501Y",
+		"s:A570D",
+		"s:P681H",
+		"s:T716I",
+		"s:S982A",
+		"s:D1118H",
+		"nuc:C26801T",
+		"8:Q27*",
+		"8:R52I",
+		"8:Y73C",
+		"N:D3L",
+		"N:S235F"
+	],
+	"rules": {
+		"min_alt": 15,
+		"max_ref": 3
+	}
+}
