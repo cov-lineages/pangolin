@@ -138,6 +138,7 @@ def main(sysargs = sys.argv[1:]):
                 constellation_files.append(os.path.join(r, fn))
 
 
+    use_datadir = False
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
         version = "Unknown"
@@ -146,10 +147,12 @@ def main(sysargs = sys.argv[1:]):
                 if r.endswith('pangoLEARN') and fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
-                    # print("pangoLEARN version",version)
-                    pangoLEARN.__version__ = version
-
-    else:
+                    if version > pangoLEARN.__version__:
+                        # only use this for pangoLEARN if the version is > than what we already have
+                        pangoLEARN.__version__ = version
+                        use_datadir = True
+    if use_datadir == False:
+        # we haven't got a viable datadir from searching args.datadir
         pangoLEARN_dir = pangoLEARN.__path__[0]
         data_dir = os.path.join(pangoLEARN_dir,"data")
 
