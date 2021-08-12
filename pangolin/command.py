@@ -115,6 +115,9 @@ def main(sysargs = sys.argv[1:]):
     args = parser.parse_args()
 
     # find the data
+    if args.datadir is not None:
+        # this needs to be an absolute path when we pass it to scorpio
+        args.datadir = os.path.abspath(args.datadir)
     alias_file = None
     pango_designation_dir = pango_designation.__path__[0]
     constellations_dir = constellations.__path__[0]
