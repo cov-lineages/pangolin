@@ -24,14 +24,14 @@ from pangolin.utils.log_colours import green,cyan,red
 try:
     import pangoLEARN
 except:
-    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') + 
+    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') +
     "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
     sys.exit(-1)
 
 try:
     import scorpio
 except:
-    sys.stderr.write(cyan('Error: please install `scorpio` with \n') + 
+    sys.stderr.write(cyan('Error: please install `scorpio` with \n') +
     "pip install git+https://github.com/cov-lineages/scorpio.git")
     sys.exit(-1)
 
@@ -44,7 +44,7 @@ except:
 try:
     import constellations
 except:
-    sys.stderr.write(cyan('Error: please install `constellations` with \n') + 
+    sys.stderr.write(cyan('Error: please install `constellations` with \n') +
     "pip install git+https://github.com/cov-lineages/constellations.git")
     sys.exit(-1)
 
@@ -105,6 +105,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
+    parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
 
     if len(sysargs)<1:
         parser.print_help()
@@ -177,6 +178,14 @@ def main(sysargs = sys.argv[1:]):
         with open(alias_file, 'r') as handle:
             for line in handle:
                 print(line.rstrip())
+        sys.exit(0)
+
+    if args.all_versions:
+        print(f"pangolin: {__version__}\n"
+              f"pangolearn: {pangoLEARN.__version__}\n"
+              f"constellations: {constellations.__version__}\n"
+              f"scorpio: {scorpio.__version__}\n"
+              f"pango-designation: {pango_designation.__version__}")
         sys.exit(0)
 
 
@@ -506,7 +515,7 @@ def update(version_dictionary, data_dir=None):
                     tf.close()
                     destination_directory = os.path.join(data_dir, dependency_package)
                     shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
-            else:                  
+            else:
                 subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade',
                                 f"git+https://github.com/cov-lineages/{dependency}.git@{latest_release}"],
                                 check=True,
