@@ -99,7 +99,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
     parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
-    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training",help="show pango-designation version number used for training and exit")
+    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, {pango_designation.__version__} used for aliases",help="show pango-designation version number used for training and aliases, then exit")
     parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
     parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
@@ -189,7 +189,8 @@ def main(sysargs = sys.argv[1:]):
               f"pangolearn: {pangoLEARN.__version__}\n"
               f"constellations: {constellations.__version__}\n"
               f"scorpio: {scorpio.__version__}\n"
-              f"pango-designation: {pango_designation.__version__}")
+              f"pango-designation used by pangoLEARN/Usher: {PANGO_VERSION}\n"
+              f"pango-designation used for aliases: {pango_designation.__version__}")
         sys.exit(0)
 
 
