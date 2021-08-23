@@ -313,7 +313,10 @@ def main(sysargs = sys.argv[1:]):
 
         post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
         with open(post_qc_query,"w") as fw:
-            SeqIO.write(run, fw, "fasta")
+            for record in run:
+                seq = str(record.seq).replace("-","")
+                fw.write(f">{record.description}\n{seq}\n")
+
         qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
         with open(qc_fail,"w") as fw:
             SeqIO.write(do_not_run, fw, "fasta")
