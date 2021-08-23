@@ -1,0 +1,35 @@
+{
+    "label": "Zeta (P.2-like)",
+    "description": "Defining constellation for lineage P.2",
+    "sources": [
+        null
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "P.2"
+        ],
+	    "mrca_lineage": "P.2",
+        "PHE_label": "VUI-21JAN-01",
+        "WHO_label": "Zeta",
+        "representative_genome": ""
+    },
+    "tags": [
+        "P.2",
+        "VUI-21JAN-01",
+        "VUI202101/01"
+    ],
+    "sites": [
+        "ORF1ab:L205V",
+        "nuc:C11824T",
+        "S:E484K",
+        "nuc:A12964G",
+        "nuc:C28253T",
+        "N:A119S",
+        "N:M234I"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 1
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "label": "B.1.621-like",
+    "description": "",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/57"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.621"
+        ],
+	    "mrca_lineage": "B.1.621",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.621"
+    ],
+    "sites": [
+        "nuc:C3037T",
+        "ORF1a:T1055A",
+        "ORF1a:T1538I",
+        "nuc:C6037T",
+        "ORF1a:T3255I",
+        "ORF1a:Q3729R",
+        "nuc:A13057T",
+        "ORF1b:P314L",
+        "ORF1b:P1342S",
+        "nuc:C18877T",
+        "nuc:T19035C",
+        "nuc:C20148T",
+        "spike:T95I",
+        "spike:Y145N",
+        "spike:R346K",
+        "spike:E484K",
+        "spike:N501Y",
+        "spike:D614G",
+        "spike:P681H",
+        "spike:D950N",
+        "ORF3a:Q57H",
+        "nuc:A26492T",
+        "ORF8:T11K",
+        "ORF8:P38S",
+        "ORF8:S67F",
+        "nuc:A28272T",
+        "N:T205I"
+    ],
+    "intermediate": [
+        "ins:21991+TAC:0.833333",
+        "del:26158:4:0.916667",
+        "nuc:C241T:0.916667",
+        "spike:Y144S:0.916667",
+        "ORF3a:L106F:0.916667",
+        "nuc:T28618A:0.916667"
+    ],
+    "rules": {
+        "min_alt": 19,
+        "max_ref": 3
+    }
+}

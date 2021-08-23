@@ -1,0 +1,39 @@
+{
+    "label": "Epsilon (B.1.427/429-like)",
+    "description": "",
+    "sources": [
+        null
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.427",
+            "B.1.429"
+        ],
+        "WHO_label": "Epsilon",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.427",
+        "B.1.429",
+        "Eta"
+    ],
+    "sites": [
+    	"S:S13I",
+		"S:W152C",
+		"S:L452R",
+		"S:D614G",
+		"ORF1a:I4205V",
+		"ORF1b:D1183Y",
+		"nuc:C2395T",
+		"nuc:T2597C",
+		"nuc:T24349C",
+		"nuc:G27890T",
+		"nuc:A28272T"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3
+    }
+}
+

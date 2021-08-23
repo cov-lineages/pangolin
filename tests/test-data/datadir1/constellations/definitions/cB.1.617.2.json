@@ -1,0 +1,48 @@
+{
+    "label": "Delta (B.1.617.2-like-with-bells)",
+    "description": "Defining constellation for lineage B.1.617.2",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/49"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.617.2",
+            "AY.1",
+            "AY.2"
+        ],
+	    "mrca_lineage": "B.1.617.2",
+        "incompatible_lineage_calls": [
+            "AY.1",
+            "AY.2"
+        ],
+        "PHE_label": "VOC-21APR-02",
+        "WHO_label": "Delta",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.617.2",
+        "VOC-21APR-02",
+        "Delta",
+        "VUI-21APR-02"
+    ],
+    "sites": [
+        "S:T19R",
+	"S:G142D",
+        "S:L452R",
+        "S:T478K",
+        "S:P681R",
+        "S:D950N",
+        "ORF3a:S26L",
+        "M:I82T",
+        "ORF7a:V82A",
+        "ORF7a:T120I",
+        "N:D63G",
+        "N:R203M",
+        "N:D377Y"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3
+    }
+}

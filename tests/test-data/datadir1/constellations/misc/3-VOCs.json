@@ -1,0 +1,15 @@
+{
+	"name": "3-VOCs",
+	"description": "VOC B.1.1.7, B.1.351 & P.1 common mutations",
+	"citation": "",
+	"sites": [
+		"1ab:SGF3675-",
+		"s:L18F",
+		"s:HV69-",
+		"s:Y144-",
+		"s:K417",
+		"s:N501Y",
+		"s:E484K",
+		"s:P681H"
+	]
+}

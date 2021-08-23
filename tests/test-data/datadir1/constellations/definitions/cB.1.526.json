@@ -1,0 +1,46 @@
+{
+    "label": "Iota (B.1.526-like)",
+    "description": "",
+    "sources": [
+        null
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.526"
+        ],
+	    "mrca_lineage": "B.1.526",
+        "WHO_label": "Iota",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.526",
+        "Iota"
+    ],
+    "sites": [
+        "nuc:C3037T",
+		"ORF1a:T265I",
+		"ORF1a:L3201P",
+		"1ab:SGF3675-",
+		"ORF1b:P314L",
+		"ORF1b:Q1011H",
+        "nuc:A20262G",
+        "S:L5F",
+		"S:T95I",
+		"S:D253G",
+		"S:E484K",
+		"S:D614G",
+		"S:A701V",
+		"ORF3a:P42L",
+		"ORF3a:Q57H",
+		"N:P199L",
+		"N:M234I",
+		"ORF8:T11I",
+        "nuc:A28271-"
+    ],
+    "rules": {
+        "min_alt": 11,
+        "max_ref": 3
+    }
+}
+

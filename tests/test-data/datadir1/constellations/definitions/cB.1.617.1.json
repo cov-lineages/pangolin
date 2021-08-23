@@ -1,0 +1,38 @@
+{
+    "label": "B.1.617.1-like",
+    "description": "Defining constellation for lineage B.1.617.1",
+    "sources": [
+        "https://github.com/cov-lineages/pango-designation/issues/38",
+        "https://www.telegraphindia.com/india/covid-double-mutation-variant-fuels-fears/cid/1809715"
+    ],
+    "type": "variant",
+    "variant": {
+        "Pango_lineages": [
+            "B.1.617.1"
+        ],
+	    "mrca_lineage": "B.1.617.1",
+        "PHE_label": "VUI-21APR-01",
+        "representative_genome": ""
+    },
+    "tags": [
+        "B.1.617.1",
+        "VUI-21APR-01"
+    ],
+    "sites": [
+        "nuc:C3457T",
+        "nsp3:T749I",
+        "nsp6:T77A",
+        "nsp13:M429I",
+        "nsp15:K259R",
+        "S:L452R",
+        "S:E484Q",
+        "S:P681R",
+        "ORF3a:S26L",
+        "ORF7a:V82A",
+        "N:R203M"
+    ],
+    "rules": {
+        "min_alt": 5,
+        "max_ref": 3
+    }
+}

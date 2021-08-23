@@ -1,0 +1,46 @@
+{
+    "label": "B.1.1.318-like",
+	"description": "Defining of lineage B.1.1.318",
+	"sources": [
+		"https://github.com/cov-lineages/pango-designation/issues/15"
+	],
+    "type": "variant", 
+    "variant": {
+		"Pango_lineages": [
+			"B.1.1.318"        
+		],
+	    "mrca_lineage": "B.1.1.318",
+		"PHE_label": "VUI-21FEB-04",
+		"representative_genome": ""
+    },
+	"tags": [
+		"B.1.1.318",
+		"VUI-21FEB-04",
+		"VUI202102/04"
+	],
+    "sites": [
+        "nuc:C3961T",
+        "nsp3:K1693N",
+        "nsp4:T173I",
+        "nsp4:A446V",
+        "nsp5:T21I",
+        "del:11287:9",
+        "nsp15:V320M",
+        "S:T95I",
+        "del:21990:3",
+        "S:E484K",
+        "nuc:T23287C",
+        "S:P681H",
+        "S:D796H",
+        "nuc:C25276A",
+        "M:I82T",
+        "del:27887:15",
+        "ORF8:E106*",
+        "nuc:A28271G",
+        "del:28895:3"
+    ],
+    "rules": {
+        "min_alt": 11,
+        "max_ref": 3
+    }
+}

@@ -79,7 +79,6 @@ def version_from_init(init_file):
     return version
 
 def main(sysargs = sys.argv[1:]):
-
     parser = argparse.ArgumentParser(prog = _program,
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages',
     usage='''pangolin <query> [options]''')
@@ -112,9 +111,11 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(-1)
     else:
         args = parser.parse_args(sysargs)
-    args = parser.parse_args()
 
     # find the data
+    if args.datadir is not None:
+        # this needs to be an absolute path when we pass it to scorpio
+        args.datadir = os.path.abspath(args.datadir)
     alias_file = None
     pango_designation_dir = pango_designation.__path__[0]
     constellations_dir = constellations.__path__[0]
@@ -140,6 +141,7 @@ def main(sysargs = sys.argv[1:]):
                 constellation_files.append(os.path.join(r, fn))
 
 
+    use_datadir = False
     if args.datadir:
         data_dir = os.path.join(cwd, args.datadir)
         version = "Unknown"
@@ -148,10 +150,12 @@ def main(sysargs = sys.argv[1:]):
                 if r.endswith('pangoLEARN') and fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
-                    # print("pangoLEARN version",version)
-                    pangoLEARN.__version__ = version
-
-    else:
+                    if version > pangoLEARN.__version__:
+                        # only use this for pangoLEARN if the version is > than what we already have
+                        pangoLEARN.__version__ = version
+                        use_datadir = True
+    if use_datadir == False:
+        # we haven't got a viable datadir from searching args.datadir
         pangoLEARN_dir = pangoLEARN.__path__[0]
         data_dir = os.path.join(pangoLEARN_dir,"data")
 
