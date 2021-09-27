@@ -1,4 +1,4 @@
-name: pangolin
+name: pangolin2
 channels:
   - conda-forge
   - bioconda
@@ -10,6 +10,7 @@ dependencies:
   - python>=3.7
   - snakemake-minimal<=6.8.0
   - gofasta
+  - pysam==0.16.0.1
   - usher>=0.3.2
   - pip:
     - pandas==1.0.1
