@@ -279,7 +279,7 @@ def main(sysargs = sys.argv[1:]):
         for record in SeqIO.parse(query, "fasta"):
             total_input +=1
             # replace spaces in sequence headers with underscores
-            record.description = record.description.replace(' ', '_')
+            record.description = record.description.replace(' ', '_').replace(",","_")
             record.id = record.description
             if "," in record.id:
                 record.id=record.id.replace(",","_")
@@ -299,7 +299,7 @@ def main(sysargs = sys.argv[1:]):
                     # print("{record.id} | has an N content of {prop_N}")
                 else:
                     run.append(record)
-
+        
         print(green("\nNumber of sequences detected: ") + f"{total_input}")
         print(green("Total passing QC: ") + f"{len(run)}")
 
