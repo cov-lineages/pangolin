@@ -12,3 +12,15 @@
 <strong>Full pangolin documentation found at [cov-lineages.org](https://cov-lineages.org/pangolin.html)</strong>
 
 <strong>Find the pangolin web application [here](https://pangolin.cog-uk.io/), thanks to the Centre for Genomic Pathogen and Surveillance!</strong>
+
+### [Installation](https://cov-lineages.org/resources/pangolin/installation.html)
+
+### [Usage](https://cov-lineages.org/resources/pangolin/usage.html)
+
+### [Updating](https://cov-lineages.org/resources/pangolin/updating.html)
+
+### [Output](https://cov-lineages.org/resources/pangolin/output.html)
+
+### [References](https://cov-lineages.org/resources/pangolin/references.html)
+
+
