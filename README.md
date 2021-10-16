@@ -9,9 +9,12 @@
 
 <img src="https://github.com/cov-lineages/pangolin/blob/master/docs/logo.png" width="300">
 
-<strong>Full pangolin documentation found at [cov-lineages.org](https://cov-lineages.org/pangolin.html)</strong>
 
-<strong>Find the pangolin web application [here](https://pangolin.cog-uk.io/), thanks to the Centre for Genomic Pathogen and Surveillance!</strong>
+## [Web application](https://pangolin.cog-uk.io/)
+
+The pangolin web app is maintained by the Centre for Genomic Pathogen and Surveillance
+
+## [Documentation](https://cov-lineages.org/pangolin.html)
 
 ### [Installation](https://cov-lineages.org/resources/pangolin/installation.html)
 
