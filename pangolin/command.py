@@ -493,7 +493,7 @@ def update(version_dictionary, data_dir=None):
         #print(dependency, version, latest_release)
         # to match the tag names add a v to the pangolin internal version
         if dependency in ['pangolin', 'scorpio', 'pango-designation']:
-            version = "v" + version
+            if (not version.startswith('v')): version = "v" + version
         # to match the tag names for pangoLEARN add data release
         elif dependency == 'pangolearn':
             version = version.replace(' ', ' data release ')
