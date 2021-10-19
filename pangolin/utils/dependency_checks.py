@@ -27,11 +27,15 @@ def check_this_dependency(dependency,missing):
     if not check:
         missing.append(dependency)
 
-def check_dependencies():
+def check_dependencies(usher_arg):
 
     missing = []
 
-    dependency_list = ["gofasta","minimap2","snakemake","usher"]
+    dependency_list = ["gofasta","minimap2","snakemake"]
+    
+    if usher_arg:
+        dependency_list.append("usher")
+
     module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]
 
     for dependency in dependency_list:
