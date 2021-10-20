@@ -196,7 +196,7 @@ def main(sysargs = sys.argv[1:]):
 
 
 
-    dependency_checks.check_dependencies()
+    dependency_checks.check_dependencies(args.usher)
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
