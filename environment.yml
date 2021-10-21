@@ -4,7 +4,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - biopython=1.74
+  - biopython>=1.74
   - minimap2>=2.16
   - pip=19.3.1
   - python>=3.7
