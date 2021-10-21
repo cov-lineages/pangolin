@@ -25,5 +25,7 @@ jobs:
         run: pangolin --version
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
+      - name: Run pangolin usher with test data
+        run: pangolin --usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
       - name: Install and run pytest
         run: mamba install -y pytest && python -m pytest tests/
