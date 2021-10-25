@@ -285,33 +285,39 @@ def main(sysargs = sys.argv[1:]):
         post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
         fw_pass = open(post_qc_query,"w")
         qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-        fw_fail = open(qc_fail,"w"
+        fw_fail = open(qc_fail,"w")
 
         total_input = 0
         total_pass = 0
         
         try:
             for record in SeqIO.parse(query, "fasta"):
-            total_input +=1
-            record.description = record.description.replace(' ', '_').replace(",","_")
-            record.id = record.description
-            if "," in record.id:
-                record.id=record.id.replace(",","_")
+                total_input +=1
+                record.description = record.description.replace(' ', '_').replace(",","_")
+                record.id = record.description
+                if "," in record.id:
+                    record.id=record.id.replace(",","_")
 
-            if len(record) <args.minlen:
-                record.description = record.description + f" fail=seq_len:{len(record)}"
-                fw_fail.write(f">{record.description}\n{record.seq}\n")
-            else:
-                num_N = str(record.seq).upper().count("N")
-                prop_N = round((num_N)/len(record.seq), 2)
-                if prop_N > args.maxambig:
-                    record.description = record.description + f" fail=N_content:{prop_N}"
+                if len(record) <args.minlen:
+                    record.description = record.description + f" fail=seq_len:{len(record)}"
                     fw_fail.write(f">{record.description}\n{record.seq}\n")
                 else:
-                    total_pass +=1
-                    seq = str(record.seq).replace("-","")
-                    fw_pass.write(f">{record.description}\n{seq}\n")
-        
+                    num_N = str(record.seq).upper().count("N")
+                    prop_N = round((num_N)/len(record.seq), 2)
+                    if prop_N > args.maxambig:
+                        record.description = record.description + f" fail=N_content:{prop_N}"
+                        fw_fail.write(f">{record.description}\n{record.seq}\n")
+                    else:
+                        total_pass +=1
+                        seq = str(record.seq).replace("-","")
+                        fw_pass.write(f">{record.description}\n{seq}\n")
+        except UnicodeDecodeError:
+            sys.stderr.write(cyan(
+                f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
+                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                ' for detailed instructions.\n'))
+            sys.exit(-1)
+
         print(green("Number of sequences detected: ") + f"{total_input}")
         print(green("Total passing QC: ") + f"{total_pass}")
         fw_fail.close()
