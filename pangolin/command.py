@@ -255,11 +255,8 @@ def main(sysargs = sys.argv[1:]):
     if not args.decompress:
         do_not_run = []
         run = []
-        total_input = 0
-        print(green("** Sequence QC **"))
-        fmt = "{:<30}\t{:>25}\t{:<10}\n"
-
-        print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
+        
+        print(green("** Running sequence QC **"))
 
         file_ending = query.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
@@ -267,9 +264,16 @@ def main(sysargs = sys.argv[1:]):
         elif file_ending in ["xz","lzma"]:
             query = lzma.open(query, 'rt')
 
+        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
+        fw_pass = open(post_qc_query,"w")
+        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
+        fw_fail = open(qc_fail,"w")
+
+        total_input = 0
+        total_pass = 0
+
         for record in SeqIO.parse(query, "fasta"):
             total_input +=1
-            # replace spaces in sequence headers with underscores
             record.description = record.description.replace(' ', '_').replace(",","_")
             record.id = record.description
             if "," in record.id:
@@ -277,27 +281,27 @@ def main(sysargs = sys.argv[1:]):
 
             if len(record) <args.minlen:
                 record.description = record.description + f" fail=seq_len:{len(record)}"
-                do_not_run.append(record)
-                print(fmt.format(record.id, "Seq too short", len(record)))
-                # print(record.id, "\t\tsequence too short")
+                fw_fail.write(f">{record.description}\n{record.seq}\n")
             else:
                 num_N = str(record.seq).upper().count("N")
                 prop_N = round((num_N)/len(record.seq), 2)
                 if prop_N > args.maxambig:
                     record.description = record.description + f" fail=N_content:{prop_N}"
-                    do_not_run.append(record)
-                    print(fmt.format(record.id, "N content too high", prop_N))
-                    # print("{record.id} | has an N content of {prop_N}")
+                    fw_fail.write(f">{record.description}\n{record.seq}\n")
                 else:
-                    run.append(record)
+                    total_pass +=1
+                    seq = str(record.seq).replace("-","")
+                    fw_pass.write(f">{record.description}\n{seq}\n")
         
-        print(green("\nNumber of sequences detected: ") + f"{total_input}")
-        print(green("Total passing QC: ") + f"{len(run)}")
+        print(green("Number of sequences detected: ") + f"{total_input}")
+        print(green("Total passing QC: ") + f"{total_pass}")
+        fw_fail.close()
+        fw_pass.close()
 
-        if run == []:
+        if total_pass == 0:
             with open(outfile, "w") as fw:
                 fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-                for record in do_not_run:
+                for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
                     desc = record.description.split(" ")
                     reason = ""
                     for item in desc:
@@ -306,16 +310,6 @@ def main(sysargs = sys.argv[1:]):
                     fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
             print(cyan(f'Note: no query sequences have passed the qc\n'))
             sys.exit(0)
-
-        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-        with open(post_qc_query,"w") as fw:
-            for record in run:
-                seq = str(record.seq).replace("-","")
-                fw.write(f">{record.description}\n{seq}\n")
-
-        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-        with open(qc_fail,"w") as fw:
-            SeqIO.write(do_not_run, fw, "fasta")
 
         config = {
             "query_fasta":post_qc_query,
