@@ -197,24 +197,32 @@ def main(sysargs = sys.argv[1:]):
     else:
         # find the query fasta
         if not args.decompress:
-            if not os.path.exists(os.path.join(cwd, args.query[0])):
-                if select.select([sys.stdin,],[],[],0.0)[0]:
-                    query = sys.stdin
-                elif not select.select([sys.stdin,],[],[],0.0)[0]:
-                    tried_path = os.path.join(cwd, args.query[0])
-                    if tried_path.endswith("-"):
-                        sys.stderr.write(cyan(
-                            f'Error: cannot find query (input) fasta file using stdin.\n' +
+            try:
+                if not os.path.exists(os.path.join(cwd, args.query[0])):
+                    if select.select([sys.stdin,],[],[],0.0)[0]:
+                        query = sys.stdin
+                    elif not select.select([sys.stdin,],[],[],0.0)[0]:
+                        tried_path = os.path.join(cwd, args.query[0])
+                        if tried_path.endswith("-"):
+                            sys.stderr.write(cyan(
+                                f'Error: cannot find query (input) fasta file using stdin.\n' +
                                          'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
                                          ' for detailed instructions.\n'))
-                    else:
-                        sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{tried_path}\n' +
+                            sys.exit(-1)
+                        else:
+                            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{tried_path}\n' +
                                           'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
                                           ' for detailed instructions.\n')
-                    sys.exit(-1)
-            else:
-                query = os.path.join(cwd, args.query[0])
-                print(green(f"The query file is:") + f"{query}")
+                            sys.exit(-1)
+                else:
+                    query = os.path.join(cwd, args.query[0])
+                    print(green(f"The query file is:") + f"{query}")
+            except IndexError:
+                sys.stderr.write(cyan(
+                    f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
+                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                    ' for detailed instructions.\n'))
+                sys.exit(-1)
 
         # default output dir
 
