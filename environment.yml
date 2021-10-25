@@ -13,7 +13,6 @@ dependencies:
   - pysam==0.16.0.1
   - usher>=0.3.2
   - pip:
-    - pandas==1.0.1
     - git+https://github.com/cov-lineages/pangoLEARN.git
     - git+https://github.com/cov-lineages/scorpio.git
     - git+https://github.com/cov-lineages/constellations.git
