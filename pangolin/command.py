@@ -200,10 +200,17 @@ def main(sysargs = sys.argv[1:]):
             if not os.path.exists(os.path.join(cwd, args.query[0])):
                 if select.select([sys.stdin,],[],[],0.0)[0]:
                     query = sys.stdin
-                else:
-                    sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
-                                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                    ' for detailed instructions.\n')
+                elif not select.select([sys.stdin,],[],[],0.0)[0]:
+                    tried_path = os.path.join(cwd, args.query[0])
+                    if tried_path.endswith("-"):
+                        sys.stderr.write(cyan(
+                            f'Error: cannot find query (input) fasta file using stdin.\n' +
+                                         'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                         ' for detailed instructions.\n'))
+                    else:
+                        sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{tried_path}\n' +
+                                          'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                          ' for detailed instructions.\n')
                     sys.exit(-1)
             else:
                 query = os.path.join(cwd, args.query[0])
@@ -270,29 +277,34 @@ def main(sysargs = sys.argv[1:]):
             elif file_ending in ["xz","lzma"]:
                 query = lzma.open(query, 'rt')
 
-        for record in SeqIO.parse(query, "fasta"):
-            total_input +=1
-            # replace spaces in sequence headers with underscores
-            record.description = record.description.replace(' ', '_').replace(",","_")
-            record.id = record.description
-            if "," in record.id:
-                record.id=record.id.replace(",","_")
+        try:
+            for record in SeqIO.parse(query, "fasta"):
+                total_input +=1
+                # replace spaces in sequence headers with underscores
+                record.description = record.description.replace(' ', '_').replace(",","_")
+                record.id = record.description
+                if "," in record.id:
+                    record.id=record.id.replace(",","_")
 
-            if len(record) <args.minlen:
-                record.description = record.description + f" fail=seq_len:{len(record)}"
-                do_not_run.append(record)
-                print(fmt.format(record.id, "Seq too short", len(record)))
-                # print(record.id, "\t\tsequence too short")
-            else:
-                num_N = str(record.seq).upper().count("N")
-                prop_N = round((num_N)/len(record.seq), 2)
-                if prop_N > args.maxambig:
-                    record.description = record.description + f" fail=N_content:{prop_N}"
+                if len(record) <args.minlen:
+                    record.description = record.description + f" fail=seq_len:{len(record)}"
                     do_not_run.append(record)
-                    print(fmt.format(record.id, "N content too high", prop_N))
-                    # print("{record.id} | has an N content of {prop_N}")
+                    print(fmt.format(record.id, "Seq too short", len(record)))
+                    # print(record.id, "\t\tsequence too short")
                 else:
-                    run.append(record)
+                    num_N = str(record.seq).upper().count("N")
+                    prop_N = round((num_N)/len(record.seq), 2)
+                    if prop_N > args.maxambig:
+                        record.description = record.description + f" fail=N_content:{prop_N}"
+                        do_not_run.append(record)
+                        print(fmt.format(record.id, "N content too high", prop_N))
+                        # print("{record.id} | has an N content of {prop_N}")
+                    else:
+                        run.append(record)
+        except UnicodeDecodeError:
+            sys.stderr.write(cyan(
+                f'Error: error when reading query fasta.\n' +
+            'It is possible that compressed stdin was passed.'))
         
         print(green("\nNumber of sequences detected: ") + f"{total_input}")
         print(green("Total passing QC: ") + f"{len(run)}")
