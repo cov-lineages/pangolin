@@ -10,6 +10,7 @@ import tempfile
 import gzip
 import joblib
 from pangolin.utils.log_colours import green,cyan,red
+import select
 
 try:
     import pangoLEARN
@@ -185,8 +186,6 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(0)
 
 
-
-
     dependency_checks.check_dependencies(args.usher)
 
     # to enable not having to pass a query if running update
@@ -198,13 +197,16 @@ def main(sysargs = sys.argv[1:]):
     else:
         # find the query fasta
         if not args.decompress:
-            query = os.path.join(cwd, args.query[0])
-            if not os.path.exists(query):
-                sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
+            if not os.path.exists(os.path.join(cwd, args.query[0])):
+                if select.select([sys.stdin,],[],[],0.0)[0]:
+                    query = sys.stdin
+                else:
+                    sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
                                     'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
                                     ' for detailed instructions.\n')
-                sys.exit(-1)
+                    sys.exit(-1)
             else:
+                query = os.path.join(cwd, args.query[0])
                 print(green(f"The query file is:") + f"{query}")
 
         # default output dir
@@ -261,11 +263,12 @@ def main(sysargs = sys.argv[1:]):
 
         print("{:<30}\t{:>25}\t{:<10}\n".format("Sequence name","Reason","Value"))
 
-        file_ending = query.split(".")[-1]
-        if file_ending in ["gz","gzip","tgz"]:
-            query = gzip.open(query, 'rt')
-        elif file_ending in ["xz","lzma"]:
-            query = lzma.open(query, 'rt')
+        if not select.select([sys.stdin,],[],[],0.0)[0]:
+            file_ending = query.split(".")[-1]
+            if file_ending in ["gz","gzip","tgz"]:
+                query = gzip.open(query, 'rt')
+            elif file_ending in ["xz","lzma"]:
+                query = lzma.open(query, 'rt')
 
         for record in SeqIO.parse(query, "fasta"):
             total_input +=1
