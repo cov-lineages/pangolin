@@ -11,6 +11,7 @@ import gzip
 import joblib
 from pangolin.utils.log_colours import green,cyan,red
 import select
+import lzma
 
 try:
     import pangoLEARN
@@ -275,7 +276,7 @@ def main(sysargs = sys.argv[1:]):
         
         print(green("** Running sequence QC **"))
 
-        if not select.select([sys.stdin,],[],[],0.0)[0]:
+        if os.path.exists(os.path.join(cwd, args.query[0])):
             file_ending = query.split(".")[-1]
             if file_ending in ["gz","gzip","tgz"]:
                 query = gzip.open(query, 'rt')
