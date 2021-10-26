@@ -271,8 +271,8 @@ def main(sysargs = sys.argv[1:]):
     3) write a file that contains just the seqs to run
     """
     if not args.decompress:
-        do_not_run = []
-        run = []
+        # do_not_run = []
+        # run = []
         
         print(green("** Running sequence QC **"))
 
@@ -314,7 +314,8 @@ def main(sysargs = sys.argv[1:]):
                         fw_pass.write(f">{record.description}\n{seq}\n")
         except UnicodeDecodeError:
             sys.stderr.write(cyan(
-                f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
+                f'Error: the input query fasta could not be parsed.\n' +
+                'Double check your query fasta and that compressed stdin was not passed.\n' +
                 'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
                 ' for detailed instructions.\n'))
             sys.exit(-1)
