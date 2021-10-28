@@ -10,6 +10,8 @@ import tempfile
 import gzip
 import joblib
 from pangolin.utils.log_colours import green,cyan,red
+import select
+import lzma
 
 try:
     import pangoLEARN
@@ -185,8 +187,6 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(0)
 
 
-
-
     dependency_checks.check_dependencies(args.usher)
 
     # to enable not having to pass a query if running update
@@ -198,14 +198,32 @@ def main(sysargs = sys.argv[1:]):
     else:
         # find the query fasta
         if not args.decompress:
-            query = os.path.join(cwd, args.query[0])
-            if not os.path.exists(query):
-                sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{query}\n' +
-                                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                    ' for detailed instructions.\n')
+            try:
+                if not os.path.exists(os.path.join(cwd, args.query[0])):
+                    if select.select([sys.stdin,],[],[],0.0)[0]:
+                        query = sys.stdin
+                    elif not select.select([sys.stdin,],[],[],0.0)[0]:
+                        tried_path = os.path.join(cwd, args.query[0])
+                        if tried_path.endswith("-"):
+                            sys.stderr.write(cyan(
+                                f'Error: cannot find query (input) fasta file using stdin.\n' +
+                                         'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                         ' for detailed instructions.\n'))
+                            sys.exit(-1)
+                        else:
+                            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{tried_path}\n' +
+                                          'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                                          ' for detailed instructions.\n')
+                            sys.exit(-1)
+                else:
+                    query = os.path.join(cwd, args.query[0])
+                    print(green(f"The query file is:") + f"{query}")
+            except IndexError:
+                sys.stderr.write(cyan(
+                    f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
+                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                    ' for detailed instructions.\n'))
                 sys.exit(-1)
-            else:
-                print(green(f"The query file is:") + f"{query}")
 
         # default output dir
 
@@ -253,17 +271,18 @@ def main(sysargs = sys.argv[1:]):
     3) write a file that contains just the seqs to run
     """
     if not args.decompress:
-        do_not_run = []
-        run = []
+        # do_not_run = []
+        # run = []
         
         print(green("** Running sequence QC **"))
 
-        file_ending = query.split(".")[-1]
-        if file_ending in ["gz","gzip","tgz"]:
-            query = gzip.open(query, 'rt')
-        elif file_ending in ["xz","lzma"]:
-            query = lzma.open(query, 'rt')
-
+        if os.path.exists(os.path.join(cwd, args.query[0])):
+            file_ending = query.split(".")[-1]
+            if file_ending in ["gz","gzip","tgz"]:
+                query = gzip.open(query, 'rt')
+            elif file_ending in ["xz","lzma"]:
+                query = lzma.open(query, 'rt')
+                
         post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
         fw_pass = open(post_qc_query,"w")
         qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
@@ -271,28 +290,36 @@ def main(sysargs = sys.argv[1:]):
 
         total_input = 0
         total_pass = 0
+        
+        try:
+            for record in SeqIO.parse(query, "fasta"):
+                total_input +=1
+                record.description = record.description.replace(' ', '_').replace(",","_")
+                record.id = record.description
+                if "," in record.id:
+                    record.id=record.id.replace(",","_")
 
-        for record in SeqIO.parse(query, "fasta"):
-            total_input +=1
-            record.description = record.description.replace(' ', '_').replace(",","_")
-            record.id = record.description
-            if "," in record.id:
-                record.id=record.id.replace(",","_")
-
-            if len(record) <args.minlen:
-                record.description = record.description + f" fail=seq_len:{len(record)}"
-                fw_fail.write(f">{record.description}\n{record.seq}\n")
-            else:
-                num_N = str(record.seq).upper().count("N")
-                prop_N = round((num_N)/len(record.seq), 2)
-                if prop_N > args.maxambig:
-                    record.description = record.description + f" fail=N_content:{prop_N}"
+                if len(record) <args.minlen:
+                    record.description = record.description + f" fail=seq_len:{len(record)}"
                     fw_fail.write(f">{record.description}\n{record.seq}\n")
                 else:
-                    total_pass +=1
-                    seq = str(record.seq).replace("-","")
-                    fw_pass.write(f">{record.description}\n{seq}\n")
-        
+                    num_N = str(record.seq).upper().count("N")
+                    prop_N = round((num_N)/len(record.seq), 2)
+                    if prop_N > args.maxambig:
+                        record.description = record.description + f" fail=N_content:{prop_N}"
+                        fw_fail.write(f">{record.description}\n{record.seq}\n")
+                    else:
+                        total_pass +=1
+                        seq = str(record.seq).replace("-","")
+                        fw_pass.write(f">{record.description}\n{seq}\n")
+        except UnicodeDecodeError:
+            sys.stderr.write(cyan(
+                f'Error: the input query fasta could not be parsed.\n' +
+                'Double check your query fasta and that compressed stdin was not passed.\n' +
+                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+                ' for detailed instructions.\n'))
+            sys.exit(-1)
+
         print(green("Number of sequences detected: ") + f"{total_input}")
         print(green("Total passing QC: ") + f"{total_pass}")
         fw_fail.close()
