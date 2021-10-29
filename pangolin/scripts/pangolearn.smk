@@ -268,6 +268,8 @@ rule generate_report:
                                     new_row['conflict'] = ""
                                     new_row['ambiguity_score'] = ""
                                     break
+                            if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
+                                break
                             expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
                     writer.writerow(new_row)
 
@@ -415,6 +417,8 @@ rule usher_to_report:
                                     conflict = ""
                                     lineage_unassigned = True
                                     break
+                            if lineage == UNASSIGNED_LINEAGE_REPORTED:
+                                break
                             expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
 
                         if not lineage_unassigned:
