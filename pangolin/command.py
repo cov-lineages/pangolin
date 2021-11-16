@@ -95,6 +95,7 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, alias version {pango_designation.__version__}",help="show pango-designation version number used for training and aliases, then exit")
     parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
     parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
+    parser.add_argument('--use-cache', action="store_true",help="Use cache file to speed up assignments")
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
     parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
@@ -187,7 +188,7 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(0)
 
 
-    dependency_checks.check_dependencies(args.usher)
+    dependency_checks.check_dependencies(args.usher, args.use_cache)
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
@@ -351,11 +352,12 @@ def main(sysargs = sys.argv[1:]):
             "alias_file": alias_file,
             "constellation_files": constellation_files,
             "skip_designation_hash": args.skip_designation_hash,
-            "verbose":args.verbose,
-            "pangoLEARN_version":pangoLEARN.__version__,
-            "pangolin_version":__version__,
-            "pango_version":PANGO_VERSION,
-            "threads":args.threads
+            "use_cache": args.use_cache,
+            "verbose": args.verbose,
+            "pangoLEARN_version": pangoLEARN.__version__,
+            "pangolin_version": __version__,
+            "pango_version": PANGO_VERSION,
+            "threads": args.threads
             }
 
         data_install_checks.check_install(config)
@@ -365,7 +367,7 @@ def main(sysargs = sys.argv[1:]):
 
     trained_model = ""
     header_file = ""
-    designated_hash=""
+    designated_hash = ""
     use_usher = args.usher
     if args.usher_protobuf:
         usher_protobuf = os.path.join(cwd, args.usher_protobuf)
@@ -375,6 +377,35 @@ def main(sysargs = sys.argv[1:]):
         use_usher = True
     else:
         usher_protobuf = ""
+
+    use_cache = args.use_cache
+    cache = ""
+    if use_cache:
+        try:
+            import pangolin_assignment
+            pangolin_assignment_dir = pangolin_assignment.__path__[0]
+            for r, d, f in os.walk(pangolin_assignment_dir):
+                for fn in f:
+                    if fn == "pango_assignment.cache.csv.gz" and cache == "":
+                        cache = os.path.join(r, fn)
+            if not os.path.exists(cache):
+                sys.stderr.write('Error: cannot find cache\n')
+                sys.exit(-1)
+        except:
+            sys.stderr.write(cyan('Error: please install `pangolin_assignment` with \n') +
+                             "pip install git+https://github.com/cov-lineages/pangolin-assignment.git")
+            sys.exit(-1)
+
+        try:
+            with gzip.open(cache, 'rt') as f:
+                line = f.readline()
+        except:
+            with open(cache, 'r') as f:
+                line = f.readline()
+                if "git-lfs.github.com" in line:
+                    sys.stderr.write(
+                        'Error: Git LFS file not pulled successfully. Please install git-lfs \nusing conda or an alternative (not pip) then re-install pangolin-assignment \nwith pip install git+https://github.com/cov-lineages/pangolin-assignment.git\n')
+                    sys.exit(-1)
 
     for r,d,f in os.walk(data_dir):
         for fn in f:
@@ -417,10 +448,14 @@ Please see https://cov-lineages.org/pangolin.html for installation and updating 
             print(f"Trained model:\t{trained_model}")
             print(f"Header file:\t{header_file}")
             print(f"Designated hash:\t{designated_hash}")
+        if use_cache:
+            print(f"Assignment cache:\t{cache}")
+
 
         config["trained_model"] = trained_model
         config["header_file"] = header_file
         config["designated_hash"] = designated_hash
+        config["cache"] = cache
 
     if use_usher:
         config["usher_protobuf"] = usher_protobuf

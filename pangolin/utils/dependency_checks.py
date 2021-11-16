@@ -27,7 +27,7 @@ def check_this_dependency(dependency,missing):
     if not check:
         missing.append(dependency)
 
-def check_dependencies(usher_arg):
+def check_dependencies(usher_arg, cache_arg):
 
     missing = []
 
@@ -35,6 +35,9 @@ def check_dependencies(usher_arg):
     
     if usher_arg:
         dependency_list.append("usher")
+
+    if cache_arg:
+        dependency_list.append("pangolin-assignment")
 
     module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]
 
