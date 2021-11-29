@@ -63,7 +63,7 @@ rule align_to_reference:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
         """
-        minimap2 -a -x asm5 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
+        minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0 -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q}
         gofasta sam toMultiAlign \
             -s {params.sam:q} \
             -t {workflow.cores} \
