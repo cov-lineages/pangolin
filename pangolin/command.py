@@ -89,11 +89,10 @@ def main(sysargs = sys.argv[1:]):
     config = setup_config_dict(cwd)
 
     
-
     # find the data
-    if args.datadir is not None:
+    if args.datadir:
         # this needs to be an absolute path when we pass it to scorpio
-        args.datadir = os.path.abspath(args.datadir)
+        config[KEY_DATADIR] = os.path.abspath(args.datadir)
 
     alias_file = None
     pango_designation_dir = pango_designation.__path__[0]
@@ -111,7 +110,8 @@ def main(sysargs = sys.argv[1:]):
             constellation_files = []  # only collect the constellations from the last directory found
         for fn in f:
             if r.endswith('/pango_designation') and fn == "alias_key.json":
-                alias_file = os.path.join(r, fn)
+                config[KEY_ALIAS_FILE] = os.path.join(r, fn)
+                
                 # the __init__.py file for pango_designation is on the same level as alias_key.json
                 pango_designation.__version__ = version_from_init(os.path.join(r, '__init__.py'))
             elif r.endswith('/constellations') and fn == '__init__.py':
@@ -152,13 +152,15 @@ def main(sysargs = sys.argv[1:]):
                 'constellations': constellations.__version__,
                 'pango-designation': pango_designation.__version__}, args.datadir)
 
-    if not alias_file:
-        sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
-                         "pip install git+https://github.com/cov-lineages/pango-designation.git")
-        sys.exit(-1)
+
 
     if args.aliases:
-        with open(alias_file, 'r') as handle:
+        if not config[KEY_ALIAS_FILE]:
+            sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
+                            "pip install git+https://github.com/cov-lineages/pango-designation.git")
+            sys.exit(-1)
+            
+        with open(config[KEY_ALIAS_FILE], 'r') as handle:
             for line in handle:
                 print(line.rstrip())
         sys.exit(0)
