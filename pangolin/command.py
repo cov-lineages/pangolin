@@ -4,72 +4,37 @@ import os
 import sys
 import argparse
 import itertools
-import snakemake
+
+try:
+    import snakemake
+except:
+    sys.stderr.write(cyan(f'Error: package `{snakemake}` not found, please install snakemake or update pangolin environment.\n'))
+    sys.exit(-1)
+
 from tempfile import TemporaryDirectory, TemporaryFile, gettempdir, tempdir
 import tempfile
 import gzip
 import joblib
-from pangolin.utils.log_colours import green,cyan,red
 import select
 import lzma
-
-try:
-    import pangoLEARN
-except:
-    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') +
-    "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
-    sys.exit(-1)
-
-try:
-    import scorpio
-except:
-    sys.stderr.write(cyan('Error: please install `scorpio` with \n') +
-    "pip install git+https://github.com/cov-lineages/scorpio.git")
-    sys.exit(-1)
-
-try:
-    from pangoLEARN import PANGO_VERSION
-except:
-    sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
-    sys.exit(-1)
-
-try:
-    import constellations
-except:
-    sys.stderr.write(cyan('Error: please install `constellations` with \n') +
-    "pip install git+https://github.com/cov-lineages/constellations.git")
-    sys.exit(-1)
-
-try:
-    import pango_designation
-except:
-    sys.stderr.write(cyan('Error: please install `pango_designation` with \n') +
-    "pip install git+https://github.com/cov-lineages/pango-designation.git")
-    sys.exit(-1)
-
-from pangolin.utils import dependency_checks
-from pangolin.utils import data_install_checks
-from pangolin.utils import update
-
-import pangolin.utils.custom_logger as custom_logger
-
 import pkg_resources
+
 from Bio import SeqIO
 
 from . import _program
 
+from pangolin.utils.log_colours import green,cyan,red
+from pangolin.utils import dependency_checks
+
+from pangolin.utils import data_install_checks
+from pangolin.utils import update
+
+import pangolin.utils.custom_logger as custom_logger
+from pangolin.utils.config import *
+from pangolin.utils.initialising import *
+
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
-
-def version_from_init(init_file):
-    with open(init_file, "r") as fr:
-        for l in fr:
-            if l.startswith("__version__"):
-                l = l.rstrip("\n")
-                version = l.split('=')[1]
-                version = version.replace('"',"").replace(" ","")
-                break
-    return version
 
 def main(sysargs = sys.argv[1:]):
     parser = argparse.ArgumentParser(prog = _program,
@@ -83,18 +48,21 @@ def main(sysargs = sys.argv[1:]):
     io_group.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
-    io_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the model and header files, and UShER tree.")
+    io_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangoLEARN package")
     io_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
 
-    a_group = parser.add_argument_group('Analysis options')
+    a_group = parser.add_argument_group('Analysis modes')
     a_group.add_argument('--usher', action="store_true",help="Use UShER model for lineage inference. Default: UShER if <1000 sequences, pangoLEARN if >1000 sequences.")
     a_group.add_argument('--pangoLEARN', action="store_true",help="Use pangoLEARN model for fast lineage inference. Default: UShER if <1000 sequences, pangoLEARN if >1000 sequences.")
     a_group.add_argument('--cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.")
-    a_group.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
-    a_group.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
+    
+    ao_group = parser.add_argument_group('Analysis options')
 
-    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    ao_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    ao_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+
+    ao_group.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
+    ao_group.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
 
     d_group = parser.add_argument_group('Data options')
     d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
@@ -116,10 +84,17 @@ def main(sysargs = sys.argv[1:]):
     else:
         args = parser.parse_args(sysargs)
 
+
+    # Initialise config dict
+    config = setup_config_dict(cwd)
+
+    
+
     # find the data
     if args.datadir is not None:
         # this needs to be an absolute path when we pass it to scorpio
         args.datadir = os.path.abspath(args.datadir)
+
     alias_file = None
     pango_designation_dir = pango_designation.__path__[0]
     constellations_dir = constellations.__path__[0]
@@ -198,7 +173,7 @@ def main(sysargs = sys.argv[1:]):
         sys.exit(0)
 
 
-    dependency_checks.check_dependencies(args.usher, args.use_cache)
+    
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
@@ -310,7 +285,7 @@ def main(sysargs = sys.argv[1:]):
         data_install_checks.check_install(config)
         snakefile = data_install_checks.get_snakefile(thisdir)
 
-        dependency_checks.set_up_verbosity(config)
+        set_up_verbosity(config)
 
     trained_model = ""
     header_file = ""
