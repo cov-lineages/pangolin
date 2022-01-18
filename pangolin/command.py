@@ -76,29 +76,39 @@ def main(sysargs = sys.argv[1:]):
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages',
     usage='''pangolin <query> [options]''')
 
-    parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
-    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
-    parser.add_argument('--usher', action="store_true",help="Use UShER model instead of default pangoLEARN")
-    parser.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
-    parser.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
-    parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
-    parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
-    parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
-    parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    parser.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing a fasta alignment and guide tree")
-    parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
-    parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
-    parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
-    parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
-    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
-    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, alias version {pango_designation.__version__}",help="show pango-designation version number used for training and aliases, then exit")
-    parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
-    parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
-    parser.add_argument('--use-cache', action="store_true",help="Use cache file to speed up assignments")
-    parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
-    parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
-    parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
+    io_group = parser.add_argument_group('Input-Output options')
+    io_group.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
+    io_group.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
+    io_group.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
+    io_group.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
+    io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
+    io_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the model and header files, and UShER tree.")
+    io_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
+
+    a_group = parser.add_argument_group('Analysis options')
+    a_group.add_argument('--usher', action="store_true",help="Use UShER model for lineage inference. Default: UShER if <1000 sequences, pangoLEARN if >1000 sequences.")
+    a_group.add_argument('--pangoLEARN', action="store_true",help="Use pangoLEARN model for fast lineage inference. Default: UShER if <1000 sequences, pangoLEARN if >1000 sequences.")
+    a_group.add_argument('--cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.")
+    a_group.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
+    a_group.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
+
+    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+
+    d_group = parser.add_argument_group('Data options')
+    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
+    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
+
+    m_group = parser.add_argument_group('Misc options')
+    m_group.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
+    m_group.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
+    m_group.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, alias version {pango_designation.__version__}",help="show pango-designation version number used for training and aliases, then exit")
+    m_group.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
+    m_group.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
+    m_group.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
+    m_group.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
+
 
     if len(sysargs)<1:
         parser.print_help()
@@ -193,7 +203,7 @@ def main(sysargs = sys.argv[1:]):
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
     if len(args.query) > 1:
-        print(cyan(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only"))
+        print(cyan(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only."))
         parser.print_help()
         sys.exit(-1)
     else:
@@ -271,73 +281,10 @@ def main(sysargs = sys.argv[1:]):
     2) check N content
     3) write a file that contains just the seqs to run
     """
+
     if not args.decompress:
         # do_not_run = []
         # run = []
-        
-        print(green("** Running sequence QC **"))
-
-        if os.path.exists(os.path.join(cwd, args.query[0])):
-            file_ending = query.split(".")[-1]
-            if file_ending in ["gz","gzip","tgz"]:
-                query = gzip.open(query, 'rt')
-            elif file_ending in ["xz","lzma"]:
-                query = lzma.open(query, 'rt')
-                
-        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-        fw_pass = open(post_qc_query,"w")
-        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-        fw_fail = open(qc_fail,"w")
-
-        total_input = 0
-        total_pass = 0
-        
-        try:
-            for record in SeqIO.parse(query, "fasta"):
-                total_input +=1
-                record.description = record.description.replace(' ', '_').replace(",","_")
-                record.id = record.description
-                if "," in record.id:
-                    record.id=record.id.replace(",","_")
-
-                if len(record) <args.minlen:
-                    record.description = record.description + f" fail=seq_len:{len(record)}"
-                    fw_fail.write(f">{record.description}\n{record.seq}\n")
-                else:
-                    num_N = str(record.seq).upper().count("N")
-                    prop_N = round((num_N)/len(record.seq), 2)
-                    if prop_N > args.maxambig:
-                        record.description = record.description + f" fail=N_content:{prop_N}"
-                        fw_fail.write(f">{record.description}\n{record.seq}\n")
-                    else:
-                        total_pass +=1
-                        seq = str(record.seq).replace("-","")
-                        fw_pass.write(f">{record.description}\n{seq}\n")
-        except UnicodeDecodeError:
-            sys.stderr.write(cyan(
-                f'Error: the input query fasta could not be parsed.\n' +
-                'Double check your query fasta and that compressed stdin was not passed.\n' +
-                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                ' for detailed instructions.\n'))
-            sys.exit(-1)
-
-        print(green("Number of sequences detected: ") + f"{total_input}")
-        print(green("Total passing QC: ") + f"{total_pass}")
-        fw_fail.close()
-        fw_pass.close()
-
-        if total_pass == 0:
-            with open(outfile, "w") as fw:
-                fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-                for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
-                    desc = record.description.split(" ")
-                    reason = ""
-                    for item in desc:
-                        if item.startswith("fail="):
-                            reason = item.split("=")[1]
-                    fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-            print(cyan(f'Note: no query sequences have passed the qc\n'))
-            sys.exit(0)
 
         config = {
             "query_fasta":post_qc_query,
