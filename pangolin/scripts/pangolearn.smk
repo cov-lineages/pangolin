@@ -6,6 +6,8 @@ import os
 import gzip
 from pangolin.utils.log_colours import green,cyan,red
 from pangolin.utils.hash_functions import get_hash_string
+from pangolin.utils.sequence_qc import sequence_qc
+
 import pangolin.pangolearn.pangolearn as pangolearn
 
 ##### Configuration #####
@@ -49,57 +51,7 @@ rule all:
     input:
         config["outfile"],
         os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
-                    
-rule align_to_reference:
-    input:
-        fasta = config["query_fasta"],
-        reference = config["reference_fasta"]
-    params:
-        trim_start = 265,
-        trim_end = 29674,
-        sam = os.path.join(config["tempdir"],"mapped.sam")
-    output:
-        fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
-    log:
-        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
-    shell:
-        """
-        minimap2 -a -x asm5 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
-        gofasta sam toMultiAlign \
-            -s {params.sam:q} \
-            -t {workflow.cores} \
-            --reference {input.reference:q} \
-            --trimstart {params.trim_start} \
-            --trimend {params.trim_end} \
-            --trim \
-            --pad > '{output.fasta}'
-        """
 
-rule hash_sequence_assign:
-    input:
-        fasta = rules.align_to_reference.output.fasta
-    output:
-        designated = os.path.join(config["tempdir"],"hash_assigned.csv"),
-        for_inference = os.path.join(config["tempdir"],"not_assigned.fasta")
-    params:
-        skip_designation_hash = config["skip_designation_hash"]
-    run:
-        set_hash = {}
-        with open(config["designated_hash"],"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                set_hash[row["seq_hash"]] = row["lineage"]
-        
-        with open(output.designated,"w") as fw:
-            fw.write("taxon,lineage\n")
-            with open(output.for_inference, "w") as fseq:
-                for record in SeqIO.parse(input.fasta, "fasta"):
-                    if record.id!="reference":
-                        hash_string = get_hash_string(record)
-                        if not params.skip_designation_hash and hash_string in set_hash:
-                            fw.write(f"{record.id},{set_hash[hash_string]}\n")
-                        else:
-                            fseq.write(f">{record.description}\n{record.seq}\n")
 
 rule cache_sequence_assign:
     input:
@@ -156,6 +108,102 @@ rule cache_sequence_assign:
                 for record in SeqIO.parse(input.fasta, "fasta"):
                     if record.id in seqs_to_assign:
                         fseq.write(f">{record.description}\n{record.seq}\n")
+
+rule align_to_reference:
+    input:
+        fasta = config["query_fasta"],
+        reference = config["reference_fasta"]
+    params:
+        trim_start = 265,
+        trim_end = 29674,
+        sam = os.path.join(config["tempdir"],"mapped.sam")
+    output:
+        fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
+    log:
+        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
+    shell:
+        """
+        minimap2 -a -x asm20 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
+        gofasta sam toMultiAlign \
+            -s {params.sam:q} \
+            -t {workflow.cores} \
+            --reference {input.reference:q} \
+            --trimstart {params.trim_start} \
+            --trimend {params.trim_end} \
+            --trim \
+            --pad > '{output.fasta}'
+        """
+
+
+rule hash_sequence_assign:
+    input:
+        fasta = rules.align_to_reference.output.fasta
+    output:
+        designated = os.path.join(config["tempdir"],"hash_assigned.csv"),
+        for_inference = os.path.join(config["tempdir"],"not_assigned.fasta")
+    params:
+        skip_designation_hash = config["skip_designation_hash"]
+    run:
+        set_hash = {}
+        with open(config["designated_hash"],"r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                set_hash[row["seq_hash"]] = row["lineage"]
+        
+        with open(output.designated,"w") as fw:
+            fw.write("taxon,lineage\n")
+            with open(output.for_inference, "w") as fseq:
+                for record in SeqIO.parse(input.fasta, "fasta"):
+                    if record.id!="reference":
+                        hash_string = get_hash_string(record)
+                        if not params.skip_designation_hash and hash_string in set_hash:
+                            fw.write(f"{record.id},{set_hash[hash_string]}\n")
+                        else:
+                            fseq.write(f">{record.description}\n{record.seq}\n")
+
+
+rule scorpio:
+    input:
+        fasta = rules.align_to_reference.output.fasta,
+    params:
+        constellation_files = " ".join(config["constellation_files"])
+    output:
+        report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
+    threads:
+        workflow.cores
+    log:
+        os.path.join(config["tempdir"], "logs/scorpio.log")
+    shell:
+        """
+        scorpio classify \
+        -i {input.fasta:q} \
+        -o {output.report:q} \
+        -t {workflow.cores} \
+        --output-counts \
+        --constellations {params.constellation_files} \
+        --pangolin \
+        --list-incompatible \
+        --long &> {log:q}
+        """
+
+rule get_constellations:
+    params:
+        constellation_files = " ".join(config["constellation_files"])
+    output:
+        list = os.path.join(config["tempdir"], "get_constellations.txt")
+    shell:
+        """
+        scorpio list \
+        --constellations {params.constellation_files} \
+        --pangolin > {output.list:q}
+        """
+
+
+rule sequence_qc:
+    input:
+    output:
+    run:
+
 
 rule pangolearn:
     input:
@@ -227,43 +275,6 @@ rule add_failed_seqs:
             for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
                 if record.id not in passed:
                     fw.write(f"{record.id},{UNASSIGNED_LINEAGE_REPORTED},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
-
-rule scorpio:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-    params:
-        constellation_files = " ".join(config["constellation_files"])
-    output:
-        report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
-    threads:
-        workflow.cores
-    log:
-        os.path.join(config["tempdir"], "logs/scorpio.log")
-    shell:
-        """
-        scorpio classify \
-        -i {input.fasta:q} \
-        -o {output.report:q} \
-        -t {workflow.cores} \
-        --output-counts \
-        --constellations {params.constellation_files} \
-        --pangolin \
-        --list-incompatible \
-        --long &> {log:q}
-        """
-
-rule get_constellations:
-    params:
-        constellation_files = " ".join(config["constellation_files"])
-    output:
-        list = os.path.join(config["tempdir"], "get_constellations.txt")
-    shell:
-        """
-        scorpio list \
-        --constellations {params.constellation_files} \
-        --pangolin > {output.list:q}
-        """
-
 
 rule generate_report:
     input:
