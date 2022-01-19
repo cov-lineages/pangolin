@@ -12,16 +12,6 @@ from tempfile import TemporaryDirectory, tempdir
 
 from pangolin.utils.log_colours import green,cyan,red
 
-def version_from_init(init_file):
-    with open(init_file, "r") as fr:
-        for l in fr:
-            if l.startswith("__version__"):
-                l = l.rstrip("\n")
-                version = l.split('=')[1]
-                version = version.replace('"',"").replace(" ","")
-                break
-    return version
-
 
 def update(version_dictionary, data_dir=None):
     """
