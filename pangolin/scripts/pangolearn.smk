@@ -18,7 +18,6 @@ if config.get("trained_model"):
 if config.get("header_file"):
     config["header_file"] = os.path.join(workflow.current_basedir,'..', config["header_file"])
 
-##### Utility functions #####
 
 
 ##### Report options #####
