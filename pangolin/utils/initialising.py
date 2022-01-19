@@ -1,37 +1,22 @@
+import os
+import sys
+
+import itertools
+
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils.config import *
 from pangolin.utils.error_messages import *
+from pangolin import __version__
 
-try:
-    import pangoLEARN
-except:
-    install_error("pangoLEARN", "https://github.com/cov-lineages/pangoLEARN.git")
-
-try:
-    from pangoLEARN import PANGO_VERSION
-except:
-    sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
-    sys.exit(-1)
-
-try:
-    import scorpio
-except:
-    install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
-
-try:
-    import constellations
-except:
-    install_error("constellations", "https://github.com/cov-lineages/constellations.git")
-
-try:
-    import pango_designation
-except:
-    install_error("pango_designation", "https://github.com/cov-lineages/pango-designation.git")
-
+import pangoLEARN
+from pangoLEARN import PANGO_VERSION
+import scorpio
+import constellations
+import pango_designation
 
 def setup_config_dict(cwd):
     default_dict = {
-            KEY_ANALYSIS_MODE:"accurate", #options: accurate, fast, usher, pangolearn, cache-assign
+            KEY_ANALYSIS_MODE:"usher", #options: accurate, fast, usher, pangolearn, assignment_cache
             
             KEY_SKIP_DESIGNATION_HASH: False,
             KEY_USE_CACHE: False,
@@ -42,9 +27,8 @@ def setup_config_dict(cwd):
             KEY_OUTFILE:"lineage_report.csv",
 
             KEY_ALIGNDIR: cwd,
-            KEY_ALIGNMENT_OUT: False,
-
             KEY_ALIGNMENT_FILE:"alignment.fasta",
+            KEY_ALIGNMENT_OUT: False,
 
             KEY_TEMPDIR:None,
             KEY_NO_TEMP:False,
@@ -56,11 +40,12 @@ def setup_config_dict(cwd):
             
             KEY_ALIAS_FILE: None,
 
-            KEY_CONSTELLATION_FILES: constellation_files,
+            KEY_CONSTELLATION_FILES: None,
             
             KEY_PANGOLEARN_VERSION: pangoLEARN.__version__,
             KEY_PANGOLIN_VERSION: __version__,
             KEY_PANGO_VERSION: PANGO_VERSION,
+            KEY_PANGO_DESIGNATION_VERSION: pango_designation.__version__,
             KEY_SCORPIO_VERSION: scorpio.__version__,
             KEY_CONSTELLATIONS_VERSION: constellations.__version__,
 
@@ -81,14 +66,14 @@ def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assi
     
     analysis_mode = default_mode
     
-    if usher_arg:
-        accurate_arg = True
-    if pangolearn_arg:
-        fast_arg = True
+    if accurate_arg:
+        usher_arg = True
+    if fast_arg:
+        pangolearn_arg = True
 
-    analysis_options = {"accurate":accurate_arg,
-                        "fast":fast_arg,
-                        "cache":assignment_cache_arg}
+    analysis_options = {"usher":usher_arg,
+                        "pangolearn":pangolearn_arg,
+                        "assignment_cache":assignment_cache_arg}
     option_count = 0
     
     for i in analysis_options:
@@ -104,24 +89,47 @@ def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assi
     
 
 def check_datadir(datadir_arg):
-
+    datadir = None
     # find the data
     if datadir_arg:
         # this needs to be an absolute path when we pass it to scorpio
-        datadir = os.path.abspath(args.datadir)
-        if not os.path.exists(config[KEY_DATADIR]):
-            sys.stderr.write(cyan(f"Cannot find data directory specified: {config[KEY_DATADIR]}\n"))
+        datadir = os.path.abspath(datadir_arg)
+        if not os.path.exists(datadir):
+            sys.stderr.write(cyan(f"Cannot find data directory specified: {datadir}\n"))
             sys.exit(-1)
     return datadir
 
+def version_from_init(init_file):
+    with open(init_file, "r") as fr:
+        for l in fr:
+            if l.startswith("__version__"):
+                l = l.rstrip("\n")
+                version = l.split('=')[1]
+                version = version.replace('"',"").replace(" ","")
+                break
+    return version
 
-def setup_data(datadir,pangolearn_version, config)
+def pango_version_from_init(init_file):
+    with open(init_file, "r") as fr:
+        for l in fr:
+            if l.startswith("PANGO_VERSION"):
+                l = l.rstrip("\n")
+                version = l.split('=')[1]
+                version = version.replace('"',"").replace(" ","")
+                break
+    return version
+
+
+def setup_data(datadir_arg,analysis_mode, config):
+
+    datadir = check_datadir(datadir_arg)
+
     pango_designation_dir = pango_designation.__path__[0]
     constellations_dir = constellations.__path__[0]
-
     constellation_files = []
 
     data_locations = [os.walk(pango_designation_dir), os.walk(constellations_dir)]
+
     if datadir:
         data_locations.append(os.walk(datadir))
 
@@ -145,30 +153,37 @@ def setup_data(datadir,pangolearn_version, config)
     use_datadir = False
     if datadir:
         version = "Unknown"
-        for r,d,f in datadir:
+        for r,d,f in os.walk(datadir):
             for fn in f:
                 if r.endswith('pangoLEARN') and fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
-                    if version > pangolearn_version:
+                    
+                    if version > pangoLEARN.__version__:
                         # only use this for pangoLEARN if the version is > than what we already have
-                        pangolearn_version = version
+                        pangoLEARN.__version__ = version
                         use_datadir = True
-                        
-    if use_datadir == False:
-        # we haven't got a viable datadir from searching args.datadir
-        pangoLEARN_dir = pangoLEARN.__path__[0]
-        datadir = os.path.join(pangoLEARN_dir,"data")
-
+                        pango_version = pango_version_from_init(init_file)
+    
     if not alias_file:
         sys.stderr.write(cyan('Error: Could not find alias file'))
         install_error("pango-designation", "https://github.com/cov-lineages/pango-designation.git")
 
-    config[KEY_PANGOLEARN_VERSION] = pangolearn_version
-    config[KEY_PANGO_VERSION] = pango_designation_version
+    if use_datadir == False:
+        # we haven't got a viable datadir from searching args.datadir
+        pangoLEARN_dir = pangoLEARN.__path__[0]
+        datadir = os.path.join(pangoLEARN_dir,"data")
+    else:
+        config[PANGO_VERSION] = pango_version
+
+    config[KEY_PANGOLEARN_VERSION] = pangoLEARN.__version__
+    config[KEY_PANGO_DESIGNATION_VERSION] = pango_designation_version
+    
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
     config[KEY_ALIAS_FILE] = alias_file
     config[KEY_DATADIR] = datadir
+
+    
 
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
@@ -176,6 +191,14 @@ def print_alias_file_exit(alias_file):
             print(line.rstrip())
         sys.exit(0)
 
+def print_versions_exit(config):
+    print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
+            f"pangolearn: {config[KEY_PANGOLEARN_VERSION]}\n"
+            f"constellations: {config[KEY_CONSTELLATIONS_VERSION]}\n"
+            f"scorpio: {config[KEY_SCORPIO_VERSION]}\n"
+            f"pango-designation used by pangoLEARN/Usher: {config[KEY_PANGO_VERSION]}\n"
+            f"pango-designation aliases: {config[KEY_PANGO_DESIGNATION_VERSION]}")
+    sys.exit(0)
 
 def set_up_verbosity(config):
     if config[KEY_VERBOSE]:
