@@ -37,13 +37,13 @@ except:
     sys.stderr.write(cyan(f'Error: package `{snakemake}` not found, please install snakemake or update pangolin environment.\n'))
     sys.exit(-1)
 
-import gzip
+
 import joblib
 
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils import dependency_checks
 
-from pangolin.utils import data_install_checks
+from pangolin.utils import data_checks
 from pangolin.utils import update
 
 import pangolin.utils.custom_logger as custom_logger
@@ -76,7 +76,7 @@ def main(sysargs = sys.argv[1:]):
     a_group.add_argument('--pangolearn', action="store_true",help="Run pangoLEARN pipeline for lineage inference.")
     
     a_group.add_argument('--assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
-    a_group.add_argument("--no-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="no_designation_cache")
+    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
 
     ao_group = parser.add_argument_group('Analysis options')
     ao_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
@@ -106,7 +106,8 @@ def main(sysargs = sys.argv[1:]):
 
     # Initialise config dict
     config = setup_config_dict(cwd)
-    data_install_checks.check_install(config)
+    data_checks.check_install(config)
+    set_up_verbosity(config)
 
     if args.update:
         update.update({'pangolin': __version__,
@@ -125,7 +126,7 @@ def main(sysargs = sys.argv[1:]):
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.accurate, args.fast, args.usher, args.pangolearn, args.assignment_cache, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
-    print(snakefile)
+
     setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
 
     if args.aliases:
@@ -143,21 +144,97 @@ def main(sysargs = sys.argv[1:]):
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
     config[KEY_TEMPDIR] = io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR])
     config[KEY_ALIGNMENT_FILE],config[KEY_ALIGNMENT_OUT] = io.parse_alignment_options(args.alignment, config[KEY_OUTDIR], config[KEY_TEMPDIR],args.alignment_file, config[KEY_ALIGNMENT_FILE])
-    print(config)
+    
+    config[KEY_DESIGNATION_CACHE] = find_designation_cache(config[KEY_DATADIR],designation_cache_file,args.skip_designation_cache)
 
-#     """
+    if config[KEY_ANALYSIS_MODE] == "usher":
+        # needed data is usher protobuf file
+        config[KEY_USHER_PB] = data_checks.get_usher_protobuf_arg(usher_arg,cwd)
+        data_checks.get_datafiles(config[KEY_DATADIR],usher_files,config)
+
+    elif config[KEY_ANALYSIS_MODE] == "pangolearn":
+        # find designation cache and the model files
+        data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
+        
+    elif config[KEY_ANALYSIS_MODE] == "cache":
+        # look for the assignment cache, and also the ??? files (usher or pangolearn?)
+        config[KEY_CACHE] = data_checks.get_cache()
+
+#  """
 #     QC steps:
 #     1) check no empty seqs
 #     2) check N content
 #     3) write a file that contains just the seqs to run
 #     """
+#     if not args.decompress:
+#         # do_not_run = []
+#         # run = []
+        
+#         print(green("** Running sequence QC **"))
 
-#     # do_not_run = []
-#     # run = []
+#         if os.path.exists(os.path.join(cwd, args.query[0])):
+#             file_ending = query.split(".")[-1]
+#             if file_ending in ["gz","gzip","tgz"]:
+#                 query = gzip.open(query, 'rt')
+#             elif file_ending in ["xz","lzma"]:
+#                 query = lzma.open(query, 'rt')
+                
+#         post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
+#         fw_pass = open(post_qc_query,"w")
+#         qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
+#         fw_fail = open(qc_fail,"w")
 
-    
+#         total_input = 0
+#         total_pass = 0
+        
+#         try:
+#             for record in SeqIO.parse(query, "fasta"):
+#                 total_input +=1
+#                 record.description = record.description.replace(' ', '_').replace(",","_")
+#                 record.id = record.description
+#                 if "," in record.id:
+#                     record.id=record.id.replace(",","_")
 
-#     set_up_verbosity(config)
+#                 if len(record) <args.minlen:
+#                     record.description = record.description + f" fail=seq_len:{len(record)}"
+#                     fw_fail.write(f">{record.description}\n{record.seq}\n")
+#                 else:
+#                     num_N = str(record.seq).upper().count("N")
+#                     prop_N = round((num_N)/len(record.seq), 2)
+#                     if prop_N > args.maxambig:
+#                         record.description = record.description + f" fail=N_content:{prop_N}"
+#                         fw_fail.write(f">{record.description}\n{record.seq}\n")
+#                     else:
+#                         total_pass +=1
+#                         seq = str(record.seq).replace("-","")
+#                         fw_pass.write(f">{record.description}\n{seq}\n")
+#         except UnicodeDecodeError:
+#             sys.stderr.write(cyan(
+#                 f'Error: the input query fasta could not be parsed.\n' +
+#                 'Double check your query fasta and that compressed stdin was not passed.\n' +
+#                 'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+#                 ' for detailed instructions.\n'))
+#             sys.exit(-1)
+
+#         print(green("Number of sequences detected: ") + f"{total_input}")
+#         print(green("Total passing QC: ") + f"{total_pass}")
+#         fw_fail.close()
+#         fw_pass.close()
+
+#         if total_pass == 0:
+#             with open(outfile, "w") as fw:
+#                 fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+#                 for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
+#                     desc = record.description.split(" ")
+#                     reason = ""
+#                     for item in desc:
+#                         if item.startswith("fail="):
+#                             reason = item.split("=")[1]
+#                     fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+#             print(cyan(f'Note: no query sequences have passed the qc\n'))
+#             sys.exit(0)
+
+
 
 #     trained_model = ""
 #     header_file = ""
@@ -172,34 +249,7 @@ def main(sysargs = sys.argv[1:]):
 #     else:
 #         usher_protobuf = ""
 
-#     use_cache = args.use_cache
-#     cache = ""
-#     if use_cache:
-#         try:
-#             import pangolin_assignment
-#             pangolin_assignment_dir = pangolin_assignment.__path__[0]
-#             for r, d, f in os.walk(pangolin_assignment_dir):
-#                 for fn in f:
-#                     if fn == "pango_assignment.cache.csv.gz" and cache == "":
-#                         cache = os.path.join(r, fn)
-#             if not os.path.exists(cache):
-#                 sys.stderr.write('Error: cannot find cache\n')
-#                 sys.exit(-1)
-#         except:
-#             sys.stderr.write(cyan('Error: please install `pangolin_assignment` with \n') +
-#                              "pip install git+https://github.com/cov-lineages/pangolin-assignment.git")
-#             sys.exit(-1)
-
-#         try:
-#             with gzip.open(cache, 'rt') as f:
-#                 line = f.readline()
-#         except:
-#             with open(cache, 'r') as f:
-#                 line = f.readline()
-#                 if "git-lfs.github.com" in line:
-#                     sys.stderr.write(
-#                         'Error: Git LFS file not pulled successfully. Please install git-lfs \nusing conda or an alternative (not pip) then re-install pangolin-assignment \nwith pip install git+https://github.com/cov-lineages/pangolin-assignment.git\n')
-#                     sys.exit(-1)
+#     
 
 #     for r,d,f in os.walk(data_dir):
 #         for fn in f:

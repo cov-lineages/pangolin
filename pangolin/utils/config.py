@@ -1,7 +1,5 @@
 KEY_ANALYSIS_MODE="analysis_mode"
 
-KEY_SKIP_DESIGNATION_HASH="skip_designation_hash"
-KEY_USE_CACHE="use_cache"
 
 KEY_QUERY_FASTA="query_fasta"
 
@@ -23,7 +21,13 @@ KEY_TRIM_END="trim_end"
 KEY_ALIAS_FILE="alias_file"
 
 KEY_CONSTELLATION_FILES="constellation_files"
+KEY_USHER_PB = "usher_pb"
+KEY_PLEARN_MODEL = "plearn_model"
+KEY_PLEARN_header = "plearn_header"
+KEY_DESIGNATION_CACHE="designation_cache"
+KEY_CACHE = "cache"
 
+# Version KEYS
 KEY_PANGOLEARN_VERSION="pangoLEARN_version"
 KEY_PANGOLIN_VERSION="pangolin_version"
 KEY_CONSTELLATIONS_VERSION="constellation_version"
@@ -34,5 +38,18 @@ KEY_PANGO_DESIGNATION_VERSION="pango_designation_version"
 KEY_VERBOSE="verbose"
 KEY_THREADS="threads"
 
+# File names 
+designation_cache_file = "lineages.hash.csv"
+
+pangolearn_files = {
+    "decisionTree_v1.joblib":KEY_PLEARN_MODEL,
+    "decisionTreeHeaders_v1.joblib":KEY_PLEARN_HEADER
+    }
+    }
+usher_files = {
+    "lineageTree.pb":KEY_USHER_PB
+    }
+
+# Dependencies
 dependency_list = ["gofasta","minimap2","snakemake"]
 module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]

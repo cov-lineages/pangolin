@@ -18,8 +18,7 @@ def setup_config_dict(cwd):
     default_dict = {
             KEY_ANALYSIS_MODE:"usher", #options: accurate, fast, usher, pangolearn, assignment_cache
             
-            KEY_SKIP_DESIGNATION_HASH: False,
-            KEY_USE_CACHE: False,
+            KEY_DESIGNATION_CACHE: "",
 
             KEY_QUERY_FASTA:None,
 
