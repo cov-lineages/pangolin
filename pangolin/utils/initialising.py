@@ -87,6 +87,13 @@ def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assi
     
     return analysis_mode
     
+def get_snakefile(thisdir,analysis_mode):
+    # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or cache)
+    snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
+    if not os.path.exists(snakefile):
+        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}\n Check installation\n'))
+        sys.exit(-1)
+    return snakefile
 
 def check_datadir(datadir_arg):
     datadir = None
