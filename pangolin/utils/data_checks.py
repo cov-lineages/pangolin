@@ -45,6 +45,7 @@ def get_usher_protobuf_arg(usher_arg,cwd):
             sys.exit(-1)
 
 def get_datafiles(datadir,file_dict,config):
+    print(datadir)
     datafiles = {}
     print(green("****"))
     for r,d,f in os.walk(datadir):
@@ -54,8 +55,9 @@ def get_datafiles(datadir,file_dict,config):
     for fn in datafiles:
         print(green(f"Found {fn}."))
         config[fn] = datafiles[fn]
-    for fn in files:
-        if fn not in config:
+    print(green("****"))
+    for fn in file_dict:
+        if file_dict[fn] not in config:
             sys.stderr.write(cyan(f'Error: Cannot find {fn} in datadir. Please supply a datadir with required files or specify an alternative analysis mode.\n'))
             sys.exit(-1)
 
@@ -88,6 +90,6 @@ def get_cache():
                     'Error: Git LFS file not pulled successfully. Please install git-lfs \nusing conda or an alternative (not pip) then re-install pangolin-assignment \nwith pip install git+https://github.com/cov-lineages/pangolin-assignment.git\n')
                 sys.exit(-1)
     return cache
-    
+
 # config={}
 # check_install()

@@ -1,6 +1,5 @@
 KEY_ANALYSIS_MODE="analysis_mode"
 
-
 KEY_QUERY_FASTA="query_fasta"
 
 KEY_OUTDIR="outdir"
@@ -23,9 +22,9 @@ KEY_ALIAS_FILE="alias_file"
 KEY_CONSTELLATION_FILES="constellation_files"
 KEY_USHER_PB = "usher_pb"
 KEY_PLEARN_MODEL = "plearn_model"
-KEY_PLEARN_header = "plearn_header"
+KEY_PLEARN_HEADER = "plearn_header"
 KEY_DESIGNATION_CACHE="designation_cache"
-KEY_CACHE = "cache"
+KEY_ASSIGNMENT_CACHE = "assignment_cache"
 
 # Version KEYS
 KEY_PANGOLEARN_VERSION="pangoLEARN_version"
@@ -44,7 +43,6 @@ designation_cache_file = "lineages.hash.csv"
 pangolearn_files = {
     "decisionTree_v1.joblib":KEY_PLEARN_MODEL,
     "decisionTreeHeaders_v1.joblib":KEY_PLEARN_HEADER
-    }
     }
 usher_files = {
     "lineageTree.pb":KEY_USHER_PB

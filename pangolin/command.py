@@ -46,7 +46,7 @@ from pangolin.utils import dependency_checks
 from pangolin.utils import data_checks
 from pangolin.utils import update
 
-import pangolin.utils.custom_logger as custom_logger
+
 from pangolin.utils.config import *
 from pangolin.utils.initialising import *
 import pangolin.utils.io_parsing as io
@@ -145,20 +145,20 @@ def main(sysargs = sys.argv[1:]):
     config[KEY_TEMPDIR] = io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR])
     config[KEY_ALIGNMENT_FILE],config[KEY_ALIGNMENT_OUT] = io.parse_alignment_options(args.alignment, config[KEY_OUTDIR], config[KEY_TEMPDIR],args.alignment_file, config[KEY_ALIGNMENT_FILE])
     
-    config[KEY_DESIGNATION_CACHE] = find_designation_cache(config[KEY_DATADIR],designation_cache_file,args.skip_designation_cache)
+    config[KEY_DESIGNATION_CACHE] = data_checks.find_designation_cache(config[KEY_DATADIR],designation_cache_file,args.skip_designation_cache)
 
     if config[KEY_ANALYSIS_MODE] == "usher":
         # needed data is usher protobuf file
-        config[KEY_USHER_PB] = data_checks.get_usher_protobuf_arg(usher_arg,cwd)
+        config[KEY_USHER_PB] = data_checks.get_usher_protobuf_arg(args.usher_protobuf,cwd)
         data_checks.get_datafiles(config[KEY_DATADIR],usher_files,config)
 
     elif config[KEY_ANALYSIS_MODE] == "pangolearn":
         # find designation cache and the model files
         data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
-        
-    elif config[KEY_ANALYSIS_MODE] == "cache":
+
+    elif config[KEY_ANALYSIS_MODE] == "assignment_cache":
         # look for the assignment cache, and also the ??? files (usher or pangolearn?)
-        config[KEY_CACHE] = data_checks.get_cache()
+        config[KEY_ASSIGNMENT_CACHE] = data_checks.get_cache()
 
 #  """
 #     QC steps:

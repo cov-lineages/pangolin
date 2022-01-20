@@ -1,6 +1,6 @@
 import os
 import sys
-
+import pangolin.utils.custom_logger as custom_logger
 import itertools
 
 from pangolin.utils.log_colours import green,cyan
@@ -90,7 +90,7 @@ def get_snakefile(thisdir,analysis_mode):
     # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or cache)
     snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
     if not os.path.exists(snakefile):
-        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}\n Check installation\n'))
+        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
         sys.exit(-1)
     return snakefile
 
@@ -215,6 +215,3 @@ def set_up_verbosity(config):
         config["quiet"] = True
         logger = custom_logger.Logger()
         config["log_api"] = logger.log_handler
-
-        lh_path = os.path.realpath(lh.__file__)
-        config["log_string"] = f"--quiet --log-handler-script {lh_path} "
