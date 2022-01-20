@@ -45,21 +45,23 @@ def get_usher_protobuf_arg(usher_arg,cwd):
             sys.exit(-1)
 
 def get_datafiles(datadir,file_dict,config):
-    print(datadir)
     datafiles = {}
-    print(green("****"))
     for r,d,f in os.walk(datadir):
         for fn in f:
             if fn in file_dict:
                 datafiles[file_dict[fn]] = os.path.join(r, fn)
     for fn in datafiles:
-        print(green(f"Found {fn}."))
         config[fn] = datafiles[fn]
-    print(green("****"))
     for fn in file_dict:
         if file_dict[fn] not in config:
-            sys.stderr.write(cyan(f'Error: Cannot find {fn} in datadir. Please supply a datadir with required files or specify an alternative analysis mode.\n'))
+            sys.stderr.write(cyan(f'Error: Cannot find {fn} in datadir. Please supply a datadir with required files or specify an alternative analysis mode.\nPlease see https://cov-lineages.org/pangolin.html for full installation and updating instructions.'))
             sys.exit(-1)
+
+    print(green("****\nData files found:"))
+    for fn in datafiles:
+        print(f"{fn}:\t{datafiles[fn]}")
+        config[fn] = datafiles[fn]
+    print(green("****"))
 
 
 def get_cache():

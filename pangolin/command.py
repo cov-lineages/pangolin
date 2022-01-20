@@ -38,8 +38,6 @@ except:
     sys.exit(-1)
 
 
-import joblib
-
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils import dependency_checks
 
@@ -166,7 +164,6 @@ def main(sysargs = sys.argv[1:]):
 #     2) check N content
 #     3) write a file that contains just the seqs to run
 #     """
-#     if not args.decompress:
 #         # do_not_run = []
 #         # run = []
         
@@ -233,60 +230,6 @@ def main(sysargs = sys.argv[1:]):
 #                     fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
 #             print(cyan(f'Note: no query sequences have passed the qc\n'))
 #             sys.exit(0)
-
-
-
-#     trained_model = ""
-#     header_file = ""
-#     designated_hash = ""
-#     use_usher = args.usher
-#     if args.usher_protobuf:
-#         usher_protobuf = os.path.join(cwd, args.usher_protobuf)
-#         if not os.path.exists(usher_protobuf):
-#             sys.stderr.write('Error: cannot find --usher-tree file at {}\n'.format(usher_protobuf))
-#             sys.exit(-1)
-#         use_usher = True
-#     else:
-#         usher_protobuf = ""
-
-#     
-
-#     for r,d,f in os.walk(data_dir):
-#         for fn in f:
-#             if fn == "decisionTreeHeaders_v1.joblib":
-#                 header_file = os.path.join(r, fn)
-#             elif fn == "decisionTree_v1.joblib":
-#                 trained_model = os.path.join(r, fn)
-#             elif fn =="lineages.hash.csv":
-#                 designated_hash = os.path.join(r, fn)
-#             elif fn == "lineageTree.pb" and usher_protobuf == "":
-#                 usher_protobuf = os.path.join(r, fn)
-#     if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
-#         (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
-#         print(cyan("""pangoLEARN version should be >= 2021-05-27. \n
-# Appropriate data files not found from the installed pangoLEARN repo.
-# Please see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
-#         exit(1)
-
-#         print(green("\nData files found:"))
-#         if use_usher:
-#             print(f"UShER tree:\t{usher_protobuf}")
-#             print(f"Designated hash:\t{designated_hash}")
-#         else:
-#             print(f"Trained model:\t{trained_model}")
-#             print(f"Header file:\t{header_file}")
-#             print(f"Designated hash:\t{designated_hash}")
-#         if use_cache:
-#             print(f"Assignment cache:\t{cache}")
-
-
-#         config["trained_model"] = trained_model
-#         config["header_file"] = header_file
-#         config["designated_hash"] = designated_hash
-#         config["cache"] = cache
-
-#     if use_usher:
-#         config["usher_protobuf"] = usher_protobuf
 
 #     if config['verbose']:
 #         print(green("\n**** CONFIG ****"))
