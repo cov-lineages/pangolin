@@ -18,6 +18,7 @@ def find_query_file(cwd, query_arg):
         if not os.path.exists(os.path.join(cwd, query_arg[0])):
             if select.select([sys.stdin,],[],[],0.0)[0]:
                 query = sys.stdin
+                print(green("Query:\t") + "reading from stdin.")
             elif not select.select([sys.stdin,],[],[],0.0)[0]:
                 tried_path = os.path.join(cwd, query_arg[0])
                 if tried_path.endswith("-"):
@@ -44,9 +45,9 @@ def find_query_file(cwd, query_arg):
     return query
 
 
-def quick_check_query_file(query):
+def quick_check_query_file(cwd, query_arg, query):
 
-    if os.path.exists(query):
+    if os.path.exists(os.path.join(cwd, query_arg[0])):
         file_ending = query.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
             query = gzip.open(query, 'rt')
