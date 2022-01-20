@@ -190,7 +190,6 @@ def setup_data(datadir_arg,analysis_mode, config):
     config[KEY_DATADIR] = datadir
 
     
-
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
         for line in handle:

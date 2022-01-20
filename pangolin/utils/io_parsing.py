@@ -33,13 +33,23 @@ def find_query_file(cwd, query_arg):
                     sys.exit(-1)
         else:
             query = os.path.join(cwd, query_arg[0])
-            print(green(f"The query file is:") + f"{query}")
+            print(green(f"Query file:\t") + f"{query}")
     except IndexError:
         sys.stderr.write(cyan(
             f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
             'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
             ' for detailed instructions.\n'))
         sys.exit(-1)
+
+
+def quick_check_query_file(query):
+
+    if os.path.exists(os.path.join(cwd, query_fasta)):
+        file_ending = query_fasta.split(".")[-1]
+        if file_ending in ["gz","gzip","tgz"]:
+            query = gzip.open(query, 'rt')
+        elif file_ending in ["xz","lzma"]:
+            query = lzma.open(query, 'rt')
 
 def set_up_outdir(outdir_arg,cwd,outdir):
     if outdir_arg:
