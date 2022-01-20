@@ -2,7 +2,7 @@ import sys
 import os
 from pangolin.utils.log_colours import green,cyan
 import select
-
+from Bio import SeqIO
 
 from tempfile import TemporaryDirectory, TemporaryFile, gettempdir, tempdir
 import tempfile
@@ -41,15 +41,32 @@ def find_query_file(cwd, query_arg):
             ' for detailed instructions.\n'))
         sys.exit(-1)
 
+    return query
+
 
 def quick_check_query_file(query):
 
-    if os.path.exists(os.path.join(cwd, query_fasta)):
-        file_ending = query_fasta.split(".")[-1]
+    if os.path.exists(query):
+        file_ending = query.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
             query = gzip.open(query, 'rt')
         elif file_ending in ["xz","lzma"]:
             query = lzma.open(query, 'rt')
+    try:
+        parse= True
+        c = 0
+        
+        for record in SeqIO.parse(query, "fasta"):
+            if parse == False:
+                break
+            parse = False
+    except UnicodeDecodeError:
+        sys.stderr.write(cyan(
+            f'Error: the input query fasta could not be parsed.\n' +
+            'Double check your query fasta and that compressed stdin was not passed.\n' +
+            'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
+            ' for detailed instructions.\n'))
+        sys.exit(-1)
 
 def set_up_outdir(outdir_arg,cwd,outdir):
     if outdir_arg:

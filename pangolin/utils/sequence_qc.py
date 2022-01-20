@@ -1,6 +1,11 @@
+import gzip
+import os
+import sys
+
+
 
 def sequence_qc(in_fasta,out_qc_pass,out_qc_fail):
-    print(green("** Running sequence QC **"))
+    print(green("****\nRunning sequence QC"))
 
     if os.path.exists(in_fasta):
         file_ending = query.split(".")[-1]

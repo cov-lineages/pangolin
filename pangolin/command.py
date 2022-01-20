@@ -137,6 +137,7 @@ def main(sysargs = sys.argv[1:]):
     # by allowing query to accept 0 to many arguments
     config[KEY_QUERY_FASTA] = io.find_query_file(cwd, args.query)
 
+    io.quick_check_query_file(config[KEY_QUERY_FASTA])
 #   setup outdir and outfiles
     config[KEY_OUTDIR] = io.set_up_outdir(args.outdir,cwd,config[KEY_OUTDIR])
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
