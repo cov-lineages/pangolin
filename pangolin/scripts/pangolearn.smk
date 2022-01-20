@@ -9,7 +9,7 @@ from pangolin.utils.hash_functions import get_hash_string
 from pangolin.utils.sequence_qc import sequence_qc
 
 import pangolin.pangolearn.pangolearn as pangolearn
-
+from pangolin.utils.config import *
 ##### Configuration #####
 
 if config.get("trained_model"):
@@ -41,7 +41,7 @@ rule align_to_reference:
         trim_end = 29674,
         sam = os.path.join(config["tempdir"],"mapped.sam")
     output:
-        fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
+        fasta = config[KEY_ALIGNMENT_FILE]
     log:
         os.path.join(config["tempdir"], "logs/minimap2_sam.log")
     shell:
@@ -272,5 +272,5 @@ rule generate_report:
                     writer.writerow(new_row)
 
         print(green(f"Output file written to: ") + f"{output.csv}")
-        if config["alignment_out"]:
-            print(green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
+        if config[KEY_ALIGNMENT_OUT]:
+            print(green(f"Output alignment written to: ") + config[KEY_ALIGNMENT_FILE])
