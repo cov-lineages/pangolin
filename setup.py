@@ -11,7 +11,7 @@ setup(name='pangolin',
       scripts=[
             'pangolin/scripts/pangolearn.smk',
             'pangolin/scripts/usher.smk',
-            'pangolin/scripts/cache.smk'
+            'pangolin/scripts/assignment_cache.smk'
                 ],
       package_data={"pangolin":["data/*"]},
       install_requires=[
