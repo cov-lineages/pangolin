@@ -4,134 +4,33 @@ import csv
 from Bio import SeqIO
 import os
 import gzip
-from pangolin.utils.log_colours import green,cyan,red
+from pangolin.utils.log_colours import green,cyan
 from pangolin.utils.hash_functions import get_hash_string
-from pangolin.utils.sequence_qc import sequence_qc
 
-import pangolin.pangolearn.pangolearn as pangolearn
-
+from pangolin.utils.config import *
 
 ##### Report options #####
 UNASSIGNED_LINEAGE_REPORTED="None"
 
 ##### Target rules #####
 
-if not config.get("usher_protobuf"):
-    config["usher_protobuf"]=""
-
-ruleorder: usher_to_report > generate_report
-
 rule all:
     input:
-        config["outfile"],
-        os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
-
-rule align_to_reference:
-    input:
-        fasta = config["query_fasta"],
-        reference = config["reference_fasta"]
-    params:
-        trim_start = 265,
-        trim_end = 29674,
-        sam = os.path.join(config["tempdir"],"mapped.sam")
-    output:
-        fasta = os.path.join(config["aligndir"],"sequences.aln.fasta")
-    log:
-        os.path.join(config["tempdir"], "logs/minimap2_sam.log")
-    shell:
-        """
-        minimap2 -a -x asm20 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
-        gofasta sam toMultiAlign \
-            -s {params.sam:q} \
-            -t {workflow.cores} \
-            --reference {input.reference:q} \
-            --trimstart {params.trim_start} \
-            --trimend {params.trim_end} \
-            --trim \
-            --pad > '{output.fasta}'
-        """
-
-rule hash_sequence_assign:
-    input:
-        fasta = rules.align_to_reference.output.fasta
-    output:
-        designated = os.path.join(config["tempdir"],"hash_assigned.csv"),
-        for_inference = os.path.join(config["tempdir"],"not_assigned.fasta")
-    params:
-        skip_designation_hash = config["skip_designation_hash"]
-    run:
-        set_hash = {}
-        with open(config["designated_hash"],"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                set_hash[row["seq_hash"]] = row["lineage"]
-        
-        with open(output.designated,"w") as fw:
-            fw.write("taxon,lineage\n")
-            with open(output.for_inference, "w") as fseq:
-                for record in SeqIO.parse(input.fasta, "fasta"):
-                    if record.id!="reference":
-                        hash_string = get_hash_string(record)
-                        if not params.skip_designation_hash and hash_string in set_hash:
-                            fw.write(f"{record.id},{set_hash[hash_string]}\n")
-                        else:
-                            fseq.write(f">{record.description}\n{record.seq}\n")
-
-rule scorpio:
-    input:
-        fasta = rules.align_to_reference.output.fasta,
-    params:
-        constellation_files = " ".join(config["constellation_files"])
-    output:
-        report = os.path.join(config["tempdir"],"VOC_report.scorpio.csv")
-    threads:
-        workflow.cores
-    log:
-        os.path.join(config["tempdir"], "logs/scorpio.log")
-    shell:
-        """
-        scorpio classify \
-        -i {input.fasta:q} \
-        -o {output.report:q} \
-        -t {workflow.cores} \
-        --output-counts \
-        --constellations {params.constellation_files} \
-        --pangolin \
-        --list-incompatible \
-        --long &> {log:q}
-        """
-
-rule get_constellations:
-    params:
-        constellation_files = " ".join(config["constellation_files"])
-    output:
-        list = os.path.join(config["tempdir"], "get_constellations.txt")
-    shell:
-        """
-        scorpio list \
-        --constellations {params.constellation_files} \
-        --pangolin > {output.list:q}
-        """
-
-
-rule sequence_qc:
-    input:
-    output:
-    run:
-
+        config[KEY_OUTFILE],
+        os.path.join(config[KEY_TEMPDIR],"VOC_report.scorpio.csv")
 
 rule use_usher:
     input:
-        fasta = rules.cache_sequence_assign.output.for_inference,
-        reference = config["reference_fasta"],
-        usher_protobuf = config["usher_protobuf"]
+        fasta = os.path.join(config[KEY_TEMPDIR],"pass_qc.fasta"),
+        reference = config[KEY_REFERENCE_FASTA],
+        usher_protobuf = config[KEY_USHER_PB]
     params:
-        vcf = os.path.join(config["tempdir"], "sequences.aln.vcf")
+        vcf = os.path.join(config[KEY_TEMPDIR], "sequences.aln.vcf")
     threads: workflow.cores
     output:
-        txt = os.path.join(config["tempdir"], "clades.txt")
+        txt = os.path.join(config[KEY_TEMPDIR], "clades.txt")
     log:
-        os.path.join(config["tempdir"], "logs/usher.log")
+        os.path.join(config[KEY_TEMPDIR], "logs/usher.log")
     shell:
         """
         echo "Using UShER as inference engine."
@@ -147,30 +46,11 @@ rule use_usher:
 rule usher_to_report:
     input:
         txt = rules.use_usher.output.txt,
-        scorpio_voc_report = rules.scorpio.output.report,
-        constellations_list = rules.get_constellations.output.list,
-        designated = rules.hash_sequence_assign.output.designated,
-        cached = rules.cache_sequence_assign.output.cached,
-        qcfail= config["qc_fail"],
-        qc_pass_fasta = config["query_fasta"],
-        alias_file = config["alias_file"]
+        qc_pass_fasta = os.path.join(config[KEY_TEMPDIR],"pass_qc.fasta"),
+        alias_file = config[KEY_ALIAS_FILE]
     output:
-        csv = config["outfile"]
+        csv = config[KEY_OUTFILE]
     run:
-        voc_dict = {}
-        passed = []
-
-        voc_list = []
-        with open(input.constellations_list,"r") as f:
-            for line in f:
-                voc_list.append(line.rstrip())
-
-        with open(input.scorpio_voc_report,"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["constellations"] != "":
-                    voc_dict[row["query"]] = row
-
 
         alias_dict = {}
         with open(input.alias_file, "r") as read_file:
@@ -293,5 +173,5 @@ rule usher_to_report:
                     fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
         print(green(f"Output file written to: ") + f"{output.csv}")
-        if config["alignment_out"]:
-            print(green(f"Output alignment written to: ") + config["outdir"] +"/sequences.aln.fasta")
+        if config[KEY_ALIGNMENT_OUT]:
+            print(green(f"Output alignment written to: ") + config[KEY_OUTDIR] +"/sequences.aln.fasta")
