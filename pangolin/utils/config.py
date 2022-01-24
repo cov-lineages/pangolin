@@ -1,6 +1,7 @@
 KEY_ANALYSIS_MODE="analysis_mode"
 
 KEY_QUERY_FASTA="query_fasta"
+KEY_REFERENCE_FASTA="reference_fasta"
 
 KEY_OUTDIR="outdir"
 KEY_OUTFILE="outfile"
@@ -14,6 +15,8 @@ KEY_NO_TEMP = "no_temp"
 
 KEY_DATADIR="datadir"
 
+KEY_MINLEN="minlen"
+KEY_MAXAMBIG="maxambig"
 KEY_TRIM_START="trim_start"
 KEY_TRIM_END="trim_end"
 
@@ -35,6 +38,7 @@ KEY_PANGO_VERSION="pango_version"
 KEY_PANGO_DESIGNATION_VERSION="pango_designation_version"
 
 KEY_VERBOSE="verbose"
+KEY_LOG_API = "log_api"
 KEY_THREADS="threads"
 
 # File names 

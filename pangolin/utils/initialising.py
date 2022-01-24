@@ -34,12 +34,14 @@ def setup_config_dict(cwd):
             
             KEY_DATADIR:None,
 
+            KEY_MINLEN: 25000,
+            KEY_MAXAMBIG: 0.3,
             KEY_TRIM_START:265, # where to pad to using datafunk
             KEY_TRIM_END:29674, # where to pad after using datafunk
             
             KEY_ALIAS_FILE: None,
 
-            KEY_CONSTELLATION_FILES: None,
+            KEY_CONSTELLATION_FILES: [],
             
             KEY_PANGOLEARN_VERSION: pangoLEARN.__version__,
             KEY_PANGOLIN_VERSION: __version__,
@@ -49,6 +51,7 @@ def setup_config_dict(cwd):
             KEY_CONSTELLATIONS_VERSION: constellations.__version__,
 
             KEY_VERBOSE: False,
+            KEY_LOG_API: "",
             KEY_THREADS: 1
             }
     return default_dict
@@ -87,7 +90,7 @@ def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assi
     return analysis_mode
     
 def get_snakefile(thisdir,analysis_mode):
-    # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or cache)
+    # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or preprocessing)
     snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
     if not os.path.exists(snakefile):
         sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
@@ -188,6 +191,7 @@ def setup_data(datadir_arg,analysis_mode, config):
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
     config[KEY_ALIAS_FILE] = alias_file
     config[KEY_DATADIR] = datadir
+    config[KEY_CONSTELLATION_FILES] = constellation_files
 
     
 def print_alias_file_exit(alias_file):
@@ -208,9 +212,9 @@ def print_versions_exit(config):
 def set_up_verbosity(config):
     if config[KEY_VERBOSE]:
         config["quiet"] = False
-        config["log_api"] = ""
+        config[KEY_LOG_API] = ""
         config["log_string"] = ""
     else:
         config["quiet"] = True
         logger = custom_logger.Logger()
-        config["log_api"] = logger.log_handler
+        config[KEY_LOG_API] = logger.log_handler
