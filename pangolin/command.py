@@ -63,7 +63,7 @@ def main(sysargs = sys.argv[1:]):
     io_group.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     io_group.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
+    io_group.add_argument('--alignment', action="store",help="Output multiple sequence alignment.")
     io_group.add_argument('--alignment-file', action="store",help="Multiple sequence alignment file name.")
 
     a_group = parser.add_argument_group('Analysis modes')
@@ -73,10 +73,11 @@ def main(sysargs = sys.argv[1:]):
     a_group.add_argument('--usher', action="store_true",help="Run UShER pipeline for lineage inference.")
     a_group.add_argument('--pangolearn', action="store_true",help="Run pangoLEARN pipeline for lineage inference.")
     
-    a_group.add_argument('--assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
-    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
 
     ao_group = parser.add_argument_group('Analysis options')
+    ao_group.add_argument('--use-assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
+    ao_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
+
     ao_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     ao_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
 
@@ -135,15 +136,17 @@ def main(sysargs = sys.argv[1:]):
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
-    config[KEY_QUERY_FASTA] = io.find_query_file(cwd, args.query)
-
-    io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
+    
 #   setup outdir and outfiles
     config[KEY_OUTDIR] = io.set_up_outdir(args.outdir,cwd,config[KEY_OUTDIR])
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
-    config[KEY_TEMPDIR] = io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR])
+    io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR], config)
     config[KEY_ALIGNMENT_FILE],config[KEY_ALIGNMENT_OUT] = io.parse_alignment_options(args.alignment, config[KEY_OUTDIR], config[KEY_TEMPDIR],args.alignment_file, config[KEY_ALIGNMENT_FILE])
-    
+
+    config[KEY_QUERY_FASTA] = io.find_query_file(cwd, config[KEY_TEMPDIR], args.query)
+
+    io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
+
     config[KEY_DESIGNATION_CACHE] = data_checks.find_designation_cache(config[KEY_DATADIR],designation_cache_file,args.skip_designation_cache)
 
     if config[KEY_ANALYSIS_MODE] == "usher":
@@ -159,97 +162,44 @@ def main(sysargs = sys.argv[1:]):
         # look for the assignment cache, and also the ??? files (usher or pangolearn?)
         config[KEY_ASSIGNMENT_CACHE] = data_checks.get_cache()
 
-#  """
-#     QC steps:
-#     1) check no empty seqs
-#     2) check N content
-#     3) write a file that contains just the seqs to run
-#     """
-#         # do_not_run = []
-#         # run = []
-        
-#         print(green("** Running sequence QC **"))
+    preprocessing_snakefile = get_snakefile(thisdir,"preprocessing")
 
-#         if os.path.exists(os.path.join(cwd, args.query[0])):
-#             file_ending = query.split(".")[-1]
-#             if file_ending in ["gz","gzip","tgz"]:
-#                 query = gzip.open(query, 'rt')
-#             elif file_ending in ["xz","lzma"]:
-#                 query = lzma.open(query, 'rt')
-                
-#         post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-#         fw_pass = open(post_qc_query,"w")
-#         qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-#         fw_fail = open(qc_fail,"w")
+    if args.verbose:
+        print(green("\n**** CONFIG ****"))
+        for k in sorted(config):
+            print(green(k), config[k])
 
-#         total_input = 0
-#         total_pass = 0
-        
-#         try:
-#             for record in SeqIO.parse(query, "fasta"):
-#                 total_input +=1
-#                 record.description = record.description.replace(' ', '_').replace(",","_")
-#                 record.id = record.description
-#                 if "," in record.id:
-#                     record.id=record.id.replace(",","_")
+        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
+                                        workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
+                                        )
+    else:
+        logger = custom_logger.Logger()
+        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
+                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
+                                    )
+    if status: # translate "success" into shell exit code of 0
+       
+        if config[KEY_VERBOSE]:
+            print(green("\n**** CONFIG ****"))
+            for k in sorted(config):
+                print(green(k), config[k])
 
-#                 if len(record) <args.minlen:
-#                     record.description = record.description + f" fail=seq_len:{len(record)}"
-#                     fw_fail.write(f">{record.description}\n{record.seq}\n")
-#                 else:
-#                     num_N = str(record.seq).upper().count("N")
-#                     prop_N = round((num_N)/len(record.seq), 2)
-#                     if prop_N > args.maxambig:
-#                         record.description = record.description + f" fail=N_content:{prop_N}"
-#                         fw_fail.write(f">{record.description}\n{record.seq}\n")
-#                     else:
-#                         total_pass +=1
-#                         seq = str(record.seq).replace("-","")
-#                         fw_pass.write(f">{record.description}\n{seq}\n")
-#         except UnicodeDecodeError:
-#             sys.stderr.write(cyan(
-#                 f'Error: the input query fasta could not be parsed.\n' +
-#                 'Double check your query fasta and that compressed stdin was not passed.\n' +
-#                 'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-#                 ' for detailed instructions.\n'))
-#             sys.exit(-1)
+            status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
+                                            workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
+                                            )
+        else:
+            logger = custom_logger.Logger()
+            status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
+                                        config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
+                                        )
+        ## Collate the report here?
+       
+        if status: # translate "success" into shell exit code of 0       
+            return 0
 
-#         print(green("Number of sequences detected: ") + f"{total_input}")
-#         print(green("Total passing QC: ") + f"{total_pass}")
-#         fw_fail.close()
-#         fw_pass.close()
+        return 1
+    return 1
 
-#         if total_pass == 0:
-#             with open(outfile, "w") as fw:
-#                 fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-#                 for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
-#                     desc = record.description.split(" ")
-#                     reason = ""
-#                     for item in desc:
-#                         if item.startswith("fail="):
-#                             reason = item.split("=")[1]
-#                     fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-#             print(cyan(f'Note: no query sequences have passed the qc\n'))
-#             sys.exit(0)
-
-#     if config['verbose']:
-#         print(green("\n**** CONFIG ****"))
-#         for k in sorted(config):
-#             print(green(k), config[k])
-
-#         status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-#                                         workdir=tempdir,config=config, cores=args.threads,lock=False
-#                                         )
-#     else:
-#         logger = custom_logger.Logger()
-#         status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=tempdir,
-#                                     config=config, cores=args.threads,lock=False,quiet=True,log_handler=config["log_api"]
-#                                     )
-
-#     if status: # translate "success" into shell exit code of 0
-#        return 0
-
-#     return 1
 
 
 if __name__ == '__main__':
