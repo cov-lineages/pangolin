@@ -4,11 +4,10 @@ from pangolin.utils.log_colours import green,cyan
 import select
 from Bio import SeqIO
 
-from tempfile import TemporaryDirectory, TemporaryFile, gettempdir, tempdir
 import tempfile
+from pangolin.utils.config import *
 
-
-def find_query_file(cwd, query_arg):
+def find_query_file(cwd, tempdir, query_arg):
     if len(query_arg) > 1:
         print(cyan(f"Error: Too many query (input) fasta files supplied: {query_arg}\nPlease supply one only."))
         sys.exit(-1)
@@ -17,7 +16,12 @@ def find_query_file(cwd, query_arg):
     try:
         if not os.path.exists(os.path.join(cwd, query_arg[0])):
             if select.select([sys.stdin,],[],[],0.0)[0]:
-                query = sys.stdin
+                query = os.path.join(tempdir, "stdin_query.fasta")
+                with open(query,"w") as fw:
+                    for l in sys.stdin:
+                        l= l.rstrip("\n")
+                        fw.write(l + '\n')
+                
                 print(green("Query:\t") + "reading from stdin.")
             elif not select.select([sys.stdin,],[],[],0.0)[0]:
                 tried_path = os.path.join(cwd, query_arg[0])
@@ -88,23 +92,38 @@ def set_up_outfile(outfile_arg, outfile, outdir):
     return outfile
 
 
-def set_up_tempdir(tempdir_arg,no_temp_arg,cwd,outdir):
-
-    if tempdir_arg:
-        to_be_dir = os.path.join(cwd, tempdir_arg)
-        if not os.path.exists(to_be_dir):
-            os.mkdir(to_be_dir)
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
-        tempdir = temporary_directory.name
-    else:
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
-        tempdir = temporary_directory.name
+def set_up_tempdir(tempdir_arg,no_temp_arg,cwd,outdir,config):
 
     if no_temp_arg:
-        print(green(f"\n--no-temp: ") + f"all intermediate files will be written to {outdir}\n")
         tempdir = outdir
-
-    return tempdir
+        config[KEY_TEMPDIR] = tempdir
+        print(green(f"\n--no-temp: ") + f"all intermediate files will be written to {outdir}\n")
+    elif tempdir_arg:
+        to_be_dir = os.path.join(cwd, tempdir_arg)
+        try:
+            if not os.path.exists(to_be_dir):
+                os.mkdir(to_be_dir)
+        except:
+            sys.stderr.write(cyan(f'Error: cannot create temp directory {to_be_dir}.\n'))
+            sys.exit(-1)
+        tempdir = tempfile.mkdtemp(dir=to_be_dir)
+        config[KEY_TEMPDIR] = tempdir
+    else:
+        tempdir = tempfile.mkdtemp()
+        config[KEY_TEMPDIR] = tempdir
+        try:
+            if not os.path.exists(tempdir):
+                os.mkdir(tempdir)
+        except:
+            sys.stderr.write(cyan(f'Error: cannot create temp directory {tempdir}.\n'))
+            sys.exit(-1)
+        
+        try:
+            with open(os.path.join(tempdir, "test.txt"),"w") as fw:
+                fw.write("Test")
+        except:
+            sys.stderr.write(cyan(f'Error: cannot write to temp directory {tempdir}.\n'))
+            sys.exit(-1)
 
 
 def parse_alignment_options(alignment_arg, outdir, tempdir,alignment_file_arg, alignment_file):
