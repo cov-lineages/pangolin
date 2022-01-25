@@ -107,7 +107,7 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
     goes through the original fasta file and for every record collates the 
     available info into a csv file with header fields as below:
     """
-    header = ["name","hash","lineage","scorpio_call","scorpio_support","scorpio_conflict","scorpio_notes","designated","qc_status","qc_notes"]
+    header = ["name","hash","lineage","scorpio_constellations","scorpio_mrca_lineage","scorpio_incompatible_lineages","scorpio_support","scorpio_conflict","scorpio_notes","designated","qc_status","qc_notes"]
     with open(out_merged,"w") as fw:
         writer = csv.DictWriter(fw, fieldnames=header,lineterminator="\n")
         writer.writeheader()
@@ -137,7 +137,9 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
         with open(scorpio_report,"r") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                info_dict[row["query"]]["scorpio_call"] = row["constellations"]
+                info_dict[row["query"]]["scorpio_constellations"] = row["constellations"]
+                info_dict[row["query"]]["scorpio_mrca_lineage"] = row["mrca_lineage"]
+                info_dict[row["query"]]["scorpio_incompatible_lineages"] = row["incompatible_lineages"]
                 info_dict[row["query"]]["scorpio_support"] = row["support"]
                 info_dict[row["query"]]["scorpio_conflict"] = row["conflict"]
                 info_dict[row["query"]]["scorpio_notes"] =  f'scorpio call: Alt alleles {row["alt_count"]}; Ref alleles {row["ref_count"]}; Amb alleles {row["ambig_count"]}; Oth alleles {row["other_count"]}'
@@ -164,7 +166,9 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
                         "lineage":"Unassigned",
                         "qc_status":"fail",
                         "qc_notes":"failed to map",
-                        "scorpio_call":"",
+                        "scorpio_mrca_lineage":"",
+                        "scorpio_constellations":"",
+                        "scorpio_incompatible_lineages":"",
                         "scorpio_support":"",
                         "scorpio_conflict":"",
                         "scorpio_notes":""

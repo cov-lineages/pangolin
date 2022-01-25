@@ -186,9 +186,17 @@ def main(sysargs = sys.argv[1:]):
             status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
                                         config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
                                         )
-        ## Collate the report here?
+        
        
-        if status: # translate "success" into shell exit code of 0       
+        if status: 
+            
+            ## Collate the report here
+
+            preprocessing_csv = os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
+            inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
+            
+            generate_final_report(preprocessing_csv, inference_csv, config[KEY_OUTFILE])
+
             return 0
 
         return 1
