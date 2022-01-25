@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import re
+import csv
+
 
 def expand_alias(pango_lineage, alias_dict):
     if not pango_lineage or pango_lineage in ["None", None, ""] or "/" in pango_lineage:
@@ -100,11 +102,11 @@ def scorpio_parsing():
 def usher_parsing(usher_result,output_report):
     """
     Parsing the output of usher inference into a lineage report with columns
-    name, lineage, conflict, histogram_note
+    name, lineage, conflict, usher_note
     """
 
     with open(output_report, "w") as fw:
-        fw.write("taxon,lineage,conflict,histogram_note\n")
+        fw.write("taxon,lineage,conflict,usher_note\n")
 
         with open(usher_result, "r") as f:
             for l in f:
@@ -142,3 +144,25 @@ def usher_parsing(usher_result,output_report):
                     histogram_note = ""
                 
                 fw.write(f"{name},{lineage},{conflict},{histogram_note}\n")
+
+def pangolearn_parsing(pangolearn_result,output_report):
+    """
+    Parsing the output of pangolearn inference into a lineage report with columns
+    name, lineage, conflict, ambiguity_score, pangolearn_note
+    """
+    with open(output_report,"w") as fw:
+        fw.write("taxon,lineage,conflict,ambiguity_score,pangolearn_note\n")
+
+        with open(pangolearn_result, "r") as f:
+            reader = csv.DictReader(f)
+
+            for row in reader:
+                note = ''
+                support =  1 - round(float(row["score"]), 2)
+                ambiguity_score = round(float(row['imputation_score']), 2)
+
+                non_zero_ids = row["non_zero_ids"].split(";")
+                if len(non_zero_ids) > 1:
+                    note = f"Alt assignments: {row['non_zero_ids']},{row['non_zero_scores']}"
+                
+                fw.write(f"{row['taxon']},{row['prediction']},{support},{ambiguity_score},{note}\n")
