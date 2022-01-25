@@ -5,7 +5,7 @@ from Bio import SeqIO
 import os
 import gzip
 from pangolin.utils.log_colours import green,cyan
-import pangolin.utils.report_collation as report_collation
+from pangolin.utils.report_collation import usher_parsing
 from pangolin.utils.config import *
 
 ##### Report options #####
@@ -15,7 +15,7 @@ from pangolin.utils.config import *
 
 rule all:
     input:
-        csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
+        os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
 
 rule usher_inference:
     input:
@@ -47,4 +47,4 @@ rule usher_to_report:
     output:
         csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
     run:
-        report_collation.usher_parsing(input.txt, output.csv)
+        usher_parsing(input.txt, output.csv)
