@@ -13,8 +13,7 @@ from pangolin.utils.config import *
 rule all:
     input:
         config[KEY_ALIGNMENT_FILE],
-        os.path.join(config[KEY_TEMPDIR],"preprocessing.csv"),
-        os.path.join(config[KEY_TEMPDIR],"VOC_report.scorpio.csv")
+        os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
 
 rule align_to_reference:
     input:
@@ -29,8 +28,10 @@ rule align_to_reference:
     log:
         os.path.join(config[KEY_TEMPDIR], "logs/minimap2_sam.log")
     shell:
+    # the first line of this streams through the fasta and replaces '-' in sequences with empty strings
         """
-        minimap2 -a -x asm20 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} '{input.fasta}' -o {params.sam:q} &> {log:q} 
+        awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' {input.fasta} | \
+        minimap2 -a -x asm20 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
         gofasta sam toMultiAlign \
             -s {params.sam:q} \
             -t {workflow.cores} \
