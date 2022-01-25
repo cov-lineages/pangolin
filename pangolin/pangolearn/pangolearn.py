@@ -14,6 +14,10 @@ from Bio import SeqIO
 import sys
 import os
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 def findReferenceSeq(referenceFile):
 	currentSeq = ""
 
@@ -114,6 +118,7 @@ def readInAndFormatData(referenceSeq, imputationScores,sequencesFile, indiciesTo
 
 def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile):
 
+	print("Running pangoLEARN assignment")
 	dirname = os.path.dirname(__file__)
 
 	referenceSeq = ""
@@ -145,14 +150,14 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile)
 
 		refRow = [r==c for r in rs for c in categories]
 
-		print("loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+		print("Loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 		loaded_model = joblib.load(model_file)
 
 		# write predictions to a file
 		f = open(outfile, "w")
 		f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
 		for idList, seqList in readInAndFormatData(referenceSeq,imputationScores,sequences_file, indiciesToKeep):
-			print("processing block of {} sequences {}".format(
+			print("Processing block of {} sequences {}".format(
 				len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
 			))
 
@@ -198,4 +203,4 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile)
 
 		f.close()
 
-	print("complete " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
+	print("Complete " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
