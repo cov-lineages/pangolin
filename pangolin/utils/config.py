@@ -41,6 +41,8 @@ KEY_VERBOSE="verbose"
 KEY_LOG_API = "log_api"
 KEY_THREADS="threads"
 
+UNASSIGNED_LINEAGE_REPORTED="Unassigned"
+
 # File names 
 designation_cache_file = "lineages.hash.csv"
 
