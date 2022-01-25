@@ -25,7 +25,32 @@ jobs:
         run: pangolin --version
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
+      - name: Run pangolin with test zip data
+        run: pangolin pangolin/test/test_seqs.fasta.gz 2>&1 | tee pangolin_zip.log
+      - name: Run pangolin with test all cache data
+        run: pangolin pangolin/test/all_bad_seqs.fasta 2>&1 | tee pangolin_all_bad.log
+      - name: Run pangolin with test all bad data
+        run: pangolin pangolin/test/all_hash.fasta 2>&1 | tee pangolin_cache.log
       - name: Run pangolin usher with test data
         run: pangolin --usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
       - name: Install and run pytest
         run: mamba install -y pytest && python -m pytest tests/
+      - name: Run pangolin usher with outdir and outfile
+        run: pangolin pangolin/test/test_seqs.fasta -o my_test --outfile pangolin_out.txt 2>&1 | tee pangolin_outdir_outfile.log
+      - name: Run pangolin usher with outdir and outfile
+        run: pangolin pangolin/test/test_seqs.fasta --alignment --alignment-file my_alignment.fasta 2>&1 | tee pangolin_alignment.log
+      - name: Run pangolin usher with accurate
+        run: pangolin pangolin/test/test_seqs.fasta --accurate 2>&1 | tee pangolin_accurate.log
+      - name: Run pangolin aliases
+        run: pangolin --aliases  2>&1  | tee pangolin_alias.log
+      - name: Run pangolin all versions
+        run: pangolin --all-versions  2>&1  | tee pangolin_versions.log
+      - name: Run pangolin skip designation cache
+        run: pangolin --skip-designation-cache   2>&1  | tee pangolin_no_cache.log
+      - name: Run pangolin update
+        run: pangolin --update   2>&1  | tee pangolin_update.log
+      - name: Run pangolin update data
+        run: pangolin --update-data   2>&1  | tee pangolin_update_data.log
+      - name: Run pangolin update data
+        run: pangolin --verbose   2>&1  | tee pangolin_verbose.log
+
