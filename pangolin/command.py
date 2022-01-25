@@ -66,20 +66,14 @@ def main(sysargs = sys.argv[1:]):
     io_group.add_argument('--alignment', action="store",help="Output multiple sequence alignment.")
     io_group.add_argument('--alignment-file', action="store",help="Multiple sequence alignment file name.")
 
-    a_group = parser.add_argument_group('Analysis modes')
-    a_group.add_argument('--accurate', action="store_true",help="Use high accuracy mode for lineage inference. Pipeline: UShER pipeline.")
-    a_group.add_argument('--fast', action="store_true",help="Use fast mode for lineage inference. Pipeline: pangoLEARN pipeline.")
-
-    a_group.add_argument('--usher', action="store_true",help="Run UShER pipeline for lineage inference.")
-    a_group.add_argument('--pangolearn', action="store_true",help="Run pangoLEARN pipeline for lineage inference.")
+    a_group = parser.add_argument_group('Analysis options')
+    a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
     
+    a_group.add_argument('--use-assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
+    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
 
-    ao_group = parser.add_argument_group('Analysis options')
-    ao_group.add_argument('--use-assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
-    ao_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
-
-    ao_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    ao_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
 
     d_group = parser.add_argument_group('Data options')
     d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits.")
@@ -122,7 +116,7 @@ def main(sysargs = sys.argv[1:]):
                 'pango-designation': config[KEY_PANGO_VERSION]}, args.datadir)
 
     # Parsing analysis mode flags to return one of 'usher', 'pangolearn' or 'assignment_cache'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.accurate, args.fast, args.usher, args.pangolearn, args.assignment_cache, config[KEY_ANALYSIS_MODE])
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, args.assignment_cache, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 

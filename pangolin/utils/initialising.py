@@ -56,7 +56,7 @@ def setup_config_dict(cwd):
             }
     return default_dict
 
-def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assignment_cache_arg,default_mode):
+def set_up_analysis_mode(analysis_arg, assignment_cache_arg, default_mode):
     """
     the logic here 
     - takes the default mode set in the config dict (accurate)
@@ -67,26 +67,16 @@ def set_up_analysis_mode(accurate_arg, fast_arg, usher_arg, pangolearn_arg, assi
     """
     
     analysis_mode = default_mode
-    
-    if accurate_arg:
-        usher_arg = True
-    if fast_arg:
-        pangolearn_arg = True
+    if analysis_arg:
+        if not analysis_arg in ["usher","pangolearn","fast","accurate"]:
+            sys.stderr.write(cyan(f"Invalid `--analysis-mode` option specified: please select one of `fast`,`accurate`,`pangolearn` or`usher`\n"))
+            sys.exit(-1)
 
-    analysis_options = {"usher":usher_arg,
-                        "pangolearn":pangolearn_arg,
-                        "assignment_cache":assignment_cache_arg}
-    option_count = 0
-    
-    for i in analysis_options:
-        if analysis_options[i]==True:
-            option_count +=1
-            analysis_mode = i
+        if analysis_arg in ['pangolearn','fast']:
+            analysis_mode = "pangolearn"
+        elif analysis_arg in ['usher','accurate']:
+            analysis_mode = "usher"
 
-    if option_count > 1:
-        sys.stderr.write(cyan(f"Incompatible options specified: please select one of `--fast`,`--accurate`,`--pangolearn`,`--usher` or `--assignment-cache`\n"))
-        sys.exit(-1)
-    
     return analysis_mode
     
 def get_snakefile(thisdir,analysis_mode):
