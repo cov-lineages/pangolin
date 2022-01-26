@@ -65,7 +65,7 @@ def main(sysargs = sys.argv[1:]):
     io_group.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
     io_group.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
     io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    io_group.add_argument('--alignment', action="store",help="Output multiple sequence alignment.")
+    io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
     io_group.add_argument('--alignment-file', action="store",help="Multiple sequence alignment file name.")
 
     a_group = parser.add_argument_group('Analysis options')
