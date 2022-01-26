@@ -32,15 +32,19 @@ jobs:
       - name: Run pangolin with test all bad data
         run: pangolin pangolin/test/all_hash.fasta 2>&1 | tee pangolin_cache.log
       - name: Run pangolin usher with test data
-        run: pangolin --usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
+        run: pangolin --analysis-mode usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
+      - name: Run pangolin pangolearn with test data
+        run: pangolin --analysis-mode pangolearn pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_panolearn.log
+      - name: Run pangolin fast with test data
+        run: pangolin --analysis-mode fast pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_fast.log
+      - name: Run pangolin accurate with test data
+        run: pangolin --analysis-mode accurate pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_accurate.log
       - name: Install and run pytest
         run: mamba install -y pytest && python -m pytest tests/
-      - name: Run pangolin usher with outdir and outfile
+      - name: Run pangolin with outdir and outfile
         run: pangolin pangolin/test/test_seqs.fasta -o my_test --outfile pangolin_out.txt 2>&1 | tee pangolin_outdir_outfile.log
-      - name: Run pangolin usher with outdir and outfile
+      - name: Run pangolin with out alignment
         run: pangolin pangolin/test/test_seqs.fasta --alignment --alignment-file my_alignment.fasta 2>&1 | tee pangolin_alignment.log
-      - name: Run pangolin usher with accurate
-        run: pangolin pangolin/test/test_seqs.fasta --accurate 2>&1 | tee pangolin_accurate.log
       - name: Run pangolin aliases
         run: pangolin --aliases  2>&1  | tee pangolin_alias.log
       - name: Run pangolin all versions
