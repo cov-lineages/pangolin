@@ -49,6 +49,8 @@ from pangolin.utils.config import *
 from pangolin.utils.initialising import *
 import pangolin.utils.io_parsing as io
 
+from pangolin.utils.report_collation import generate_final_report,get_voc_list
+
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
 
@@ -194,8 +196,15 @@ def main(sysargs = sys.argv[1:]):
 
             preprocessing_csv = os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
             inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
-            
-            generate_final_report(preprocessing_csv, inference_csv, config[KEY_OUTFILE])
+            constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"))
+
+            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGO_DESIGNATION_VERSION],config[KEY_ANALYSIS_MODE], config[KEY_OUTFILE])
+
+            print(green(f"****\nOutput file written to: ") + config[KEY_OUTFILE])
+
+            if config[KEY_ALIGNMENT_OUT]:
+                print(green(f"****\nOutput alignment written to: ") + config[KEY_ALIGNMENT_FILE])
+
 
             return 0
 
