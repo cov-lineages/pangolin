@@ -26,14 +26,13 @@ def check_install(config):
 
 def find_designation_cache(datadir,designation_cache_file):
     designation_cache = ""
-    if not skip_designation_cache_arg:
-        for r,d,f in os.walk(datadir):
-            for fn in f:
-                if fn == designation_cache_file:
-                    designation_cache = os.path.join(r, fn)
-        if designation_cache == "":
-            sys.stderr.write(cyan(f'Error: Missing designation cache file. Either supply a datadir with a {designation_cache_file} file, or specify `--skip-designation-cache`\n'))
-            sys.exit(-1)
+    for r,d,f in os.walk(datadir):
+        for fn in f:
+            if fn == designation_cache_file:
+                designation_cache = os.path.join(r, fn)
+    if designation_cache == "":
+        sys.stderr.write(cyan(f'Error: Missing designation cache file. Either supply a datadir with a {designation_cache_file} file, or specify `--skip-designation-cache`\n'))
+        sys.exit(-1)
     
     return designation_cache
 
