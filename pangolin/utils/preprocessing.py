@@ -142,8 +142,11 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
                 info_dict[row["query"]]["scorpio_incompatible_lineages"] = row["incompatible_lineages"]
                 info_dict[row["query"]]["scorpio_support"] = row["support"]
                 info_dict[row["query"]]["scorpio_conflict"] = row["conflict"]
-                info_dict[row["query"]]["scorpio_notes"] =  f'scorpio call: Alt alleles {row["alt_count"]}; Ref alleles {row["ref_count"]}; Amb alleles {row["ambig_count"]}; Oth alleles {row["other_count"]}'
-
+                if row["mrca_lineage"]:
+                    info_dict[row["query"]]["scorpio_notes"] =  f'scorpio call: Alt alleles {row["alt_count"]}; Ref alleles {row["ref_count"]}; Amb alleles {row["ambig_count"]}; Oth alleles {row["other_count"]}'
+                else:
+                    info_dict[row["query"]]["scorpio_notes"] = ""
+                    
         file_ending = fasta.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
             query = gzip.open(fasta, 'rt')

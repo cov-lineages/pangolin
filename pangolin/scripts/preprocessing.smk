@@ -13,6 +13,7 @@ from pangolin.utils.config import *
 rule all:
     input:
         config[KEY_ALIGNMENT_FILE],
+         os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"),
         os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
 
 rule align_to_reference:
