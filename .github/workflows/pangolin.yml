@@ -50,7 +50,7 @@ jobs:
       - name: Run pangolin all versions
         run: pangolin --all-versions  2>&1  | tee pangolin_versions.log
       - name: Run pangolin skip designation cache
-        run: pangolin --skip-designation-cache   2>&1  | tee pangolin_no_cache.log
+        run: pangolin  pangolin/test/test_seqs.fasta --skip-designation-cache   2>&1  | tee pangolin_no_cache.log
       - name: Run pangolin update
         run: pangolin --update   2>&1  | tee pangolin_update.log
       - name: Run pangolin update data

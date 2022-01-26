@@ -117,7 +117,7 @@ def get_voc_list(voc_file):
             voc_list.append(line.rstrip())
     return voc_list
 
-def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode, output_report):
+def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode,skip_cache, output_report):
     """
     preprocessing_csv header is: 
     ["name","hash","lineage","scorpio_constellations",
@@ -164,7 +164,7 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                     expanded_pango_lineage = expand_alias(inference_out["lineage"], alias_dict)
 
                     #1. check if hash assigned
-                    if row["designated"] == "True":
+                    if row["designated"] == "True" and not skip_cache:
                         new_row["note"] = "Assigned from designation hash."
                         new_row["version"] = f"PANGO-{pango_version}"
                     
