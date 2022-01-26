@@ -24,7 +24,7 @@ def check_install(config):
     for resource in resources:
         package_data_check(resource["filename"],resource["directory"],resource["key"],config)
 
-def find_designation_cache(datadir,designation_cache_file,skip_designation_cache_arg):
+def find_designation_cache(datadir,designation_cache_file):
     designation_cache = ""
     if not skip_designation_cache_arg:
         for r,d,f in os.walk(datadir):

@@ -143,7 +143,7 @@ def main(sysargs = sys.argv[1:]):
 
     io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
 
-    config[KEY_DESIGNATION_CACHE] = data_checks.find_designation_cache(config[KEY_DATADIR],designation_cache_file,args.skip_designation_cache)
+    config[KEY_DESIGNATION_CACHE] = data_checks.find_designation_cache(config[KEY_DATADIR],designation_cache_file)
 
     if config[KEY_ANALYSIS_MODE] == "usher":
         # needed data is usher protobuf file
