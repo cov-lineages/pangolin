@@ -118,7 +118,7 @@ def main(sysargs = sys.argv[1:]):
                 'pango-designation': config[KEY_PANGO_VERSION]}, args.datadir)
 
     # Parsing analysis mode flags to return one of 'usher', 'pangolearn' or 'assignment_cache'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, args.assignment_cache, config[KEY_ANALYSIS_MODE])
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
@@ -154,9 +154,9 @@ def main(sysargs = sys.argv[1:]):
         # find designation cache and the model files
         data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
 
-    elif config[KEY_ANALYSIS_MODE] == "assignment_cache":
-        # look for the assignment cache, and also the ??? files (usher or pangolearn?)
-        config[KEY_ASSIGNMENT_CACHE] = data_checks.get_cache()
+    # elif config[KEY_ANALYSIS_MODE] == "assignment_cache":
+    #     # look for the assignment cache, and also the ??? files (usher or pangolearn?)
+    #     config[KEY_ASSIGNMENT_CACHE] = data_checks.get_cache()
 
     preprocessing_snakefile = get_snakefile(thisdir,"preprocessing")
 

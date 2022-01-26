@@ -56,7 +56,7 @@ def setup_config_dict(cwd):
             }
     return default_dict
 
-def set_up_analysis_mode(analysis_arg, assignment_cache_arg, default_mode):
+def set_up_analysis_mode(analysis_arg, default_mode):
     """
     the logic here 
     - takes the default mode set in the config dict (accurate)
