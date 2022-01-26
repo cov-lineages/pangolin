@@ -55,6 +55,6 @@ jobs:
         run: pangolin --update   2>&1  | tee pangolin_update.log
       - name: Run pangolin update data
         run: pangolin --update-data   2>&1  | tee pangolin_update_data.log
-      - name: Run pangolin update data
-        run: pangolin --verbose   2>&1  | tee pangolin_verbose.log
+      - name: Run pangolin verbose mode
+        run: pangolin --verbose  pangolin/test/test_seqs.fasta  2>&1  | tee pangolin_verbose.log
 
