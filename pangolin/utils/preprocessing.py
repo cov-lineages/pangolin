@@ -7,7 +7,6 @@ import csv
 import gzip
 
 
-
 def create_seq_hash(seq_file,hash_map,hashed_seqs):
     """
     iterates through seq file, keeps track of seq hash

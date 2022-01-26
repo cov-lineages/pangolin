@@ -4,10 +4,7 @@ import csv
 from Bio import SeqIO
 import os
 from pangolin.utils.log_colours import green,cyan
-from pangolin.utils.hash_functions import get_hash_string
-
 from pangolin.utils.preprocessing import *
-
 from pangolin.utils.config import *
 
 rule all:
