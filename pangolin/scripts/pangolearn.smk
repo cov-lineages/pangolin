@@ -257,6 +257,9 @@ rule generate_report:
                             elif "incompatible_lineages" in scorpio_call_info and row['lineage'] in scorpio_call_info["incompatible_lineages"].split("|"):
                                 new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
                                 new_row['lineage'] = scorpio_lineage
+                            elif not expanded_scorpio_lineage:
+                                new_row["note"] += f'; scorpio replaced lineage assignment {row["lineage"]}'
+                                new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
                     else:
                         expanded_pango_lineage = expand_alias(row['lineage'], alias_dict)
                         while expanded_pango_lineage and len(expanded_pango_lineage) > 3:
@@ -401,6 +404,9 @@ rule usher_to_report:
                         elif "incompatible_lineages" in scorpio_call_info and lineage in scorpio_call_info["incompatible_lineages"].split("|"):
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
+                        elif not expanded_scorpio_lineage:
+                                note += f'; scorpio replaced lineage assignment {row["lineage"]}'
+                                lineage = UNASSIGNED_LINEAGE_REPORTED
 
                         if histogram_note:
                             note += f'; {histogram_note}'
