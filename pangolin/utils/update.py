@@ -31,18 +31,15 @@ def update(version_dictionary, data_dir=None):
                         e.g.
     {pangolin: string containing the __version__ data for the currently
                       running pangolin module
-    pangolearn: string containing the __version__ data for the imported
-                       pangoLEARN data module
+    pangolin-data: string containing the __version__ data for the imported
+                       pangolin-data module
     scorpio: string containing the __version__ data for the imported
                        scorpio module
     constellations: string containing the __version__ data for the imported
-                       constellations data module
-    pango-designation: string containing the __version__ data for the imported
-                       pango_designation data module}
+                       constellations data module}
 
     """
-    package_names = {'pangolearn': 'pangoLEARN',
-                     'pango-designation': 'pango_designation'
+    package_names = {'pangolin-data': 'pangolin_data'
                     }
 
     # flag if any element is update if everything is the latest release
@@ -75,11 +72,11 @@ def update(version_dictionary, data_dir=None):
 
         # clean up version numbers to remove leading v's and "data release"
         version = version.strip('data release').lstrip('v').strip()
-        if dependency not in ['pangolin', 'scorpio', 'pango-designation',
-                              'pangolearn', 'constellations']:
+        if dependency not in ['pangolin', 'scorpio', 'pangolin-data','constellations']:
+            
             raise ValueError("Dependency name for auto-update must be one "
                              "of: 'pangolin', 'pangolearn', scorpio', "
-                             "'constellations', 'pango-designation'")
+                             "'constellations', 'pangolin-data'")
 
         # convert to LooseVersion to have proper ordering of versions
         # this prevents someone using the latest commit/HEAD from being
