@@ -30,11 +30,11 @@ KEY_DESIGNATION_CACHE="designation_cache"
 KEY_ASSIGNMENT_CACHE = "assignment_cache"
 
 # Version KEYS
-KEY_PANGOLEARN_VERSION="pangoLEARN_version"
+
+KEY_PANGOLIN_DATA_VERSION="pangolin_data_version"
 KEY_PANGOLIN_VERSION="pangolin_version"
 KEY_CONSTELLATIONS_VERSION="constellation_version"
 KEY_SCORPIO_VERSION="scorpio_version"
-KEY_PANGO_VERSION="pango_version"
 KEY_PANGO_DESIGNATION_VERSION="pango_designation_version"
 
 KEY_VERBOSE="verbose"
@@ -44,7 +44,8 @@ KEY_THREADS="threads"
 UNASSIGNED_LINEAGE_REPORTED="Unassigned"
 
 # File names 
-designation_cache_file = "lineages.hash.csv"
+DESIGNATION_CACHE_FILE = "lineages.hash.csv"
+ALIAS_FILE = "alias_key.json"
 
 pangolearn_files = {
     "decisionTree_v1.joblib":KEY_PLEARN_MODEL,
