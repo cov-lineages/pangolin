@@ -113,7 +113,8 @@ def main(sysargs = sys.argv[1:]):
 
     if args.update_data:
         update.update({'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
-                'constellations': config[KEY_CONSTELLATIONS_VERSION], args.datadir)
+                'constellations': config[KEY_CONSTELLATIONS_VERSION]}, 
+                args.datadir)
 
     # Parsing analysis mode flags to return one of 'usher', 'pangolearn' or 'assignment_cache'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
@@ -196,7 +197,7 @@ def main(sysargs = sys.argv[1:]):
             inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
             constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"))
 
-            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGO_DESIGNATION_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE])
+            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE])
 
             print(green(f"****\nOutput file written to: ") + config[KEY_OUTFILE])
 
