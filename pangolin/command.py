@@ -2,20 +2,21 @@
 from . import _program
 from pangolin import __version__
 
-try:
-    import pangoLEARN
-except:
-    install_error("pangoLEARN", "https://github.com/cov-lineages/pangoLEARN.git")
+# try:
+#     import pangoLEARN
+# except:
+#     install_error("pangoLEARN", "https://github.com/cov-lineages/pangoLEARN.git")
+
+# try:
+#     from pangoLEARN import PANGO_VERSION
+# except:
+#     sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
+#     sys.exit(-1)
 
 try:
-    from pangoLEARN import PANGO_VERSION
+    import pangolin_data
 except:
-    sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
-    sys.exit(-1)
-try:
-    import pango_designation
-except:
-    install_error("pango-designation", "https://github.com/cov-lineages/pango-designation.git")
+    install_error("pangolin_data", "https://github.com/cov-lineages/pangolin_data.git")
 
 try:
     import scorpio
@@ -80,14 +81,13 @@ def main(sysargs = sys.argv[1:]):
     d_group = parser.add_argument_group('Data options')
     d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits.")
     d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits.")
-    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangoLEARN package.")
-    d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir.")
+    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
+    d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangolin-data repository or --datadir.")
 
     m_group = parser.add_argument_group('Misc options')
     m_group.add_argument("--aliases", action='store_true', default=False, help="Print pango-designation alias_key.json and exit.")
     m_group.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
-    m_group.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit.")
-    m_group.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, alias version {pango_designation.__version__}",help="show pango-designation version number used for training and aliases, then exit.")
+    m_group.add_argument("-pv","--pangolin-data-version", action='version', version=f"pangolin-data {pangolin_data.__version__}",help="show version number of pangolin data files (UShER tree and pangoLEARN model files) and exit.")
     m_group.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
     m_group.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     m_group.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
@@ -106,16 +106,14 @@ def main(sysargs = sys.argv[1:]):
 
     if args.update:
         update.update({'pangolin': __version__,
-                'pangolearn': config[KEY_PANGOLEARN_VERSION],
+                'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                 'constellations': config[KEY_CONSTELLATIONS_VERSION],
-                'scorpio': config[KEY_SCORPIO_VERSION],
-                'pango-designation': config[KEY_PANGO_VERSION]
+                'scorpio': config[KEY_SCORPIO_VERSION]
                 })
 
     if args.update_data:
-        update.update({'pangolearn': config[KEY_PANGOLEARN_VERSION],
-                'constellations': config[KEY_CONSTELLATIONS_VERSION],
-                'pango-designation': config[KEY_PANGO_VERSION]}, args.datadir)
+        update.update({'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
+                'constellations': config[KEY_CONSTELLATIONS_VERSION], args.datadir)
 
     # Parsing analysis mode flags to return one of 'usher', 'pangolearn' or 'assignment_cache'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
@@ -123,9 +121,6 @@ def main(sysargs = sys.argv[1:]):
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
     setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
-
-    if args.aliases:
-        print_alias_file_exit(config[KEY_ALIAS_FILE])
 
     if args.all_versions:
         print_versions_exit(config)
@@ -143,7 +138,10 @@ def main(sysargs = sys.argv[1:]):
 
     io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
 
-    config[KEY_DESIGNATION_CACHE] = data_checks.find_designation_cache(config[KEY_DATADIR],designation_cache_file)
+    config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
+
+    if args.aliases:
+        print_alias_file_exit(config[KEY_ALIAS_FILE])
 
     if config[KEY_ANALYSIS_MODE] == "usher":
         # needed data is usher protobuf file
@@ -210,8 +208,6 @@ def main(sysargs = sys.argv[1:]):
 
         return 1
     return 1
-
-
 
 if __name__ == '__main__':
     main()
