@@ -85,7 +85,7 @@ def main(sysargs = sys.argv[1:]):
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangolin-data repository or --datadir.")
 
     m_group = parser.add_argument_group('Misc options')
-    m_group.add_argument("--aliases", action='store_true', default=False, help="Print pango-designation alias_key.json and exit.")
+    m_group.add_argument("--aliases", action='store_true', default=False, help="Print Pango alias_key.json and exit.")
     m_group.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
     m_group.add_argument("-pv","--pangolin-data-version", action='version', version=f"pangolin-data {pangolin_data.__version__}",help="show version number of pangolin data files (UShER tree and pangoLEARN model files) and exit.")
     m_group.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
@@ -122,6 +122,9 @@ def main(sysargs = sys.argv[1:]):
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
     setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
+    config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
+    if args.aliases:
+        print_alias_file_exit(config[KEY_ALIAS_FILE])
 
     if args.all_versions:
         print_versions_exit(config)
@@ -138,11 +141,6 @@ def main(sysargs = sys.argv[1:]):
     config[KEY_QUERY_FASTA] = io.find_query_file(cwd, config[KEY_TEMPDIR], args.query)
 
     io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
-
-    config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
-
-    if args.aliases:
-        print_alias_file_exit(config[KEY_ALIAS_FILE])
 
     if config[KEY_ANALYSIS_MODE] == "usher":
         # needed data is usher protobuf file

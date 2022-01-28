@@ -159,7 +159,8 @@ def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
         for line in handle:
             print(line.rstrip())
-        sys.exit(0)
+    
+    sys.exit(0)
 
 def print_versions_exit(config):
     print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
