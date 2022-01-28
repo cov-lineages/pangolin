@@ -24,17 +24,22 @@ def check_install(config):
     for resource in resources:
         package_data_check(resource["filename"],resource["directory"],resource["key"],config)
 
-def find_designation_cache(datadir,designation_cache_file):
+def find_designation_cache_and_alias(datadir,designation_cache_file,alias_file):
     designation_cache = ""
+    alias = ""
     for r,d,f in os.walk(datadir):
         for fn in f:
             if fn == designation_cache_file:
                 designation_cache = os.path.join(r, fn)
+            elif fn == alias_file:
+                alias = os.path.join(r, fn)
     if designation_cache == "":
         sys.stderr.write(cyan(f'Error: Missing designation cache file. Either supply a datadir with a {designation_cache_file} file, or specify `--skip-designation-cache`\n'))
         sys.exit(-1)
-    
-    return designation_cache
+    elif alias == "":
+        sys.stderr.write(cyan(f'Error: Missing alias file. Please supply a datadir with a {alias_file} file or check installation of pangolin-data dependency.\n'))
+        sys.exit(-1)
+    return designation_cache,alias
 
 def get_usher_protobuf_arg(usher_arg,cwd):
     if usher_arg:
@@ -61,6 +66,12 @@ def get_datafiles(datadir,file_dict,config):
         print(f"{fn}:\t{datafiles[fn]}")
         config[fn] = datafiles[fn]
     print(green("****"))
+
+
+def install_error(package, url):
+    sys.stderr.write(cyan(f'Error: please install `{package}` with \n') +
+    f"pip install git+{url}")
+    sys.exit(-1)
 
 
 def get_cache():
