@@ -405,7 +405,7 @@ rule usher_to_report:
                             note += f'; scorpio replaced lineage assignment {lineage}'
                             lineage = scorpio_lineage
                         elif not expanded_scorpio_lineage:
-                                note += f'; scorpio replaced lineage assignment {row["lineage"]}'
+                                note += f'; scorpio replaced lineage assignment {lineage}'
                                 lineage = UNASSIGNED_LINEAGE_REPORTED
 
                         if histogram_note:
