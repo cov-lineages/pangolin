@@ -1,18 +1,16 @@
 import os
 import sys
-import pangolin.utils.custom_logger as custom_logger
 import itertools
 
+import pangolin.utils.custom_logger as custom_logger
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils.config import *
-from pangolin.utils.error_messages import *
+from pangolin.utils.data_checks import *
 from pangolin import __version__
 
-import pangoLEARN
-from pangoLEARN import PANGO_VERSION
+import pangolin_data
 import scorpio
 import constellations
-import pango_designation
 
 def setup_config_dict(cwd):
     default_dict = {
@@ -43,10 +41,8 @@ def setup_config_dict(cwd):
 
             KEY_CONSTELLATION_FILES: [],
             
-            KEY_PANGOLEARN_VERSION: pangoLEARN.__version__,
             KEY_PANGOLIN_VERSION: __version__,
-            KEY_PANGO_VERSION: PANGO_VERSION,
-            KEY_PANGO_DESIGNATION_VERSION: pango_designation.__version__,
+            KEY_PANGOLIN_DATA_VERSION: pangolin_data.__version__,
             KEY_SCORPIO_VERSION: scorpio.__version__,
             KEY_CONSTELLATIONS_VERSION: constellations.__version__,
 
@@ -108,43 +104,28 @@ def version_from_init(init_file):
                 break
     return version
 
-def pango_version_from_init(init_file):
-    with open(init_file, "r") as fr:
-        for l in fr:
-            if l.startswith("PANGO_VERSION"):
-                l = l.rstrip("\n")
-                version = l.split('=')[1]
-                version = version.replace('"',"").replace(" ","")
-                break
-    return version
-
-
 def setup_data(datadir_arg,analysis_mode, config):
 
     datadir = check_datadir(datadir_arg)
 
-    pango_designation_dir = pango_designation.__path__[0]
+    pangolin_data_dir = pangolin_data.__path__[0]
     constellations_dir = constellations.__path__[0]
     constellation_files = []
 
-    data_locations = [os.walk(pango_designation_dir), os.walk(constellations_dir)]
+    data_locations = [os.walk(constellations_dir)]
 
     if datadir:
         data_locations.append(os.walk(datadir))
 
-    # the logic of this is to search the "built-in" pango_designation and constellations
-    # paths first and then if as custom datadir is passed, follow up with those, so that
+    # the logic of this is to search the "built-in" constellations
+    # path first and then if as custom datadir is passed, follow up with those, so that
     # any files found in the datadir supercede the "built-in" modules. The assumption
     # here is that the datadir contains newer (user updated) data
     for r, _, f in itertools.chain.from_iterable(data_locations):
         if r.endswith('/constellations') or r.endswith('/constellations/definitions'):
             constellation_files = []  # only collect the constellations from the last directory found
         for fn in f:
-            if r.endswith('/pango_designation') and fn == "alias_key.json":
-                alias_file = os.path.join(r, fn)
-                # the __init__.py file for pango_designation is on the same level as alias_key.json
-                pango_designation_version = version_from_init(os.path.join(r, '__init__.py'))
-            elif r.endswith('/constellations') and fn == '__init__.py':
+            if r.endswith('/constellations') and fn == '__init__.py':
                 constellations_version = version_from_init(os.path.join(r, fn))
             elif (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
                 constellation_files.append(os.path.join(r, fn))
@@ -154,32 +135,22 @@ def setup_data(datadir_arg,analysis_mode, config):
         version = "Unknown"
         for r,d,f in os.walk(datadir):
             for fn in f:
-                if r.endswith('pangoLEARN') and fn == "__init__.py":
+                if r.endswith('data') and fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
                     
-                    if version > pangoLEARN.__version__:
+                    if version > pangolin_data.__version__:
                         # only use this for pangoLEARN if the version is > than what we already have
-                        pangoLEARN.__version__ = version
+                        pangolin_data.__version__ = version
                         use_datadir = True
-                        pango_version = pango_version_from_init(init_file)
-    
-    if not alias_file:
-        sys.stderr.write(cyan('Error: Could not find alias file'))
-        install_error("pango-designation", "https://github.com/cov-lineages/pango-designation.git")
 
     if use_datadir == False:
         # we haven't got a viable datadir from searching args.datadir
-        pangoLEARN_dir = pangoLEARN.__path__[0]
-        datadir = os.path.join(pangoLEARN_dir,"data")
-    else:
-        config[PANGO_VERSION] = pango_version
+        pangolin_data_dir = pangolin_data.__path__[0]
+        datadir = os.path.join(pangolin_data,"data")
 
-    config[KEY_PANGOLEARN_VERSION] = pangoLEARN.__version__
-    config[KEY_PANGO_DESIGNATION_VERSION] = pango_designation_version
-    
+    config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data.__version__
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
-    config[KEY_ALIAS_FILE] = alias_file
     config[KEY_DATADIR] = datadir
     config[KEY_CONSTELLATION_FILES] = constellation_files
 
@@ -192,11 +163,9 @@ def print_alias_file_exit(alias_file):
 
 def print_versions_exit(config):
     print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
-            f"pangolearn: {config[KEY_PANGOLEARN_VERSION]}\n"
+            f"pangolin-data: {config[KEY_PANGOLIN_DATA_VERSION]}\n"
             f"constellations: {config[KEY_CONSTELLATIONS_VERSION]}\n"
-            f"scorpio: {config[KEY_SCORPIO_VERSION]}\n"
-            f"pango-designation used by pangoLEARN/Usher: {config[KEY_PANGO_VERSION]}\n"
-            f"pango-designation aliases: {config[KEY_PANGO_DESIGNATION_VERSION]}")
+            f"scorpio: {config[KEY_SCORPIO_VERSION]}\n")
     sys.exit(0)
 
 def set_up_verbosity(config):
