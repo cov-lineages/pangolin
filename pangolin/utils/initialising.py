@@ -147,7 +147,7 @@ def setup_data(datadir_arg,analysis_mode, config):
     if use_datadir == False:
         # we haven't got a viable datadir from searching args.datadir
         pangolin_data_dir = pangolin_data.__path__[0]
-        datadir = os.path.join(pangolin_data,"data")
+        datadir = os.path.join(pangolin_data_dir,"data")
 
     config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data.__version__
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
