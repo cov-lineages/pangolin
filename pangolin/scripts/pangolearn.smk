@@ -210,18 +210,6 @@ rule generate_report:
     output:
         csv = config["outfile"]
     run:
-        voc_list = []
-        with open(input.constellations_list,"r") as f:
-            for line in f:
-                voc_list.append(line.rstrip())
-
-        voc_dict = {}
-        with open(input.scorpio_voc_report,"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["constellations"] != "":
-                    voc_dict[row["query"]] = row
-
         alias_dict = {}
         with open(input.alias_file, "r") as read_file:
             alias_dict = json.load(read_file)
@@ -229,6 +217,20 @@ rule generate_report:
             del alias_dict["A"]
         if "B" in alias_dict:
             del alias_dict["B"]
+
+        voc_list = []
+        with open(input.constellations_list,"r") as f:
+            for line in f:
+                expanded_voc = expand_alias(line.rstrip(), alias_dict)
+                if expanded_voc:
+                    voc_list.append(expanded_voc)
+
+        voc_dict = {}
+        with open(input.scorpio_voc_report,"r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["constellations"] != "":
+                    voc_dict[row["query"]] = row
 
         with open(output.csv, "w") as fw:
 
@@ -319,18 +321,6 @@ rule usher_to_report:
         voc_dict = {}
         passed = []
 
-        voc_list = []
-        with open(input.constellations_list,"r") as f:
-            for line in f:
-                voc_list.append(line.rstrip())
-
-        with open(input.scorpio_voc_report,"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                if row["constellations"] != "":
-                    voc_dict[row["query"]] = row
-
-
         alias_dict = {}
         with open(input.alias_file, "r") as read_file:
             alias_dict = json.load(read_file)
@@ -338,6 +328,19 @@ rule usher_to_report:
             del alias_dict["A"]
         if "B" in alias_dict:
             del alias_dict["B"]
+
+        voc_list = []
+        with open(input.constellations_list,"r") as f:
+            for line in f:
+                expanded_voc = expand_alias(line.rstrip(), alias_dict)
+                if expanded_voc:
+                    voc_list.append(expanded_voc)
+
+        with open(input.scorpio_voc_report,"r") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row["constellations"] != "":
+                    voc_dict[row["query"]] = row
 
         ## Catching scorpio and usher output 
         with open(output.csv, "w") as fw:
