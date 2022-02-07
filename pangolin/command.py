@@ -193,7 +193,7 @@ def main(sysargs = sys.argv[1:]):
 
             preprocessing_csv = os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
             inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
-            constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"))
+            constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"), config[KEY_ALIAS_FILE])
 
             generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE])
 
