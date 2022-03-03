@@ -3,6 +3,7 @@
 import re
 import csv
 import json
+
 from pangolin.utils.config import *
 
 def usher_parsing(usher_result,output_report):
@@ -121,7 +122,7 @@ def get_voc_list(voc_file, alias_file):
                 voc_list.append(expanded_voc)
     return voc_list
 
-def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode,skip_cache, output_report):
+def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode,skip_cache, output_report,config):
     """
     preprocessing_csv header is: 
     ["name","hash","lineage","scorpio_constellations",
@@ -151,15 +152,25 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
         with open(preprocessing_csv, "r") as f:
             reader = csv.DictReader(f)
 
-            out_header = reader.fieldnames
-            for field in ["conflict","ambiguity_score",f"{analysis_mode}_note","version","note"]:
-                out_header.append(field)
+            out_header = FINAL_HEADER
+            
             writer = csv.DictWriter(fw, fieldnames=out_header, lineterminator="\n")
             writer.writeheader()
 
             for row in reader:
-                new_row = row
+                new_row = {}
+                for field in row:
+                    if field in FINAL_HEADER:
+                        new_row[field] = row[field]
+                    elif field in HEADER_FIELD_MAP:
+                        final_field = HEADER_FIELD_MAP[field]
+                        new_row[final_field] = row[field]
+
                 new_row["version"] = version
+                new_row[KEY_PANGOLIN_VERSION] = config[KEY_PANGOLIN_VERSION]
+                new_row[KEY_SCORPIO_VERSION] = config[KEY_SCORPIO_VERSION]
+                new_row[KEY_CONSTELLATIONS_VERSION] = config[KEY_CONSTELLATIONS_VERSION]
+
                 new_row["note"] = ""
 
                 # if it passed qc and mapped
@@ -206,10 +217,13 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                     #4. otherwise use inference output
                     else:
                         for field in inference_out:
-                            new_row[field] = inference_out[field]
+                            if field in FINAL_HEADER:
+                                new_row[field] = inference_out[field]
                         new_row['note'] = f"Assigned using {analysis_mode} inference."
 
                 else:
                     new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
+
+                
 
                 writer.writerow(new_row)

@@ -43,6 +43,18 @@ KEY_THREADS="threads"
 
 UNASSIGNED_LINEAGE_REPORTED="Unassigned"
 
+# final report header
+FINAL_HEADER= ["taxon", "lineage", "conflict", "ambiguity_score", 
+"scorpio_call", "scorpio_support", "scorpio_conflict", "scorpio_notes", 
+ "version", KEY_PANGOLIN_VERSION, KEY_SCORPIO_VERSION, KEY_CONSTELLATIONS_VERSION, 
+"is_designated", "qc_status", "qc_notes", "note"]
+
+HEADER_FIELD_MAP = {
+    "name":"taxon",
+    "scorpio_mrca_lineage":"scorpio_call",
+    "designated":"is_designated"
+}
+
 # File names 
 DESIGNATION_CACHE_FILE = "lineages.hash.csv"
 ALIAS_FILE = "alias_key.json"
