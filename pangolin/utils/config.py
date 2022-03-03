@@ -51,7 +51,7 @@ FINAL_HEADER= ["taxon", "lineage", "conflict", "ambiguity_score",
 
 HEADER_FIELD_MAP = {
     "name":"taxon",
-    "scorpio_mrca_lineage":"scorpio_call",
+    "scorpio_constellations":"scorpio_call",
     "designated":"is_designated"
 }
 
