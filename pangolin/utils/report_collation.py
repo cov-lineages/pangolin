@@ -122,6 +122,14 @@ def get_voc_list(voc_file, alias_file):
                 voc_list.append(expanded_voc)
     return voc_list
 
+def add_relevant_fields_to_new_row(data_dict,new_row):
+    for field in data_dict:
+        if field in FINAL_HEADER:
+            new_row[field] = data_dict[field]
+        elif field in HEADER_FIELD_MAP:
+            final_field = HEADER_FIELD_MAP[field]
+            new_row[final_field] = data_dict[field]
+
 def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode,skip_cache, output_report,config):
     """
     preprocessing_csv header is: 
@@ -159,12 +167,7 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
 
             for row in reader:
                 new_row = {}
-                for field in row:
-                    if field in FINAL_HEADER:
-                        new_row[field] = row[field]
-                    elif field in HEADER_FIELD_MAP:
-                        final_field = HEADER_FIELD_MAP[field]
-                        new_row[final_field] = row[field]
+                add_relevant_fields_to_new_row(row,new_row)
 
                 new_row["version"] = version
                 new_row[KEY_PANGOLIN_VERSION] = config[KEY_PANGOLIN_VERSION]
@@ -172,24 +175,26 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                 new_row[KEY_CONSTELLATIONS_VERSION] = config[KEY_CONSTELLATIONS_VERSION]
 
                 new_row["note"] = ""
-
                 # if it passed qc and mapped
                 if row["hash"] in inference_dict:
                     inference_out = inference_dict[row["hash"]]
-                    expanded_pango_lineage = expand_alias(inference_out["lineage"], alias_dict)
+                    
+                    add_relevant_fields_to_new_row(inference_out,new_row)
 
+                    expanded_pango_lineage = expand_alias(inference_out["lineage"], alias_dict)
+                    
                     #1. check if hash assigned
                     if row["designated"] == "True" and not skip_cache:
                         new_row["note"] = "Assigned from designation hash."
                         new_row["version"] = f"PANGO-{pango_version}"
-                    
+
                     #2. check if scorpio assigned
                     elif row["scorpio_mrca_lineage"]:
+                        
                         scorpio_lineage = row["scorpio_mrca_lineage"]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
-
                         if '/' not in scorpio_lineage:
-                            if expanded_scorpio_lineage and expanded_pango_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                            if expanded_scorpio_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
                                 new_row["note"] =  f'scorpio replaced lineage inference {inference_out["lineage"]}'
                                 new_row["lineage"] = scorpio_lineage
                                 
