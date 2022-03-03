@@ -110,11 +110,15 @@ def get_inference_dict(inference_csv):
     return inference_dict
 
 
-def get_voc_list(voc_file):
+def get_voc_list(voc_file, alias_file):
     voc_list = []
+    alias_dict = get_alias_dict(alias_file)
+
     with open(voc_file,"r") as f:
         for line in f:
-            voc_list.append(line.rstrip())
+            expanded_voc = expand_alias(line.rstrip(), alias_dict)
+            if expanded_voc:
+                voc_list.append(expanded_voc)
     return voc_list
 
 def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list, pango_version,analysis_mode,skip_cache, output_report):
