@@ -154,8 +154,9 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
 
         for l in query:
             if l[0]=='>':
+
                 query_record = {}
-                name=l.rstrip("\n").lstrip(">")
+                name=l.rstrip("\n").lstrip(">").replace(" ","_")
                 if name in name_dict:
                     query_record = info_dict[name_dict[name]]
                     query_record["name"] = name

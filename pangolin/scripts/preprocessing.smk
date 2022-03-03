@@ -29,7 +29,7 @@ rule align_to_reference:
     # the first line of this streams through the fasta and replaces '-' in sequences with empty strings
     # this could be replaced by a python script later
         """
-        awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' {input.fasta} | \
+         awk '{{ {{ gsub("-", "",$0); }} {{ gsub(" ","_",$0); }} print $0; }}' {input.fasta} | \
         minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
         gofasta sam toMultiAlign \
             -s {params.sam:q} \
