@@ -10,7 +10,7 @@ from pangolin.utils.config import *
 rule all:
     input:
         config[KEY_ALIGNMENT_FILE],
-         os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"),
+        os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"),
         os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
 
 rule align_to_reference:
@@ -30,7 +30,7 @@ rule align_to_reference:
     # this could be replaced by a python script later
         """
         awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' {input.fasta} | \
-        minimap2 -a -x asm20 --sam-hit-only --secondary=no -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
+        minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
         gofasta sam toMultiAlign \
             -s {params.sam:q} \
             -t {workflow.cores} \
