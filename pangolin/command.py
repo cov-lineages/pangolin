@@ -73,14 +73,14 @@ def main(sysargs = sys.argv[1:]):
     a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
     
     # a_group.add_argument('--use-assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
-    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages.",dest="skip_designation_cache")
+    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
 
     a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
 
     d_group = parser.add_argument_group('Data options')
-    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits.")
-    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits.")
+    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangolin-data, scorpio and constellations, then exits.")
+    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file, then exits.")
     d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangolin-data repository or --datadir.")
 
@@ -195,7 +195,7 @@ def main(sysargs = sys.argv[1:]):
             inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
             constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"), config[KEY_ALIAS_FILE])
 
-            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE])
+            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE],config)
 
             print(green(f"****\nOutput file written to: ") + config[KEY_OUTFILE])
 
