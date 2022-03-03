@@ -156,9 +156,10 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
             if l[0]=='>':
 
                 query_record = {}
-                name=l.rstrip("\n").lstrip(">").replace(" ","_").replace(",","_")
-                if name in name_dict:
-                    query_record = info_dict[name_dict[name]]
+                name = l.rstrip("\n").lstrip(">")
+                modified_name=name.replace(" ","_").replace(",","_")
+                if modified_name in name_dict:
+                    query_record = info_dict[name_dict[modified_name]]
                     query_record["name"] = name
                     writer.writerow(query_record)
                 else:
