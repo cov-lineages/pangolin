@@ -10,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["macos-latest","ubuntu-latest"]
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -23,8 +23,6 @@ jobs:
         run: pip install -e .
       - name: Check pangolin version
         run: pangolin --version
-      - name: Run pangolin update
-        run: pangolin --update 2>&1  | tee pangolin_update.log
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
       - name: Run pangolin with test zip data
