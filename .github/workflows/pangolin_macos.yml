@@ -1,4 +1,4 @@
-name: pangolin
+name: pangolin-macosx
 on: [push, pull_request]
 defaults:
   run:

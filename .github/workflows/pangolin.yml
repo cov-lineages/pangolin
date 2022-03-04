@@ -1,4 +1,4 @@
-name: pangolin
+name: pangolin-ubuntu
 on: [push, pull_request]
 defaults:
   run:
