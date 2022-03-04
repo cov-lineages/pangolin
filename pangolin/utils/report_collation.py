@@ -187,10 +187,10 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                     if row["designated"] == "True" and not skip_cache:
                         new_row["note"] = "Assigned from designation hash."
                         new_row["version"] = f"PANGO-{pango_version}"
+                        new_row["lineage"] = row["lineage"] # revert back to designation hash lineage
 
                     #2. check if scorpio assigned
-                    elif row["scorpio_mrca_lineage"]:
-                        
+                    elif row["scorpio_constellations"]:
                         scorpio_lineage = row["scorpio_mrca_lineage"]
                         expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
                         if '/' not in scorpio_lineage:
@@ -199,8 +199,12 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                                 new_row["lineage"] = scorpio_lineage
                                 
                             elif row["scorpio_incompatible_lineages"] and inference_out["lineage"] in row["scorpio_incompatible_lineages"].split("|"):
-                                new_row["note"] = f'scorpio replaced lineage assignment {inference_out["lineage"]}'
+                                new_row["note"] = f'scorpio replaced lineage inference {inference_out["lineage"]}'
                                 new_row["lineage"] = scorpio_lineage
+                                
+                            elif not expanded_scorpio_lineage:
+                                new_row["note"] += f'scorpio replaced lineage inference {inference_out["lineage"]}'
+                                new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
 
                     #3. check if lineage is a voc
                     elif row["lineage"] in voc_list:
@@ -218,13 +222,6 @@ def generate_final_report(preprocessing_csv, inference_csv, alias_file, voc_list
                                 break
 
                             expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
-                    
-                    #4. otherwise use inference output
-                    else:
-                        for field in inference_out:
-                            if field in FINAL_HEADER:
-                                new_row[field] = inference_out[field]
-                        new_row['note'] = f"Assigned using {analysis_mode} inference."
 
                 else:
                     new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
