@@ -52,7 +52,10 @@ FINAL_HEADER= ["taxon", "lineage", "conflict", "ambiguity_score",
 HEADER_FIELD_MAP = {
     "name":"taxon",
     "scorpio_constellations":"scorpio_call",
-    "designated":"is_designated"
+    "designated":"is_designated",
+    "usher_note":"note",
+    "pangolearn_note":"note"
+
 }
 
 # File names 
