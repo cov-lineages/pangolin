@@ -33,7 +33,7 @@ rule usher_inference:
         """
         echo "Using UShER as inference engine."
         if [ -s {input.fasta:q} ]; then
-            faToVcf <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
+            faToVcf -includeNoAltN <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
             usher -n -D -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
         else
             rm -f {output.txt:q}
