@@ -12,8 +12,8 @@ from datetime import datetime
 import joblib
 from Bio import SeqIO
 import sys
-import multiprocessing as mp
 import os
+
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -116,69 +116,8 @@ def readInAndFormatData(referenceSeq, imputationScores,sequencesFile, indiciesTo
 
 	yield idList, seqList
 
+def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile):
 
-def file_writer(outfile, q):
-	"""listens for messages on the q, writes to files. """
-	f = open(outfile, "w")
-	f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
-	while 1:
-		message = q.get()
-		if message == 'kill':
-			break
-		f.write(message)
-	f.close()
-
-
-def assign_to_chunk(idList, seqList, refRow, referenceId, loaded_model, imputationScores, columns, categories, q):
-	print("Processing block of {} sequences {}".format(
-		len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-	))
-
-	rows = [[r == c for r in row for c in categories] for row in seqList]
-	# the reference seq must be added to everry block to make sure that the
-	# spots in the reference have Ns are in the dataframe to guarentee that
-	# the correct number of columns is created when get_dummies is called
-	rows.append(refRow)
-	idList.append(referenceId)
-
-	# create a data from from the seqList
-	d = np.array(rows, np.uint8)
-	df = pd.DataFrame(d, columns=columns)
-
-	predictions = loaded_model.predict_proba(df)
-
-	for index in range(len(predictions)):
-
-		maxScore = 0
-		maxIndex = -1
-
-		nonZeroIds = []
-		nonZeroScores = []
-
-		# get the max probability score and its assosciated index
-		for i in range(len(predictions[index])):
-			if predictions[index][i] > maxScore:
-				maxScore = predictions[index][i]
-				maxIndex = i
-
-				nonZeroScores.append(predictions[index][i])
-				nonZeroIds.append(loaded_model.classes_[i])
-
-		score = maxScore
-		prediction = loaded_model.classes_[maxIndex]
-		seqId = idList[index]
-
-		nonZeroIds = ";".join(nonZeroIds)
-		nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
-
-		if seqId != referenceId:
-			res = seqId + "," + prediction + "," + str(score) + "," + str(
-				imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n"
-			q.put(res)
-	return 0
-
-
-def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile,threads=1):
 	print("Running pangoLEARN assignment")
 	dirname = os.path.dirname(__file__)
 
@@ -186,25 +125,13 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile,
 	referenceId = "reference"
 
 	imputationScores = dict()
-
-	# setup manager
-	manager = mp.Manager()
-	q = manager.Queue()
-	pool = mp.Pool(threads)
-
-	if threads > 1:
-		pool.apply_async(file_writer, (outfile, q))
-
 	records = 0
 	for record in SeqIO.parse(sequences_file,"fasta"):
 		records +=1
-
-	# fire off workers
-	jobs = []
-
-	# run batches
 	if records ==0:
-		q.put("kill")
+		f = open(outfile, "w")
+		f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
+		f.close()
 		print("No sequences to assign with pangoLEARN.")
 	else:
 
@@ -225,25 +152,55 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile,
 
 		print("Loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 		loaded_model = joblib.load(model_file)
-		print("Finished loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 
 		# write predictions to a file
+		f = open(outfile, "w")
+		f.write("taxon,prediction,score,imputation_score,non_zero_ids,non_zero_scores,designated\n")
 		for idList, seqList in readInAndFormatData(referenceSeq,imputationScores,sequences_file, indiciesToKeep):
-			job = pool.apply_async(assign_to_chunk, (idList, seqList, refRow, referenceId, loaded_model,
-													 imputationScores, columns, categories, q))
-			jobs.append(job)
+			print("Processing block of {} sequences {}".format(
+				len(seqList), datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+			))
 
-	# collect results from the workers through the pool result queue
-	for job in jobs:
-		job.get()
+			rows = [[r==c for r in row for c in categories] for row in seqList]
+			# the reference seq must be added to everry block to make sure that the 
+			# spots in the reference have Ns are in the dataframe to guarentee that 
+			# the correct number of columns is created when get_dummies is called
+			rows.append(refRow)
+			idList.append(referenceId)
 
-	# now we are done, kill the listener
-	q.put('kill')
+			# create a data from from the seqList
+			d = np.array(rows, np.uint8)
+			df = pd.DataFrame(d, columns=columns)
 
-	if threads == 1:
-		pool.apply_async(file_writer, (outfile, q))
+			predictions = loaded_model.predict_proba(df)
 
-	pool.close()
-	pool.join()
+			for index in range(len(predictions)):
+
+				maxScore = 0
+				maxIndex = -1
+
+				nonZeroIds = []
+				nonZeroScores = []
+
+				# get the max probability score and its assosciated index
+				for i in range(len(predictions[index])):
+					if predictions[index][i] > maxScore:
+						maxScore = predictions[index][i]
+						maxIndex = i
+
+						nonZeroScores.append(predictions[index][i])
+						nonZeroIds.append(loaded_model.classes_[i])
+
+				score = maxScore
+				prediction = loaded_model.classes_[maxIndex]
+				seqId = idList[index]
+
+				nonZeroIds = ";".join(nonZeroIds)
+				nonZeroScores = ';'.join(str(x) for x in nonZeroScores)
+
+				if seqId != referenceId:
+					f.write(seqId + "," + prediction + "," + str(score) + "," + str(imputationScores[seqId]) + "," + nonZeroIds + "," + nonZeroScores + "," + "\n")
+
+		f.close()
 
 	print("Complete " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
