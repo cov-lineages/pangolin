@@ -2,17 +2,6 @@
 from . import _program
 from pangolin import __version__
 
-# try:
-#     import pangoLEARN
-# except:
-#     install_error("pangoLEARN", "https://github.com/cov-lineages/pangoLEARN.git")
-
-# try:
-#     from pangoLEARN import PANGO_VERSION
-# except:
-#     sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
-#     sys.exit(-1)
-
 try:
     import pangolin_data
 except:
