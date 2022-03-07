@@ -152,6 +152,7 @@ def assign_lineage(header_file,model_file,reference_file,sequences_file,outfile)
 
 		print("Loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 		loaded_model = joblib.load(model_file)
+		print("Finished loading model " + datetime.now().strftime("%m/%d/%Y, %H:%M:%S"))
 
 		# write predictions to a file
 		f = open(outfile, "w")
