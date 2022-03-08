@@ -63,7 +63,7 @@ DESIGNATION_CACHE_FILE = "lineages.hash.csv"
 ALIAS_FILE = "alias_key.json"
 
 pangolearn_files = {
-    "standard_15_randomForest_v1.joblib":KEY_PLEARN_MODEL,
+    "bad_acc_rf.joblib":KEY_PLEARN_MODEL,
     "randomForestHeaders_v1.joblib":KEY_PLEARN_HEADER
     }
 usher_files = {

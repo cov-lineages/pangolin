@@ -14,7 +14,6 @@ dependencies:
   - ucsc-fatovcf>=426
   - usher>=0.3.2
   - git-lfs
-  - backports.lzma
   - pip:
     - git+https://github.com/cov-lineages/pangolin-data.git
     - git+https://github.com/cov-lineages/scorpio.git
