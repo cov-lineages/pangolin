@@ -5,6 +5,8 @@ import sys
 import os
 import gzip
 
+from pangolin.utils.config import *
+
 def package_data_check(filename,directory,key,config):
     try:
         package_datafile = os.path.join(directory,filename)
@@ -41,12 +43,13 @@ def find_designation_cache_and_alias(datadir,designation_cache_file,alias_file):
         sys.exit(-1)
     return designation_cache,alias
 
-def get_usher_protobuf_arg(usher_arg,cwd):
-    if usher_arg:
-        usher_protobuf = os.path.join(cwd, usher_arg)
-        if not os.path.exists(usher_protobuf):
-            sys.stderr.write('Error: cannot find --usher-tree file at {}\n'.format(usher_protobuf))
+def check_file_arg(arg_file, cwd, description):
+    if arg_file:
+        file_path = os.path.join(cwd, arg_file)
+        if not os.path.exists(file_path):
+            sys.stderr.write(f"Error: cannot find {description} file at {file_path}\n")
             sys.exit(-1)
+    return file_path
 
 def get_datafiles(datadir,file_dict,config):
     datafiles = {}
@@ -70,25 +73,33 @@ def get_datafiles(datadir,file_dict,config):
 
 def install_error(package, url):
     sys.stderr.write(cyan(f'Error: please install `{package}` with \n') +
-    f"pip install git+{url}")
+                     f"pip install git+{url}\n")
     sys.exit(-1)
 
 
-def get_cache():
+def get_assignment_cache(cache_file, config):
     cache = ""
     try:
         import pangolin_assignment
         pangolin_assignment_dir = pangolin_assignment.__path__[0]
         for r, d, f in os.walk(pangolin_assignment_dir):
             for fn in f:
-                if fn == "pango_assignment.cache.csv.gz" and cache == "":
+                if fn == cache_file and cache == "":
                     cache = os.path.join(r, fn)
         if not os.path.exists(cache):
-            sys.stderr.write('Error: cannot find cache\n')
+            sys.stderr.write(cyan(f'Error: cannot find assignment cache file {cache_file} in pangolin_assignment\n'))
             sys.exit(-1)
     except:
-        sys.stderr.write(cyan('Error: please install `pangolin_assignment` with \n') +
-                            "pip install git+https://github.com/cov-lineages/pangolin-assignment.git")
+        sys.stderr.write(cyan('\nError: "pangolin --add-assignment-cache" is required before '
+                              '"pangolin --use-assignment-cache", in order to install optional '
+                              'pangolin-assignment repository (that will make future data updates slower).\n'))
+        sys.exit(-1)
+
+    # Check versions of pangolin-data and pangolin-assignment to make sure they are consistent.
+    if pangolin_assignment.__version__.lstrip('v') != config[KEY_PANGOLIN_DATA_VERSION].lstrip('v'):
+        print(cyan(f'Error: pangolin_assignment cache version {pangolin_assignment.__version__} '
+                   f'does not match pangolin_data version {config[KEY_PANGOLIN_DATA_VERSION]}. '
+                   'Run "pangolin --update-data" to fetch latest versions of both.'))
         sys.exit(-1)
 
     try:
@@ -98,8 +109,9 @@ def get_cache():
         with open(cache, 'r') as f:
             line = f.readline()
             if "git-lfs.github.com" in line:
-                sys.stderr.write(
+                sys.stderr.write(cyan(
                     'Error: Git LFS file not pulled successfully. Please install git-lfs \nusing conda or an alternative (not pip) then re-install pangolin-assignment \nwith pip install git+https://github.com/cov-lineages/pangolin-assignment.git\n')
+                )
                 sys.exit(-1)
     return cache
 

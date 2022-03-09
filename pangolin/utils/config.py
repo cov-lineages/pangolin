@@ -35,7 +35,6 @@ KEY_PANGOLIN_DATA_VERSION="pangolin_data_version"
 KEY_PANGOLIN_VERSION="pangolin_version"
 KEY_CONSTELLATIONS_VERSION="constellation_version"
 KEY_SCORPIO_VERSION="scorpio_version"
-KEY_PANGO_DESIGNATION_VERSION="pango_designation_version"
 
 KEY_VERBOSE="verbose"
 KEY_LOG_API = "log_api"
@@ -61,6 +60,7 @@ HEADER_FIELD_MAP = {
 # File names 
 DESIGNATION_CACHE_FILE = "lineages.hash.csv"
 ALIAS_FILE = "alias_key.json"
+USHER_ASSIGNMENT_CACHE_FILE = "usher_assignments.cache.csv.gz"
 
 pangolearn_files = {
     "bad_acc_rf.joblib":KEY_PLEARN_MODEL,
