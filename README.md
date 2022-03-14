@@ -12,7 +12,7 @@
 
 ## [Web application](https://pangolin.cog-uk.io/)
 
-The pangolin web app is maintained by the Centre for Genomic Pathogen and Surveillance
+The pangolin web app is maintained by the Centre for Genomic Pathogen Surveillance
 
 ## [Documentation](https://cov-lineages.org/pangolin.html)
 

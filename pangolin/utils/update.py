@@ -64,9 +64,12 @@ def update(version_dictionary, data_dir=None):
             sys.exit(-1)
 
         latest_release = json.load(latest_release)
-        latest_release_tarball = latest_release[0]['tarball_url']
+        release_index = 0
+        while release_index < len(latest_release) and latest_release[release_index]['prerelease']:
+            release_index += 1
+        latest_release_tarball = latest_release[release_index]['tarball_url']
         # extract and clean up latest release version
-        latest_release = latest_release[0]['tag_name']
+        latest_release = latest_release[release_index]['tag_name']
         latest_release_tidied = latest_release.strip('data release').lstrip('v').strip()
         latest_release_tidied = LooseVersion(latest_release_tidied)
 
