@@ -166,7 +166,13 @@ def print_versions_exit(config):
     print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
             f"pangolin-data: {config[KEY_PANGOLIN_DATA_VERSION]}\n"
             f"constellations: {config[KEY_CONSTELLATIONS_VERSION]}\n"
-            f"scorpio: {config[KEY_SCORPIO_VERSION]}\n")
+            f"scorpio: {config[KEY_SCORPIO_VERSION]}")
+    # Report pangolin_assignment version if it is installed, otherwise ignore
+    try:
+        import pangolin_assignment
+        print(f"pangolin-assignment: {pangolin_assignment.__version__}")
+    except:
+        pass
     sys.exit(0)
 
 def set_up_verbosity(config):

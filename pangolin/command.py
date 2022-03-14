@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 from . import _program
 from pangolin import __version__
+from pangolin.utils import data_checks
 
 try:
     import pangolin_data
 except:
-    install_error("pangolin_data", "https://github.com/cov-lineages/pangolin_data.git")
+    data_checks.install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
 
 try:
     import scorpio
 except:
-    install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
+    data_checks.install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
 
 try:
     import constellations
 except:
-    install_error("constellations", "https://github.com/cov-lineages/constellations.git")
+    data_checks.install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
 import os
 import sys
@@ -31,7 +32,6 @@ except:
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils import dependency_checks
 
-from pangolin.utils import data_checks
 from pangolin.utils import update
 
 
@@ -43,6 +43,7 @@ from pangolin.utils.report_collation import generate_final_report,get_voc_list
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
+
 
 def main(sysargs = sys.argv[1:]):
     parser = argparse.ArgumentParser(prog = _program,
@@ -61,17 +62,19 @@ def main(sysargs = sys.argv[1:]):
     a_group = parser.add_argument_group('Analysis options')
     a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
     
-    # a_group.add_argument('--use-assignment-cache', action="store_true",help="Use cache file from pango-assignment to speed up lineage assignment.", dest="assignment_cache")
     a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
 
     a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
 
     d_group = parser.add_argument_group('Data options')
-    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangolin-data, scorpio and constellations, then exits.")
-    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file, then exits.")
+    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangolin-data, scorpio and constellations (and pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
+    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file (also pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
+    d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
+    d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
     d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
-    d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangolin-data repository or --datadir.")
+    d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
+    d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
 
     m_group = parser.add_argument_group('Misc options')
     m_group.add_argument("--aliases", action='store_true', default=False, help="Print Pango alias_key.json and exit.")
@@ -93,19 +96,29 @@ def main(sysargs = sys.argv[1:]):
     data_checks.check_install(config)
     set_up_verbosity(config)
 
+    if args.add_assignment_cache:
+        update.install_pangolin_assignment()
+
     if args.update:
-        update.update({'pangolin': __version__,
-                'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
-                'constellations': config[KEY_CONSTELLATIONS_VERSION],
-                'scorpio': config[KEY_SCORPIO_VERSION]
-                })
+        version_dictionary = {'pangolin': __version__,
+                              'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
+                              'constellations': config[KEY_CONSTELLATIONS_VERSION],
+                              'scorpio': config[KEY_SCORPIO_VERSION]}
+        update.add_pangolin_assignment_if_installed(version_dictionary)
+        update.update(version_dictionary)
 
     if args.update_data:
-        update.update({'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
-                'constellations': config[KEY_CONSTELLATIONS_VERSION]}, 
-                args.datadir)
+        version_dictionary = {'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
+                              'constellations': config[KEY_CONSTELLATIONS_VERSION]}
+        update.add_pangolin_assignment_if_installed(version_dictionary)
+        update.update(version_dictionary, args.datadir)
 
-    # Parsing analysis mode flags to return one of 'usher', 'pangolearn' or 'assignment_cache'
+    # install_pangolin_assignment doesn't exit so that --update/--update-data can be given at the
+    # same time (or a query file).  If --add-assignment-cache is the only arg, exit without error.
+    if args.add_assignment_cache and not args.query:
+        sys.exit(0)
+
+    # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
@@ -132,17 +145,25 @@ def main(sysargs = sys.argv[1:]):
     io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
 
     if config[KEY_ANALYSIS_MODE] == "usher":
-        # needed data is usher protobuf file
-        config[KEY_USHER_PB] = data_checks.get_usher_protobuf_arg(args.usher_protobuf,cwd)
+        # Find usher protobuf file (and if specified, assignment cache file too)
         data_checks.get_datafiles(config[KEY_DATADIR],usher_files,config)
+        if args.usher_protobuf:
+            config[KEY_USHER_PB] = data_checks.check_file_arg(args.usher_protobuf, cwd, '--usher-tree')
+            printf(green(f"Using usher tree file {args.usher_protobuf}"))
+        if args.assignment_cache:
+            config[KEY_ASSIGNMENT_CACHE] = data_checks.check_file_arg(args.assignment_cache, cwd, '--assignment-cache')
+            print(green(f"Using assignment cache file {args.assignment_cache}"))
+        elif args.use_assignment_cache:
+            config[KEY_ASSIGNMENT_CACHE] = data_checks.get_assignment_cache(USHER_ASSIGNMENT_CACHE_FILE, config)
+            print(green("Using pangolin-assignment cache"))
+        else:
+            config[KEY_ASSIGNMENT_CACHE] = ""
 
     elif config[KEY_ANALYSIS_MODE] == "pangolearn":
         # find designation cache and the model files
         data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
-
-    # elif config[KEY_ANALYSIS_MODE] == "assignment_cache":
-    #     # look for the assignment cache, and also the ??? files (usher or pangolearn?)
-    #     config[KEY_ASSIGNMENT_CACHE] = data_checks.get_cache()
+        if args.use_assignment_cache or args.assignment_cache:
+            sys.stderr.write(cyan(f"Warning: --use-assignment-cache and --assignment-cache are ignored when --analysis-mode is 'fast' or 'pangolearn'.\n"))
 
     preprocessing_snakefile = get_snakefile(thisdir,"preprocessing")
 
@@ -182,9 +203,10 @@ def main(sysargs = sys.argv[1:]):
 
             preprocessing_csv = os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
             inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
+            cached_csv = os.path.join(config[KEY_TEMPDIR],"cache_assigned.csv")
             constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"), config[KEY_ALIAS_FILE])
 
-            generate_final_report(preprocessing_csv, inference_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE],config)
+            generate_final_report(preprocessing_csv, inference_csv, cached_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE],config)
 
             print(green(f"****\nOutput file written to: ") + config[KEY_OUTFILE])
 
