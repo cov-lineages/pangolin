@@ -34,3 +34,4 @@ rule pangolearn_output:
         csv= os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
     run:
         pangolearn_parsing(input.csv, output.csv)
+
