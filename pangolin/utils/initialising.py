@@ -143,6 +143,8 @@ def setup_data(datadir_arg,analysis_mode, config):
                         # only use this for pangoLEARN if the version is > than what we already have
                         pangolin_data.__version__ = version
                         use_datadir = True
+                    else:
+                        sys.stderr.write(cyan(f"Warning: Ignoring specified datadir - it contains pangoLEARN model files older than those installed: {datadir}\n"))
 
     if use_datadir == False:
         # we haven't got a viable datadir from searching args.datadir
