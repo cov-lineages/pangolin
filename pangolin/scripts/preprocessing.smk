@@ -122,7 +122,7 @@ rule sequence_qc:
         #             for item in desc:
         #                 if item.startswith("fail="):
         #                     reason = item.split("=")[1]
-        #             fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
+        #             fw.write(f"{record.id},None,,,,,,PANGO-v{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
         #     print(cyan(f'Note: no query sequences have passed the qc\n'))
         #     sys.exit(0)
 

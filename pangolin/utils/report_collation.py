@@ -77,21 +77,34 @@ def pangolearn_parsing(pangolearn_result,output_report):
 
 
 def expand_alias(pango_lineage, alias_dict):
-    if not pango_lineage or pango_lineage in ["None", None, ""] or "/" in pango_lineage:
+    if not pango_lineage or pango_lineage in ["None", None, "", UNASSIGNED_LINEAGE_REPORTED] or "/" in pango_lineage:
         return None
 
     lineage_parts = pango_lineage.split(".")
-    if lineage_parts[0].startswith('X'):
-        return pango_lineage
-    while lineage_parts[0] in alias_dict.keys():
+    while lineage_parts[0] in alias_dict.keys() and not lineage_parts[0].startswith('X'):
         if len(lineage_parts) > 1:
             pango_lineage = alias_dict[lineage_parts[0]] + "." + ".".join(lineage_parts[1:])
         else:
             pango_lineage = alias_dict[lineage_parts[0]]
         lineage_parts = pango_lineage.split(".")
-    if lineage_parts[0] not in ["A","B"]:
+    if lineage_parts[0] not in ["A","B"] and not lineage_parts[0].startswith('X'):
         return None
     return pango_lineage
+
+def get_recombinant_parents(pango_lineage, alias_dict):
+    # return the direct parents and the expanded lineage
+    list_expanded = []
+    if pango_lineage in ["None", None, "", UNASSIGNED_LINEAGE_REPORTED]:
+        return list_expanded
+
+    lineage_parts = pango_lineage.split(".")
+    if not lineage_parts[0].startswith('X'):
+        return list_expanded
+
+    for parent in alias_dict[lineage_parts[0]]:
+        list_expanded.append(expand_alias(parent, alias_dict))
+
+    return list_expanded
 
 def get_alias_dict(alias_file):
     alias_dict = {}
@@ -167,9 +180,9 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
     cached_dict = get_cached_dict(cached_csv)
 
     if analysis_mode == "pangolearn":
-        version = f"PLEARN-{pango_version}"
+        version = f"PLEARN-v{pango_version}"
     elif analysis_mode == "usher":
-        version = f"PUSHER-{pango_version}"
+        version = f"PUSHER-v{pango_version}"
 
     with open(output_report, "w") as fw:
         # the output of preprocessing csv, all records present in this file
@@ -190,7 +203,7 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
                     add_relevant_fields_to_new_row(cached_out, new_row)
                     if row["designated"] == "True" and not skip_cache:
                         add_relevant_fields_to_new_row({"note": "Assigned from designation hash.",
-                                                        "version": f"PANGO-{pango_version}",
+                                                        "version": f"PANGO-v{pango_version}",
                                                         "lineage": row["lineage"],
                                                         "designated": "True"},
                                                        new_row)
@@ -212,15 +225,20 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
                         #1. check if hash assigned
                         if row["designated"] == "True" and not skip_cache:
                             new_row["note"] = "Assigned from designation hash."
-                            new_row["version"] = f"PANGO-{pango_version}"
+                            new_row["version"] = f"PANGO-v{pango_version}"
                             new_row["lineage"] = row["lineage"] # revert back to designation hash lineage
 
                         #2. check if scorpio assigned
                         elif row["scorpio_constellations"]:
                             scorpio_lineage = row["scorpio_mrca_lineage"]
                             expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
+
+                            recombinant_parents = get_recombinant_parents(expanded_pango_lineage, alias_dict)
+
                             if '/' not in scorpio_lineage:
-                                if expanded_scorpio_lineage and not expanded_pango_lineage.startswith(expanded_scorpio_lineage):
+                                if expanded_scorpio_lineage and \
+                                        not expanded_pango_lineage.startswith(expanded_scorpio_lineage) and \
+                                        not (expanded_pango_lineage.startswith("X") and expanded_scorpio_lineage in recombinant_parents):
                                     append_note(new_row, f'scorpio replaced lineage inference {inference_out["lineage"]}')
                                     new_row["lineage"] = scorpio_lineage
 
