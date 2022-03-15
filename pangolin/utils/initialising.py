@@ -97,6 +97,7 @@ def check_datadir(datadir_arg):
     return datadir
 
 def version_from_init(init_file):
+    version=None
     with open(init_file, "r") as fr:
         for l in fr:
             if l.startswith("__version__"):
@@ -137,19 +138,25 @@ def setup_data(datadir_arg,analysis_mode, config):
         version = "Unknown"
         for r,d,f in os.walk(datadir):
             for fn in f:
-                if r.endswith('data') and fn == "__init__.py":
+                if fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
+                    if not version:
+                        continue
                     
                     if version > pangolin_data.__version__:
                         # only use this for pangoLEARN if the version is > than what we already have
                         pangolin_data.__version__ = version
                         use_datadir = True
                     else:
-                        sys.stderr.write(cyan(f"Warning: Ignoring specified datadir - it contains pangoLEARN model files older than those installed: {datadir}\n"))
+                        sys.stderr.write(cyan(f"Warning: Ignoring specified datadir {datadir} - it contains pangoLEARN model files older than those installed \n"))
 
     if use_datadir == False:
         # we haven't got a viable datadir from searching args.datadir
+        if datadir:
+            sys.stderr.write(cyan(
+                f"Warning: Ignoring specified datadir {datadir} - could not find __init__.py file to check versions \n"))
+
         pangolin_data_dir = pangolin_data.__path__[0]
         datadir = os.path.join(pangolin_data_dir,"data")
 
