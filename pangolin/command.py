@@ -63,6 +63,7 @@ def main(sysargs = sys.argv[1:]):
     a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
     
     a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
+    a_group.add_argument("--skip-scorpio", action='store_true', default=False, help="Developer option - do not use scorpio to check VOC/VUI lineage assignments.",dest="skip_scorpio")
 
     a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
@@ -118,6 +119,11 @@ def main(sysargs = sys.argv[1:]):
     if args.add_assignment_cache and not args.query:
         sys.exit(0)
 
+    # add flag to config for whether to run scorpio
+    if args.skip_scorpio:
+        print(green(f"****\nPangolin skipping scorpio steps.\n****"))
+        config[KEY_SKIP_SCORPIO] = True
+
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
@@ -149,7 +155,7 @@ def main(sysargs = sys.argv[1:]):
         data_checks.get_datafiles(config[KEY_DATADIR],usher_files,config)
         if args.usher_protobuf:
             config[KEY_USHER_PB] = data_checks.check_file_arg(args.usher_protobuf, cwd, '--usher-tree')
-            printf(green(f"Using usher tree file {args.usher_protobuf}"))
+            print(green(f"Using usher tree file {args.usher_protobuf}"))
         if args.assignment_cache:
             config[KEY_ASSIGNMENT_CACHE] = data_checks.check_file_arg(args.assignment_cache, cwd, '--assignment-cache')
             print(green(f"Using assignment cache file {args.assignment_cache}"))

@@ -132,23 +132,24 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
             for row in reader:
                 info_dict[row["hash"]]["qc_status"] = row["qc_status"]
                 info_dict[row["hash"]]["qc_notes"] = row["qc_notes"]
-        
-        with open(scorpio_report,"r") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                info_dict[row["query"]]["scorpio_constellations"] = row["constellations"]
-                info_dict[row["query"]]["scorpio_mrca_lineage"] = row["mrca_lineage"]
-                info_dict[row["query"]]["scorpio_incompatible_lineages"] = row["incompatible_lineages"]
-                if row["support"]:
-                    info_dict[row["query"]]["scorpio_support"] = round(float(row["support"]),2)
-                    info_dict[row["query"]]["scorpio_conflict"] = round(float(row["conflict"]),2)
-                else:
-                    info_dict[row["query"]]["scorpio_support"] = row["support"]
-                    info_dict[row["query"]]["scorpio_conflict"] = row["conflict"]
-                if row["mrca_lineage"]:
-                    info_dict[row["query"]]["scorpio_notes"] =  f'scorpio call: Alt alleles {row["alt_count"]}; Ref alleles {row["ref_count"]}; Amb alleles {row["ambig_count"]}; Oth alleles {row["other_count"]}'
-                else:
-                    info_dict[row["query"]]["scorpio_notes"] = ""
+
+        if os.stat(scorpio_report).st_size > 0:
+            with open(scorpio_report,"r") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    info_dict[row["query"]]["scorpio_constellations"] = row["constellations"]
+                    info_dict[row["query"]]["scorpio_mrca_lineage"] = row["mrca_lineage"]
+                    info_dict[row["query"]]["scorpio_incompatible_lineages"] = row["incompatible_lineages"]
+                    if row["support"]:
+                        info_dict[row["query"]]["scorpio_support"] = round(float(row["support"]),2)
+                        info_dict[row["query"]]["scorpio_conflict"] = round(float(row["conflict"]),2)
+                    else:
+                        info_dict[row["query"]]["scorpio_support"] = row["support"]
+                        info_dict[row["query"]]["scorpio_conflict"] = row["conflict"]
+                    if row["mrca_lineage"]:
+                        info_dict[row["query"]]["scorpio_notes"] =  f'scorpio call: Alt alleles {row["alt_count"]}; Ref alleles {row["ref_count"]}; Amb alleles {row["ambig_count"]}; Oth alleles {row["other_count"]}'
+                    else:
+                        info_dict[row["query"]]["scorpio_notes"] = ""
                     
         file_ending = fasta.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:

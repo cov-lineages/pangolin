@@ -39,6 +39,8 @@ def setup_config_dict(cwd):
             
             KEY_ALIAS_FILE: None,
 
+            KEY_SKIP_SCORPIO: False,
+
             KEY_CONSTELLATION_FILES: [],
             
             KEY_PANGOLIN_VERSION: __version__,
