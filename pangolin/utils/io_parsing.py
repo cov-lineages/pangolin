@@ -3,6 +3,8 @@ import os
 from pangolin.utils.log_colours import green,cyan
 import select
 from Bio import SeqIO
+import gzip
+import lzma
 
 import tempfile
 from pangolin.utils.config import *
