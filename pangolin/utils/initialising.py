@@ -138,7 +138,7 @@ def setup_data(datadir_arg,analysis_mode, config):
         version = "Unknown"
         for r,d,f in os.walk(datadir):
             for fn in f:
-                if fn == "__init__.py":
+                if r.endswith('data') and fn == "__init__.py":
                     # print("Found __init__.py")
                     version = version_from_init(os.path.join(r, fn))
                     if not version:
