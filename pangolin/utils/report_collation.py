@@ -10,7 +10,7 @@ from pangolin.utils.config import *
 def usher_parsing(usher_result,output_report):
     """
     Parsing the output of usher inference into a lineage report with columns
-    name, lineage, conflict, usher_note
+    hash, lineage, conflict, usher_note
     """
 
     with open(output_report, "w") as fw:
@@ -56,7 +56,7 @@ def usher_parsing(usher_result,output_report):
 def pangolearn_parsing(pangolearn_result,output_report):
     """
     Parsing the output of pangolearn inference into a lineage report with columns
-    name, lineage, conflict, ambiguity_score, pangolearn_note
+    hash, lineage, conflict, ambiguity_score, pangolearn_note
     """
     with open(output_report,"w") as fw:
         fw.write("hash,lineage,conflict,ambiguity_score,pangolearn_note\n")
@@ -167,9 +167,11 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
     "designated","qc_status","qc_notes"]
 
     inference_csv header is:
-    usher: taxon,lineage,conflict,usher_note
-    pangolearn: taxon,lineage,conflict,ambiguity_score,pangolearn_note
+    usher: hash,lineage,conflict,usher_note
+    pangolearn: hash,lineage,conflict,ambiguity_score,pangolearn_note
 
+    cached_csv header is:
+    hash,lineage,conflict,version,note
     """
     # the lineage aliases
     alias_dict = get_alias_dict(alias_file)
@@ -197,75 +199,74 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
             for row in reader:
                 new_row = {}
                 add_relevant_fields_to_new_row(row,new_row)
+                has_assignment = False
 
+                inference_lineage = UNASSIGNED_LINEAGE_REPORTED
                 if row["hash"] in cached_dict:
+                    has_assignment = True
                     cached_out = cached_dict[row["hash"]]
                     add_relevant_fields_to_new_row(cached_out, new_row)
-                    if row["designated"] == "True" and not skip_cache:
-                        add_relevant_fields_to_new_row({"note": "Assigned from designation hash.",
-                                                        "version": f"PANGO-v{pango_version}",
-                                                        "lineage": row["lineage"],
-                                                        "designated": "True"},
-                                                       new_row)
+                    inference_lineage = cached_out["lineage"]
                 else:
                     new_row["version"] = version
-                    new_row[KEY_PANGOLIN_VERSION] = config[KEY_PANGOLIN_VERSION]
-                    new_row[KEY_SCORPIO_VERSION] = config[KEY_SCORPIO_VERSION]
-                    new_row[KEY_CONSTELLATIONS_VERSION] = config[KEY_CONSTELLATIONS_VERSION]
-
-                    new_row["note"] = ""
-                    # if it passed qc and mapped
                     if row["hash"] in inference_dict:
+                        has_assignment = True
                         inference_out = inference_dict[row["hash"]]
-
                         add_relevant_fields_to_new_row(inference_out,new_row)
+                        inference_lineage = inference_out["lineage"]
 
-                        expanded_pango_lineage = expand_alias(inference_out["lineage"], alias_dict)
+                new_row[KEY_PANGOLIN_VERSION] = config[KEY_PANGOLIN_VERSION]
+                new_row[KEY_SCORPIO_VERSION] = config[KEY_SCORPIO_VERSION]
+                new_row[KEY_CONSTELLATIONS_VERSION] = config[KEY_CONSTELLATIONS_VERSION]
 
-                        #1. check if hash assigned
-                        if row["designated"] == "True" and not skip_cache:
-                            new_row["note"] = "Assigned from designation hash."
-                            new_row["version"] = f"PANGO-v{pango_version}"
-                            new_row["lineage"] = row["lineage"] # revert back to designation hash lineage
+                # if it passed qc and mapped
+                if has_assignment:
+                    expanded_pango_lineage = expand_alias(inference_lineage, alias_dict)
 
-                        #2. check if scorpio assigned
-                        elif row["scorpio_constellations"]:
-                            scorpio_lineage = row["scorpio_mrca_lineage"]
-                            expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
+                    #1. check if hash assigned
+                    if row["designated"] == "True" and not skip_cache:
+                        new_row["note"] = "Assigned from designation hash."
+                        new_row["version"] = f"PANGO-v{pango_version}"
+                        new_row["lineage"] = row["lineage"] # revert back to designation hash lineage
 
-                            recombinant_parents = get_recombinant_parents(expanded_pango_lineage, alias_dict)
+                    #2. check if scorpio assigned
+                    elif row["scorpio_constellations"]:
+                        scorpio_lineage = row["scorpio_mrca_lineage"]
+                        expanded_scorpio_lineage = expand_alias(scorpio_lineage, alias_dict)
 
-                            if '/' not in scorpio_lineage:
-                                if expanded_scorpio_lineage and \
-                                        not expanded_pango_lineage.startswith(expanded_scorpio_lineage) and \
-                                        not (expanded_pango_lineage.startswith("X") and expanded_scorpio_lineage in recombinant_parents):
-                                    append_note(new_row, f'scorpio replaced lineage inference {inference_out["lineage"]}')
-                                    new_row["lineage"] = scorpio_lineage
+                        recombinant_parents = get_recombinant_parents(expanded_pango_lineage, alias_dict)
 
-                                elif row["scorpio_incompatible_lineages"] and inference_out["lineage"] in row["scorpio_incompatible_lineages"].split("|"):
-                                    append_note(new_row, f'scorpio replaced lineage inference {inference_out["lineage"]}')
-                                    new_row["lineage"] = scorpio_lineage
+                        if '/' not in scorpio_lineage:
+                            if expanded_scorpio_lineage and \
+                                    not expanded_pango_lineage.startswith(expanded_scorpio_lineage) and \
+                                    not (expanded_pango_lineage.startswith("X") and expanded_scorpio_lineage in recombinant_parents):
+                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                new_row["lineage"] = scorpio_lineage
 
-                                elif not expanded_scorpio_lineage:
-                                    append_note(new_row, f'scorpio replaced lineage inference {inference_out["lineage"]}')
+                            elif row["scorpio_incompatible_lineages"] and inference_lineage in row["scorpio_incompatible_lineages"].split("|"):
+                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                new_row["lineage"] = scorpio_lineage
+
+                            elif not expanded_scorpio_lineage:
+                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
+
+                    #3. check if lineage is a voc
+                    elif row["lineage"] in voc_list:
+                        while expanded_pango_lineage and len(expanded_pango_lineage) > 3:
+                            for voc in voc_list:
+                                if expanded_pango_lineage.startswith(voc + ".") or expanded_pango_lineage == voc:
+                                    # have no scorpio call but an inference voc/vui call
+                                    append_note(new_row, f'Lineage inference {inference_lineage} was not supported by scorpio')
                                     new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
-
-                        #3. check if lineage is a voc
-                        elif row["lineage"] in voc_list:
-                            while expanded_pango_lineage and len(expanded_pango_lineage) > 3:
-                                for voc in voc_list:
-                                    if expanded_pango_lineage.startswith(voc + ".") or expanded_pango_lineage == voc:
-                                        # have no scorpio call but an inference voc/vui call
-                                        append_note(new_row, f'Lineage inference {inference_out["lineage"]} was not supported by scorpio')
-                                        new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
-                                        new_row['conflict'] = ""
-                                        new_row['ambiguity_score'] = ""
-                                        break
-
-                                if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
+                                    new_row['conflict'] = ""
+                                    new_row['ambiguity_score'] = ""
                                     break
 
-                                expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
+                            if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
+                                break
+
+                            expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
 
                     else:
                         new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
