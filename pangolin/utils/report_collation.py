@@ -268,9 +268,7 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
 
                             expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
 
-                    else:
-                        new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
-
-                
+                else:
+                    new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
 
                 writer.writerow(new_row)
