@@ -67,6 +67,7 @@ def main(sysargs = sys.argv[1:]):
 
     a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
     a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    a_group.add_argument('--usher', action='store_true', default=False, help=argparse.SUPPRESS)
 
     d_group = parser.add_argument_group('Data options')
     d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangolin-data, scorpio and constellations (and pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
@@ -96,6 +97,9 @@ def main(sysargs = sys.argv[1:]):
     config = setup_config_dict(cwd)
     data_checks.check_install(config)
     set_up_verbosity(config)
+
+    if args.usher:
+        sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
 
     if args.add_assignment_cache:
         update.install_pangolin_assignment()
