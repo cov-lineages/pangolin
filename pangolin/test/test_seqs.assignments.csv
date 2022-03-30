@@ -1,0 +1,9 @@
+taxon,lineage
+India seq,B.1.617.1
+b117,B.1.1.7
+outgroup_A,A
+This_seq_is_too_short,Unassigned
+This_seq_has_lots_of_Ns,Unassigned
+Japan_seq,B
+USA_seq,B.1.314
+Unassigned_omicron_seq,Unassigned
