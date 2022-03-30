@@ -25,6 +25,8 @@ jobs:
         run: pangolin --version
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
+      - name: Compare assigned lineages (first two columns only) with expected values
+        run: cut -d, -f1,2 lineage_report.csv | diff - pangolin/test/test_seqs.assignments.csv
       - name: Run pangolin with test zip data
         run: pangolin pangolin/test/test_seqs.fasta.gz 2>&1 | tee pangolin_zip.log
       - name: Run pangolin with test all cache data
