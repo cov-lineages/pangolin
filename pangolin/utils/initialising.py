@@ -14,7 +14,7 @@ import constellations
 
 def setup_config_dict(cwd):
     default_dict = {
-            KEY_ANALYSIS_MODE:"usher", #options: accurate, fast, usher, pangolearn, assignment_cache
+            KEY_ANALYSIS_MODE:"usher", #options: accurate, fast, usher, pangolearn
             
             KEY_DESIGNATION_CACHE: "",
 

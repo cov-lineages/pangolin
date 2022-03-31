@@ -65,7 +65,7 @@ ALIAS_FILE = "alias_key.json"
 USHER_ASSIGNMENT_CACHE_FILE = "usher_assignments.cache.csv.gz"
 
 pangolearn_files = {
-    "bad_acc_rf.joblib":KEY_PLEARN_MODEL,
+    "randomForest_v1.joblib":KEY_PLEARN_MODEL,
     "randomForestHeaders_v1.joblib":KEY_PLEARN_HEADER
     }
 usher_files = {
