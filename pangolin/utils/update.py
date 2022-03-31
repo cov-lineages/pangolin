@@ -144,6 +144,8 @@ def update(version_dictionary, data_dir=None):
                     tf.extractall(path=tempdir)
                     tf.close()
                     destination_directory = os.path.join(data_dir, dependency_package)
+                    if os.path.isdir(destination_directory):
+                        shutil.rmtree(destination_directory)
                     shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
             else:
                 pip_install_dep(dependency, latest_release)
