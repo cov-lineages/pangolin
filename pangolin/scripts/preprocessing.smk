@@ -112,7 +112,6 @@ rule sequence_qc:
         print(green("****\nRunning sequence QC"))
         total_pass = seq_qc(input[0],output.pass_qc,output.csv,config[KEY_MAXAMBIG])
         print(green("Total passing QC: ") + f"{total_pass}")
-        print(green("****"))
         # if total_pass == 0:
         #     with open(outfile, "w") as fw:
         #         fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")

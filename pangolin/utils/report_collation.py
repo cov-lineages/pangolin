@@ -66,7 +66,7 @@ def pangolearn_parsing(pangolearn_result,output_report):
 
             for row in reader:
                 note = ''
-                support =  1 - round(float(row["score"]), 2)
+                support =  round((1 - float(row["score"])), 2)
                 ambiguity_score = round(float(row['imputation_score']), 2)
 
                 non_zero_ids = row["non_zero_ids"].split(";")
