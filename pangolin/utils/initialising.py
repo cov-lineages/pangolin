@@ -42,6 +42,8 @@ def setup_config_dict(cwd):
 
             KEY_SKIP_SCORPIO: False,
 
+            KEY_EXPANDED_LINEAGE: False,
+
             KEY_CONSTELLATION_FILES: [],
             
             KEY_PANGOLIN_VERSION: __version__,

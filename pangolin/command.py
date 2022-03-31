@@ -58,6 +58,8 @@ def main(sysargs = sys.argv[1:]):
     io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
     io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
     io_group.add_argument('--alignment-file', action="store",help="Multiple sequence alignment file name.")
+    io_group.add_argument('--expanded-lineage', action="store_true", default=False, help="Optional expanded lineage from alias.json in report.")
+
 
     a_group = parser.add_argument_group('Analysis options')
     a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
@@ -129,7 +131,11 @@ def main(sysargs = sys.argv[1:]):
     if args.skip_scorpio:
         print(green(f"****\nPangolin skipping scorpio steps.\n****"))
         config[KEY_SKIP_SCORPIO] = True
-
+    
+    if args.expanded_lineage:
+        print(green(f"****\nAdding expanded lineage column to output.\n****"))
+        config[KEY_EXPANDED_LINEAGE] = True
+        
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))

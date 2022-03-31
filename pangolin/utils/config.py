@@ -24,6 +24,8 @@ KEY_ALIAS_FILE="alias_file"
 
 KEY_SKIP_SCORPIO = "skip_scorpio"
 
+KEY_EXPANDED_LINEAGE="expanded_lineage"
+
 KEY_CONSTELLATION_FILES="constellation_files"
 KEY_USHER_PB = "usher_pb"
 KEY_PLEARN_MODEL = "plearn_model"
