@@ -237,6 +237,8 @@ rule generate_report:
             with open(input.csv, "r") as f:
                 reader = csv.DictReader(f)
                 header_names = reader.fieldnames
+                if config['expanded_lineage']:
+                    header_names.append('expanded_lineage')
                 writer = csv.DictWriter(fw, fieldnames=header_names,lineterminator='\n')
                 writer.writeheader()
 
@@ -276,6 +278,11 @@ rule generate_report:
                             if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
                                 break
                             expanded_pango_lineage = ".".join(expanded_pango_lineage.split(".")[:-1])
+                    if config['expanded_lineage']:
+                        if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
+                            new_row['expanded_lineage']=UNASSIGNED_LINEAGE_REPORTED
+                        else:
+                            new_row['expanded_lineage']=expand_alias(new_row['lineage'], alias_dict)
                     writer.writerow(new_row)
 
         print(green(f"Output file written to: ") + f"{output.csv}")
@@ -344,15 +351,21 @@ rule usher_to_report:
 
         ## Catching scorpio and usher output 
         with open(output.csv, "w") as fw:
-            fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
+            headers = ["taxon","lineage","conflict","ambiguity_score","scorpio_call","scorpio_support","scorpio_conflict","version","pangolin_version","pangoLEARN_version","pango_version","status","note"]
+            if config['expanded_lineage']:
+                headers.append('expanded_lineage')
+            fw.write(','.join(headers) + "\n")
             
             version = f"PANGO-{config['pango_version']}"
             with open(input.designated,"r") as f:
                 reader = csv.DictReader(f)
                 note = "Assigned from designation hash."
                 for row in reader:
-                    
-                    fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
+                    if config['expanded_lineage']: 
+                        expanded_lineage=expand_alias(row['lineage'], alias_dict)
+                        fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note},{expanded_lineage}\n")
+                    else:
+                        fw.write(f"{row['taxon']},{row['lineage']},,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},passed_qc,{note}\n")
                     passed.append(row['taxon'])
 
             version = f"PUSHER-{config['pango_version']}"
@@ -432,7 +445,11 @@ rule usher_to_report:
 
                         if not lineage_unassigned:
                             note = histogram_note
-                    fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
+                    if config['expanded_lineage']: 
+                        expanded_lineage=expand_alias(lineage, alias_dict)
+                        fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note},{expanded_lineage}\n")
+                    else:
+                        fw.write(f"{name},{lineage},{conflict},,{scorpio_call},{scorpio_support},{scorpio_conflict},{version},{config['pangolin_version']},,{config['pango_version']},passed_qc,{note}\n")
                     passed.append(name)
 
             version = f"PANGO-{config['pango_version']}"
@@ -443,12 +460,17 @@ rule usher_to_report:
                 for i in desc_list:
                     if i.startswith("fail="):
                         note = i.lstrip("fail=")
-
-                fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
+                if config['expanded_lineage']: 
+                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note},None\n")
+                else:
+                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,{note}\n")
             
             for record in SeqIO.parse(input.qc_pass_fasta,"fasta"):
                 if record.id not in passed:
-                    fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
+                    if config['expanded_lineage']:
+                        fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map,None\n")
+                    else:
+                        fw.write(f"{record.id},None,,,,,,{version},{config['pangolin_version']},{config['pangoLEARN_version']},{config['pango_version']},fail,failed_to_map\n")
 
         print(green(f"Output file written to: ") + f"{output.csv}")
         if config["alignment_out"]:

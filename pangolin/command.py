@@ -98,7 +98,8 @@ def main(sysargs = sys.argv[1:]):
     parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
     parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
     parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
-
+    parser.add_argument('--expanded-lineage', action="store_true", default=False, help="Optional expanded lineage from alias.json in report.")
+    
     if len(sysargs)<1:
         parser.print_help()
         sys.exit(-1)
@@ -185,7 +186,6 @@ def main(sysargs = sys.argv[1:]):
               f"pango-designation used by pangoLEARN/Usher: {PANGO_VERSION}\n"
               f"pango-designation aliases: {pango_designation.__version__}")
         sys.exit(0)
-
 
     dependency_checks.check_dependencies(args.usher)
 
@@ -355,7 +355,8 @@ def main(sysargs = sys.argv[1:]):
             "pangoLEARN_version":pangoLEARN.__version__,
             "pangolin_version":__version__,
             "pango_version":PANGO_VERSION,
-            "threads":args.threads
+            "threads":args.threads,
+            "expanded_lineage": args.expanded_lineage,
             }
 
         data_install_checks.check_install(config)
