@@ -1,6 +1,7 @@
 import os
 import sys
 import itertools
+from distutils.version import LooseVersion
 
 import pangolin.utils.custom_logger as custom_logger
 from pangolin.utils.log_colours import green,cyan
@@ -133,34 +134,38 @@ def setup_data(datadir_arg,analysis_mode, config):
             elif (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
                 constellation_files.append(os.path.join(r, fn))
 
+    pangolin_data_version = pangolin_data.__version__
     use_datadir = False
+    datadir_too_old = False
     if datadir:
         version = "Unknown"
         for r,d,f in os.walk(datadir):
             for fn in f:
+                # pangolin-data/__init__.py not constellations/__init__.py:
                 if r.endswith('data') and fn == "__init__.py":
-                    # print("Found __init__.py")
+                    # print("Found " + os.path.join(r, fn))
                     version = version_from_init(os.path.join(r, fn))
                     if not version:
                         continue
                     
-                    if version > pangolin_data.__version__:
-                        # only use this for pangoLEARN if the version is > than what we already have
-                        pangolin_data.__version__ = version
+                    if LooseVersion(version) >= LooseVersion(pangolin_data.__version__):
+                        # only use this if the version is >= than what we already have
+                        pangolin_data_version = version
                         use_datadir = True
                     else:
-                        sys.stderr.write(cyan(f"Warning: Ignoring specified datadir {datadir} - it contains pangoLEARN model files older than those installed \n"))
+                        datadir_too_old = True
+                        sys.stderr.write(cyan(f"Warning: Ignoring specified datadir {datadir} - it contains pangoLEARN model files older ({version}) than those installed ({pangolin_data.__version__})\n"))
 
     if use_datadir == False:
         # we haven't got a viable datadir from searching args.datadir
-        if datadir:
+        if datadir and not datadir_too_old:
             sys.stderr.write(cyan(
                 f"Warning: Ignoring specified datadir {datadir} - could not find __init__.py file to check versions \n"))
 
         pangolin_data_dir = pangolin_data.__path__[0]
         datadir = os.path.join(pangolin_data_dir,"data")
 
-    config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data.__version__
+    config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data_version
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
     config[KEY_DATADIR] = datadir
     config[KEY_CONSTELLATION_FILES] = constellation_files
