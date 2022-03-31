@@ -112,18 +112,6 @@ rule sequence_qc:
         print(green("****\nRunning sequence QC"))
         total_pass = seq_qc(input[0],output.pass_qc,output.csv,config[KEY_MAXAMBIG])
         print(green("Total passing QC: ") + f"{total_pass}")
-        # if total_pass == 0:
-        #     with open(outfile, "w") as fw:
-        #         fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-        #         for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
-        #             desc = record.description.split(" ")
-        #             reason = ""
-        #             for item in desc:
-        #                 if item.startswith("fail="):
-        #                     reason = item.split("=")[1]
-        #             fw.write(f"{record.id},None,,,,,,PANGO-v{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-        #     print(cyan(f'Note: no query sequences have passed the qc\n'))
-        #     sys.exit(0)
 
 rule merged_info:
     input:
