@@ -101,6 +101,8 @@ def main(sysargs = sys.argv[1:]):
     if args.usher:
         sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
 
+    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
+
     if args.add_assignment_cache:
         update.install_pangolin_assignment()
 
@@ -133,7 +135,6 @@ def main(sysargs = sys.argv[1:]):
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
-    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
     config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
     if args.aliases:
         print_alias_file_exit(config[KEY_ALIAS_FILE])
