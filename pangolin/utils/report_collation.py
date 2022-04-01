@@ -192,6 +192,8 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
             reader = csv.DictReader(f)
 
             out_header = FINAL_HEADER
+            if config['expanded_lineage']:
+                out_header.append('expanded_lineage')
             
             writer = csv.DictWriter(fw, fieldnames=out_header, lineterminator="\n")
             writer.writeheader()
@@ -270,5 +272,9 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
 
                 else:
                     new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
-
+                if config['expanded_lineage']:
+                    if new_row["lineage"] == UNASSIGNED_LINEAGE_REPORTED:
+                        new_row["expanded_lineage"] = UNASSIGNED_LINEAGE_REPORTED
+                    else:
+                        new_row["expanded_lineage"] = expand_alias(new_row["lineage"], alias_dict)
                 writer.writerow(new_row)
