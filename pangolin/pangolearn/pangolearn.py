@@ -33,7 +33,7 @@ def findReferenceSeq(referenceFile):
 def clean(referenceSeq,x, loc):
 	x = x.upper()
 
-	if x == 'T' or x == 'A' or x == 'G' or x == 'C' or x == '-':
+	if x in {'T', 'A', 'G', 'C', '-'}:
 		return x, False
 
 	if x == 'U':
