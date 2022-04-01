@@ -1,103 +1,93 @@
 #!/usr/bin/env python3
+from . import _program
 from pangolin import __version__
-import os
-import sys
-import argparse
-import itertools
-import snakemake
-from tempfile import TemporaryDirectory, TemporaryFile, gettempdir, tempdir
-import tempfile
-import gzip
-import joblib
-from pangolin.utils.log_colours import green,cyan,red
-import select
-import lzma
+from pangolin.utils import data_checks
 
 try:
-    import pangoLEARN
+    import pangolin_data
 except:
-    sys.stderr.write(cyan('Error: please install `pangoLEARN` with \n') +
-    "pip install git+https://github.com/cov-lineages/pangoLEARN.git")
-    sys.exit(-1)
+    data_checks.install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
 
 try:
     import scorpio
 except:
-    sys.stderr.write(cyan('Error: please install `scorpio` with \n') +
-    "pip install git+https://github.com/cov-lineages/scorpio.git")
-    sys.exit(-1)
-
-try:
-    from pangoLEARN import PANGO_VERSION
-except:
-    sys.stderr.write(cyan('Error: please update to pangoLEARN version >= 2021-05-27\n'))
-    sys.exit(-1)
+    data_checks.install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
 
 try:
     import constellations
 except:
-    sys.stderr.write(cyan('Error: please install `constellations` with \n') +
-    "pip install git+https://github.com/cov-lineages/constellations.git")
-    sys.exit(-1)
+    data_checks.install_error("constellations", "https://github.com/cov-lineages/constellations.git")
+
+import os
+import sys
+import argparse
 
 try:
-    import pango_designation
+    import snakemake
 except:
-    sys.stderr.write(cyan('Error: please install `pango_designation` with \n') +
-    "pip install git+https://github.com/cov-lineages/pango-designation.git")
+    sys.stderr.write(cyan(f'Error: package `{snakemake}` not found, please install snakemake or update pangolin environment.\n'))
     sys.exit(-1)
 
+
+from pangolin.utils.log_colours import green,cyan
 from pangolin.utils import dependency_checks
-from pangolin.utils import data_install_checks
+
 from pangolin.utils import update
 
-import pangolin.utils.custom_logger as custom_logger
 
-import pkg_resources
-from Bio import SeqIO
+from pangolin.utils.config import *
+from pangolin.utils.initialising import *
+import pangolin.utils.io_parsing as io
 
-from . import _program
+from pangolin.utils.report_collation import generate_final_report,get_voc_list
 
 thisdir = os.path.abspath(os.path.dirname(__file__))
 cwd = os.getcwd()
 
-def version_from_init(init_file):
-    with open(init_file, "r") as fr:
-        for l in fr:
-            if l.startswith("__version__"):
-                l = l.rstrip("\n")
-                version = l.split('=')[1]
-                version = version.replace('"',"").replace(" ","")
-                break
-    return version
 
 def main(sysargs = sys.argv[1:]):
     parser = argparse.ArgumentParser(prog = _program,
     description='pangolin: Phylogenetic Assignment of Named Global Outbreak LINeages',
     usage='''pangolin <query> [options]''')
 
-    parser.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
-    parser.add_argument('--alignment', action="store_true",help="Optional alignment output.")
-    parser.add_argument('--usher', action="store_true",help="Use UShER model instead of default pangoLEARN")
-    parser.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of --usher default from pangoLEARN repository or --datadir")
-    parser.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    parser.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
-    parser.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
-    parser.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
-    parser.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
-    parser.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
-    parser.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing a fasta alignment and guide tree")
-    parser.add_argument('--decompress-model',action="store_true",dest="decompress",help="Permanently decompress the model file to save time running pangolin.")
-    parser.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
-    parser.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
-    parser.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
-    parser.add_argument("-pv","--pangoLEARN-version", action='version', version=f"pangoLEARN {pangoLEARN.__version__}",help="show pangoLEARN's version number and exit")
-    parser.add_argument("-dv","--pango-designation-version", action='version', version=f"pango-designation {PANGO_VERSION} used for pangoLEARN and UShER training, alias version {pango_designation.__version__}",help="show pango-designation version number used for training and aliases, then exit")
-    parser.add_argument("--aliases", action='store_true', default=False, help="print pango-designation alias_key.json and exit")
-    parser.add_argument("--skip-designation-hash", action='store_true', default=False, help="Developer option - do not use designation hash to assign lineages")
-    parser.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangoLEARN and constellations, then exits")
-    parser.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of pangoLEARN and constellations, then exits")
-    parser.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
+    io_group = parser.add_argument_group('Input-Output options')
+    io_group.add_argument('query', nargs="*", help='Query fasta file of sequences to analyse.')
+    io_group.add_argument('-o','--outdir', action="store",help="Output directory. Default: current working directory")
+    io_group.add_argument('--outfile', action="store",help="Optional output file name. Default: lineage_report.csv")
+    io_group.add_argument('--tempdir',action="store",help="Specify where you want the temp stuff to go. Default: $TMPDIR")
+    io_group.add_argument("--no-temp",action="store_true",help="Output all intermediate files, for dev purposes.")
+    io_group.add_argument('--alignment', action="store_true",help="Output multiple sequence alignment.")
+    io_group.add_argument('--alignment-file', action="store",help="Multiple sequence alignment file name.")
+    io_group.add_argument('--expanded-lineage', action="store_true", default=False, help="Optional expanded lineage from alias.json in report.")
+
+
+    a_group = parser.add_argument_group('Analysis options')
+    a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
+    
+    a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
+    a_group.add_argument("--skip-scorpio", action='store_true', default=False, help="Developer option - do not use scorpio to check VOC/VUI lineage assignments.",dest="skip_scorpio")
+
+    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    a_group.add_argument('--usher', action='store_true', default=False, help=argparse.SUPPRESS)
+
+    d_group = parser.add_argument_group('Data options')
+    d_group.add_argument("--update", action='store_true', default=False, help="Automatically updates to latest release of pangolin, pangolin-data, scorpio and constellations (and pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
+    d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file (also pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
+    d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
+    d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
+    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
+    d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
+    d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
+
+    m_group = parser.add_argument_group('Misc options')
+    m_group.add_argument("--aliases", action='store_true', default=False, help="Print Pango alias_key.json and exit.")
+    m_group.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
+    m_group.add_argument("-pv","--pangolin-data-version", action='version', version=f"pangolin-data {pangolin_data.__version__}",help="show version number of pangolin data files (UShER tree and pangoLEARN model files) and exit.")
+    m_group.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
+    m_group.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
+    m_group.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
+
 
     if len(sysargs)<1:
         parser.print_help()
@@ -105,345 +95,146 @@ def main(sysargs = sys.argv[1:]):
     else:
         args = parser.parse_args(sysargs)
 
-    # find the data
-    if args.datadir is not None:
-        # this needs to be an absolute path when we pass it to scorpio
-        args.datadir = os.path.abspath(args.datadir)
-    alias_file = None
-    pango_designation_dir = pango_designation.__path__[0]
-    constellations_dir = constellations.__path__[0]
-    constellation_files = []
-    data_locations = [os.walk(pango_designation_dir), os.walk(constellations_dir)]
-    if args.datadir is not None:
-        data_locations.append(os.walk(args.datadir))
-    # the logic of this is to search the "built-in" pango_designation and constellations
-    # paths first and then if as custom datadir is passed, follow up with those, so that
-    # any files found in the datadir supercede the "built-in" modules. The assumption
-    # here is that the datadir contains newer (user updated) data
-    for r, _, f in itertools.chain.from_iterable(data_locations):
-        if r.endswith('/constellations') or r.endswith('/constellations/definitions'):
-            constellation_files = []  # only collect the constellations from the last directory found
-        for fn in f:
-            if r.endswith('/pango_designation') and fn == "alias_key.json":
-                alias_file = os.path.join(r, fn)
-                # the __init__.py file for pango_designation is on the same level as alias_key.json
-                pango_designation.__version__ = version_from_init(os.path.join(r, '__init__.py'))
-            elif r.endswith('/constellations') and fn == '__init__.py':
-                constellations.__version__ = version_from_init(os.path.join(r, fn))
-            elif (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
-                constellation_files.append(os.path.join(r, fn))
+    # Initialise config dict
+    config = setup_config_dict(cwd)
+    data_checks.check_install(config)
+    set_up_verbosity(config)
 
+    if args.usher:
+        sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
 
-    use_datadir = False
-    if args.datadir:
-        data_dir = os.path.join(cwd, args.datadir)
-        version = "Unknown"
-        for r,d,f in os.walk(data_dir):
-            for fn in f:
-                if r.endswith('pangoLEARN') and fn == "__init__.py":
-                    # print("Found __init__.py")
-                    version = version_from_init(os.path.join(r, fn))
-                    if version > pangoLEARN.__version__:
-                        # only use this for pangoLEARN if the version is > than what we already have
-                        pangoLEARN.__version__ = version
-                        use_datadir = True
-    if use_datadir == False:
-        # we haven't got a viable datadir from searching args.datadir
-        pangoLEARN_dir = pangoLEARN.__path__[0]
-        data_dir = os.path.join(pangoLEARN_dir,"data")
+    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
 
-    # print(f"Looking in {data_dir} for data files...")
+    if args.add_assignment_cache:
+        update.install_pangolin_assignment()
+
     if args.update:
-        update.update({'pangolin': __version__,
-                'pangolearn': pangoLEARN.__version__,
-                'constellations': constellations.__version__,
-                'scorpio': scorpio.__version__,
-                'pango-designation': pango_designation.__version__
-                })
+        version_dictionary = {'pangolin': __version__,
+                              'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
+                              'constellations': config[KEY_CONSTELLATIONS_VERSION],
+                              'scorpio': config[KEY_SCORPIO_VERSION]}
+        update.add_pangolin_assignment_if_installed(version_dictionary)
+        update.update(version_dictionary)
 
     if args.update_data:
-        update.update({'pangolearn': pangoLEARN.__version__,
-                'constellations': constellations.__version__,
-                'pango-designation': pango_designation.__version__}, args.datadir)
+        version_dictionary = {'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
+                              'constellations': config[KEY_CONSTELLATIONS_VERSION]}
+        update.add_pangolin_assignment_if_installed(version_dictionary)
+        update.update(version_dictionary, args.datadir)
 
-    if not alias_file:
-        sys.stderr.write(cyan('Could not find alias file: please update pango-designation with \n') +
-                         "pip install git+https://github.com/cov-lineages/pango-designation.git")
-        sys.exit(-1)
-
-    if args.aliases:
-        with open(alias_file, 'r') as handle:
-            for line in handle:
-                print(line.rstrip())
+    # install_pangolin_assignment doesn't exit so that --update/--update-data can be given at the
+    # same time (or a query file).  If --add-assignment-cache is the only arg, exit without error.
+    if args.add_assignment_cache and not args.query:
         sys.exit(0)
+
+    # add flag to config for whether to run scorpio
+    if args.skip_scorpio:
+        print(green(f"****\nPangolin skipping scorpio steps.\n****"))
+        config[KEY_SKIP_SCORPIO] = True
+    
+    if args.expanded_lineage:
+        print(green(f"****\nAdding expanded lineage column to output.\n****"))
+        config[KEY_EXPANDED_LINEAGE] = True
+        
+    # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
+    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
+
+    config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
+    if args.aliases:
+        print_alias_file_exit(config[KEY_ALIAS_FILE])
 
     if args.all_versions:
-        print(f"pangolin: {__version__}\n"
-              f"pangolearn: {pangoLEARN.__version__}\n"
-              f"constellations: {constellations.__version__}\n"
-              f"scorpio: {scorpio.__version__}\n"
-              f"pango-designation used by pangoLEARN/Usher: {PANGO_VERSION}\n"
-              f"pango-designation aliases: {pango_designation.__version__}")
-        sys.exit(0)
-
-
-    dependency_checks.check_dependencies(args.usher)
+        print_versions_exit(config)
 
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
-    if len(args.query) > 1:
-        print(cyan(f"Error: Too many query (input) fasta files supplied: {args.query}\nPlease supply one only"))
-        parser.print_help()
-        sys.exit(-1)
-    else:
-        # find the query fasta
-        if not args.decompress:
-            try:
-                if not os.path.exists(os.path.join(cwd, args.query[0])):
-                    if select.select([sys.stdin,],[],[],0.0)[0]:
-                        query = sys.stdin
-                    elif not select.select([sys.stdin,],[],[],0.0)[0]:
-                        tried_path = os.path.join(cwd, args.query[0])
-                        if tried_path.endswith("-"):
-                            sys.stderr.write(cyan(
-                                f'Error: cannot find query (input) fasta file using stdin.\n' +
-                                         'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                         ' for detailed instructions.\n'))
-                            sys.exit(-1)
-                        else:
-                            sys.stderr.write(cyan(f'Error: cannot find query (input) fasta file at:') + f'{tried_path}\n' +
-                                          'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                                          ' for detailed instructions.\n')
-                            sys.exit(-1)
-                else:
-                    query = os.path.join(cwd, args.query[0])
-                    print(green(f"The query file is:") + f"{query}")
-            except IndexError:
-                sys.stderr.write(cyan(
-                    f'Error: input query fasta could not be detected from a filepath or through stdin.\n' +
-                    'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                    ' for detailed instructions.\n'))
-                sys.exit(-1)
+    
+#   setup outdir and outfiles
+    config[KEY_OUTDIR] = io.set_up_outdir(args.outdir,cwd,config[KEY_OUTDIR])
+    config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
+    io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR], config)
+    config[KEY_ALIGNMENT_FILE],config[KEY_ALIGNMENT_OUT] = io.parse_alignment_options(args.alignment, config[KEY_OUTDIR], config[KEY_TEMPDIR],args.alignment_file, config[KEY_ALIGNMENT_FILE])
 
-        # default output dir
+    config[KEY_QUERY_FASTA] = io.find_query_file(cwd, config[KEY_TEMPDIR], args.query)
 
-    if args.outdir:
-        outdir = os.path.join(cwd, args.outdir)
-        if not os.path.exists(outdir):
-            try:
-                os.mkdir(outdir)
-            except:
-                sys.stderr.write(cyan(f'Error: cannot create directory:') + f"{outdir}")
-                sys.exit(-1)
-    else:
-        outdir = cwd
+    io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
 
-    if args.outfile:
-        outfile = os.path.join(outdir, args.outfile)
-    else:
-        outfile = os.path.join(outdir, "lineage_report.csv")
-
-    if args.tempdir:
-        to_be_dir = os.path.join(cwd, args.tempdir)
-        if not os.path.exists(to_be_dir):
-            os.mkdir(to_be_dir)
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=to_be_dir)
-        tempdir = temporary_directory.name
-    else:
-        temporary_directory = tempfile.TemporaryDirectory(suffix=None, prefix=None, dir=None)
-        tempdir = temporary_directory.name
-
-    if args.no_temp:
-        print(green(f"\n--no-temp: ") + f"all intermediate files will be written to {outdir}\n")
-        tempdir = outdir
-
-    if args.alignment:
-        align_dir = outdir
-        alignment_out = True
-    else:
-        align_dir = tempdir
-        alignment_out = False
-
-    """
-    QC steps:
-    1) check no empty seqs
-    2) check N content
-    3) write a file that contains just the seqs to run
-    """
-    if not args.decompress:
-        # do_not_run = []
-        # run = []
-        
-        print(green("** Running sequence QC **"))
-
-        if os.path.exists(os.path.join(cwd, args.query[0])):
-            file_ending = query.split(".")[-1]
-            if file_ending in ["gz","gzip","tgz"]:
-                query = gzip.open(query, 'rt')
-            elif file_ending in ["xz","lzma"]:
-                query = lzma.open(query, 'rt')
-                
-        post_qc_query = os.path.join(tempdir, 'query.post_qc.fasta')
-        fw_pass = open(post_qc_query,"w")
-        qc_fail = os.path.join(tempdir,'query.failed_qc.fasta')
-        fw_fail = open(qc_fail,"w")
-
-        total_input = 0
-        total_pass = 0
-        
-        try:
-            for record in SeqIO.parse(query, "fasta"):
-                total_input +=1
-                record.description = record.description.replace(' ', '_').replace(",","_")
-                record.id = record.description
-                if "," in record.id:
-                    record.id=record.id.replace(",","_")
-
-                if len(record) <args.minlen:
-                    record.description = record.description + f" fail=seq_len:{len(record)}"
-                    fw_fail.write(f">{record.description}\n{record.seq}\n")
-                else:
-                    num_N = str(record.seq).upper().count("N")
-                    prop_N = round((num_N)/len(record.seq), 2)
-                    if prop_N > args.maxambig:
-                        record.description = record.description + f" fail=N_content:{prop_N}"
-                        fw_fail.write(f">{record.description}\n{record.seq}\n")
-                    else:
-                        total_pass +=1
-                        seq = str(record.seq).replace("-","")
-                        fw_pass.write(f">{record.description}\n{seq}\n")
-        except UnicodeDecodeError:
-            sys.stderr.write(cyan(
-                f'Error: the input query fasta could not be parsed.\n' +
-                'Double check your query fasta and that compressed stdin was not passed.\n' +
-                'Please enter your fasta sequence file and refer to pangolin usage at: https://cov-lineages.org/pangolin.html' +
-                ' for detailed instructions.\n'))
-            sys.exit(-1)
-
-        print(green("Number of sequences detected: ") + f"{total_input}")
-        print(green("Total passing QC: ") + f"{total_pass}")
-        fw_fail.close()
-        fw_pass.close()
-
-        if total_pass == 0:
-            with open(outfile, "w") as fw:
-                fw.write("taxon,lineage,conflict,ambiguity_score,scorpio_call,scorpio_support,scorpio_conflict,version,pangolin_version,pangoLEARN_version,pango_version,status,note\n")
-                for record in SeqIO.parse(os.path.join(tempdir,'query.failed_qc.fasta'), "fasta"):
-                    desc = record.description.split(" ")
-                    reason = ""
-                    for item in desc:
-                        if item.startswith("fail="):
-                            reason = item.split("=")[1]
-                    fw.write(f"{record.id},None,,,,,,PANGO-{PANGO_VERSION},{__version__},{pangoLEARN.__version__},{PANGO_VERSION},fail,{reason}\n")
-            print(cyan(f'Note: no query sequences have passed the qc\n'))
-            sys.exit(0)
-
-        config = {
-            "query_fasta":post_qc_query,
-            "outdir":outdir,
-            "outfile":outfile,
-            "tempdir":tempdir,
-            "aligndir":align_dir,
-            "alignment_out": alignment_out,
-            "trim_start":265,   # where to pad to using datafunk
-            "trim_end":29674,   # where to pad after using datafunk
-            "qc_fail":qc_fail,
-            "alias_file": alias_file,
-            "constellation_files": constellation_files,
-            "skip_designation_hash": args.skip_designation_hash,
-            "verbose":args.verbose,
-            "pangoLEARN_version":pangoLEARN.__version__,
-            "pangolin_version":__version__,
-            "pango_version":PANGO_VERSION,
-            "threads":args.threads
-            }
-
-        data_install_checks.check_install(config)
-        snakefile = data_install_checks.get_snakefile(thisdir)
-
-        dependency_checks.set_up_verbosity(config)
-
-    trained_model = ""
-    header_file = ""
-    designated_hash=""
-    use_usher = args.usher
-    if args.usher_protobuf:
-        usher_protobuf = os.path.join(cwd, args.usher_protobuf)
-        if not os.path.exists(usher_protobuf):
-            sys.stderr.write('Error: cannot find --usher-tree file at {}\n'.format(usher_protobuf))
-            sys.exit(-1)
-        use_usher = True
-    else:
-        usher_protobuf = ""
-
-    for r,d,f in os.walk(data_dir):
-        for fn in f:
-            if fn == "decisionTreeHeaders_v1.joblib":
-                header_file = os.path.join(r, fn)
-            elif fn == "decisionTree_v1.joblib":
-                trained_model = os.path.join(r, fn)
-            elif fn =="lineages.hash.csv":
-                designated_hash = os.path.join(r, fn)
-            elif fn == "lineageTree.pb" and usher_protobuf == "":
-                usher_protobuf = os.path.join(r, fn)
-    if ((use_usher and (usher_protobuf == "" or designated_hash=="") or
-        (not use_usher and (trained_model=="" or header_file=="" or designated_hash=="")))):
-        print(cyan("""pangoLEARN version should be >= 2021-05-27. \n
-Appropriate data files not found from the installed pangoLEARN repo.
-Please see https://cov-lineages.org/pangolin.html for installation and updating instructions."""))
-        exit(1)
-    else:
-        if args.decompress:
-            prev_size = os.path.getsize(trained_model)
-
-            print("Decompressing model and header files.")
-            model = joblib.load(trained_model)
-            joblib.dump(model, trained_model, compress=0)
-            headers = joblib.load(header_file)
-            joblib.dump(headers, header_file, compress=0)
-
-            if os.path.getsize(trained_model) >= prev_size:
-                print(green(f'Success! Decompressed the model file. Exiting\n'))
-                sys.exit(0)
-            else:
-                print(cyan(f'Error: failed to decompress model. Exiting\n'))
-                sys.exit(0)
-
-        print(green("\nData files found:"))
-        if use_usher:
-            print(f"UShER tree:\t{usher_protobuf}")
-            print(f"Designated hash:\t{designated_hash}")
+    if config[KEY_ANALYSIS_MODE] == "usher":
+        # Find usher protobuf file (and if specified, assignment cache file too)
+        data_checks.get_datafiles(config[KEY_DATADIR],usher_files,config)
+        if args.usher_protobuf:
+            config[KEY_USHER_PB] = data_checks.check_file_arg(args.usher_protobuf, cwd, '--usher-tree')
+            print(green(f"Using usher tree file {args.usher_protobuf}"))
+        if args.assignment_cache:
+            config[KEY_ASSIGNMENT_CACHE] = data_checks.check_file_arg(args.assignment_cache, cwd, '--assignment-cache')
+            print(green(f"Using assignment cache file {args.assignment_cache}"))
+        elif args.use_assignment_cache:
+            config[KEY_ASSIGNMENT_CACHE] = data_checks.get_assignment_cache(USHER_ASSIGNMENT_CACHE_FILE, config)
+            print(green("Using pangolin-assignment cache"))
         else:
-            print(f"Trained model:\t{trained_model}")
-            print(f"Header file:\t{header_file}")
-            print(f"Designated hash:\t{designated_hash}")
+            config[KEY_ASSIGNMENT_CACHE] = ""
 
-        config["trained_model"] = trained_model
-        config["header_file"] = header_file
-        config["designated_hash"] = designated_hash
+    elif config[KEY_ANALYSIS_MODE] == "pangolearn":
+        # find designation cache and the model files
+        data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
+        if args.use_assignment_cache or args.assignment_cache:
+            sys.stderr.write(cyan(f"Warning: --use-assignment-cache and --assignment-cache are ignored when --analysis-mode is 'fast' or 'pangolearn'.\n"))
 
-    if use_usher:
-        config["usher_protobuf"] = usher_protobuf
+    preprocessing_snakefile = get_snakefile(thisdir,"preprocessing")
 
-    if config['verbose']:
+    if args.verbose:
         print(green("\n**** CONFIG ****"))
         for k in sorted(config):
             print(green(k), config[k])
 
-        status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                        workdir=tempdir,config=config, cores=args.threads,lock=False
+        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
+                                        workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
                                         )
     else:
         logger = custom_logger.Logger()
-        status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=tempdir,
-                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=config["log_api"]
+        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
+                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
                                     )
-
     if status: # translate "success" into shell exit code of 0
-       return 0
+       
+        if config[KEY_VERBOSE]:
+            print(green("\n**** CONFIG ****"))
+            for k in sorted(config):
+                print(green(k), config[k])
 
+            status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
+                                            workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
+                                            )
+        else:
+            logger = custom_logger.Logger()
+            status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
+                                        config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
+                                        )
+        
+       
+        if status: 
+            
+            ## Collate the report here
+
+            preprocessing_csv = os.path.join(config[KEY_TEMPDIR],"preprocessing.csv")
+            inference_csv = os.path.join(config[KEY_TEMPDIR],"inference_report.csv")
+            cached_csv = os.path.join(config[KEY_TEMPDIR],"cache_assigned.csv")
+            constellation_list = get_voc_list(os.path.join(config[KEY_TEMPDIR], "get_constellations.txt"), config[KEY_ALIAS_FILE])
+
+            generate_final_report(preprocessing_csv, inference_csv, cached_csv, config[KEY_ALIAS_FILE], constellation_list, config[KEY_PANGOLIN_DATA_VERSION],config[KEY_ANALYSIS_MODE], args.skip_designation_cache, config[KEY_OUTFILE],config)
+
+            print(green(f"****\nOutput file written to: ") + config[KEY_OUTFILE])
+
+            if config[KEY_ALIGNMENT_OUT]:
+                print(green(f"****\nOutput alignment written to: ") + config[KEY_ALIGNMENT_FILE])
+
+
+            return 0
+
+        return 1
     return 1
-
 
 if __name__ == '__main__':
     main()

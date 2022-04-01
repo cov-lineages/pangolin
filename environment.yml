@@ -11,10 +11,11 @@ dependencies:
   - snakemake-minimal<=6.8.0
   - gofasta
   - pysam==0.16.0.1
+  - ucsc-fatovcf>=426
   - usher>=0.3.2
+  - git-lfs
   - pip:
-    - git+https://github.com/cov-lineages/pangoLEARN.git
+    - git+https://github.com/cov-lineages/pangolin-data.git
     - git+https://github.com/cov-lineages/scorpio.git
     - git+https://github.com/cov-lineages/constellations.git
-    - git+https://github.com/cov-lineages/pango-designation.git
 

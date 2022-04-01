@@ -1,4 +1,4 @@
-name: pangolin-ubuntu
+name: pangolin-macosx
 on: [push, pull_request]
 defaults:
   run:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
+        os: ["macos-latest"]
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -25,8 +25,6 @@ jobs:
         run: pangolin --version
       - name: Run pangolin with test data
         run: pangolin pangolin/test/test_seqs.fasta 2>&1 | tee pangolin.log
-      - name: Compare assigned lineages (first two columns only) with expected values
-        run: cut -d, -f1,2 lineage_report.csv | diff - pangolin/test/test_seqs.assignments.csv
       - name: Run pangolin with test zip data
         run: pangolin pangolin/test/test_seqs.fasta.gz 2>&1 | tee pangolin_zip.log
       - name: Run pangolin with test all cache data
@@ -35,6 +33,10 @@ jobs:
         run: pangolin pangolin/test/all_hash.fasta 2>&1 | tee pangolin_cache.log
       - name: Run pangolin usher with test data
         run: pangolin --analysis-mode usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
+      - name: Run pangolin pangolearn with test data
+        run: pangolin --analysis-mode pangolearn pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_panolearn.log
+      - name: Run pangolin fast with test data
+        run: pangolin --analysis-mode fast pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_fast.log
       - name: Run pangolin accurate with test data
         run: pangolin --analysis-mode accurate pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_accurate.log
       - name: Install and run pytest
@@ -49,10 +51,6 @@ jobs:
         run: pangolin --all-versions  2>&1  | tee pangolin_versions.log
       - name: Run pangolin skip designation cache
         run: pangolin  pangolin/test/test_seqs.fasta --skip-designation-cache   2>&1  | tee pangolin_no_cache.log
-      - name: Run pangolin update 
-        run: pangolin --update   2>&1  | tee pangolin_update.log
-      - name: Run pangolin update data
-        run: pangolin --update-data   2>&1  | tee pangolin_update_data.log
       - name: Run pangolin verbose mode
         run: pangolin --verbose  pangolin/test/test_seqs.fasta  2>&1  | tee pangolin_verbose.log
 

@@ -8,7 +8,10 @@ from pangolin import __version__, _program
 setup(name='pangolin',
       version=__version__,
       packages=find_packages(),
-      scripts=['pangolin/scripts/pangolearn.smk'
+      scripts=[
+            'pangolin/scripts/pangolearn.smk',
+            'pangolin/scripts/usher.smk',
+            'pangolin/scripts/preprocessing.smk'
                 ],
       package_data={"pangolin":["data/*"]},
       install_requires=[

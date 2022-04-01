@@ -27,17 +27,16 @@ def check_this_dependency(dependency,missing):
     if not check:
         missing.append(dependency)
 
-def check_dependencies(usher_arg):
+def check_dependencies(dependency_list, module_list, usher_arg, cache_arg):
 
     missing = []
 
-    dependency_list = ["gofasta","minimap2","snakemake"]
-    
     if usher_arg:
         dependency_list.append("usher")
 
-    module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]
-
+    if cache_arg:
+        dependency_list.append("pangolin-assignment")
+    
     for dependency in dependency_list:
         check_this_dependency(dependency, missing)
 
@@ -58,16 +57,4 @@ def check_dependencies(usher_arg):
     else:
         print(green("All dependencies satisfied."))
 
-def set_up_verbosity(config):
-    if config["verbose"]:
-        config["quiet"] = False
-        config["log_api"] = ""
-        config["log_string"] = ""
-    else:
-        config["quiet"] = True
-        logger = custom_logger.Logger()
-        config["log_api"] = logger.log_handler
-
-        lh_path = os.path.realpath(lh.__file__)
-        config["log_string"] = f"--quiet --log-handler-script {lh_path} "
 # check_dependencies()
