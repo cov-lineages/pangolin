@@ -137,8 +137,8 @@ def main(sysargs = sys.argv[1:]):
         config[KEY_EXPANDED_LINEAGE] = True
         
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
-    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE]
+
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
     config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
@@ -151,6 +151,9 @@ def main(sysargs = sys.argv[1:]):
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
     
+    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    print_ram_warning(config[KEY_ANALYSIS_MODE])
+
 #   setup outdir and outfiles
     config[KEY_OUTDIR] = io.set_up_outdir(args.outdir,cwd,config[KEY_OUTDIR])
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
