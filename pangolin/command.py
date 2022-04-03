@@ -137,7 +137,7 @@ def main(sysargs = sys.argv[1:]):
         config[KEY_EXPANDED_LINEAGE] = True
         
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE]
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
 
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
