@@ -172,6 +172,9 @@ def setup_data(datadir_arg,analysis_mode, config):
     config[KEY_DATADIR] = datadir
     config[KEY_CONSTELLATION_FILES] = constellation_files
 
+def print_ram_warning(analysis_mode):
+    if analysis_mode == "pangolearn":
+        print(cyan("Warning: pangoLEARN mode may use a significant amount of RAM, be aware that it will not suit every system."))
     
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
