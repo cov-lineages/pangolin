@@ -10,7 +10,6 @@ dependencies:
   - python>=3.7
   - snakemake-minimal<=6.8.0
   - gofasta
-  - pysam==0.16.0.1
   - ucsc-fatovcf>=426
   - usher>=0.3.2
   - git-lfs
