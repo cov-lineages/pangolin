@@ -76,4 +76,4 @@ usher_files = {
 
 # Dependencies
 dependency_list = ["gofasta","minimap2","snakemake"]
-module_list = ["Bio","sklearn","pandas","joblib","pysam","pangoLEARN","constellations"]
+module_list = ["Bio","sklearn","pandas","joblib","pangoLEARN","constellations"]
