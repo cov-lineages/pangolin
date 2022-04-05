@@ -43,6 +43,20 @@ def get_latest_release(dependency):
     return latest_release, latest_release_tarball
 
 
+def git_lfs_install():
+    """
+    'git-lfs install' must be run after installing git-lfs and before cloning a repo
+    that uses Git LFS.
+    """
+    try:
+        subprocess.run(['git-lfs', 'install'],
+                   check=True,
+                   stdout=subprocess.DEVNULL,
+                   stderr=subprocess.DEVNULL)
+    except CalledProcessError as e:
+        sys.stderr.write(cyan(f'Error: "git-lfs install" failed: {e}'))
+        sys.exit(-1)
+
 def pip_install_dep(dependency, release):
     """
     Use pip install to install a cov-lineages repository with the specificed release
@@ -63,6 +77,7 @@ def install_pangolin_assignment():
         print(f"pangolin-assignment already installed with version {pangolin_assignment.__version__}; use --update or --update-data if you wish to update it.", file=sys.stderr)
 
     except:
+        git_lfs_install()
         latest_release, tarball = get_latest_release('pangolin-assignment')
         pip_install_dep('pangolin-assignment', latest_release)
         print(f"pangolin-assignment installed with latest release ({latest_release})")
