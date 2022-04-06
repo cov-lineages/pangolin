@@ -69,23 +69,27 @@ def set_up_analysis_mode(analysis_arg, default_mode):
     
     analysis_mode = default_mode
     if analysis_arg:
-        if not analysis_arg in ["usher","pangolearn","fast","accurate"]:
-            sys.stderr.write(cyan(f"Invalid `--analysis-mode` option specified: please select one of `fast`,`accurate`,`pangolearn` or`usher`\n"))
+        if not analysis_arg in ["usher","pangolearn","fast","accurate","scorpio"]:
+            sys.stderr.write(cyan(f"Invalid `--analysis-mode` option specified: please select one of `fast`,`accurate`,`pangolearn`, `usher` or `scorpio`\n"))
             sys.exit(-1)
 
         if analysis_arg in ['pangolearn','fast']:
             analysis_mode = "pangolearn"
         elif analysis_arg in ['usher','accurate']:
             analysis_mode = "usher"
+        elif analysis_arg == "scorpio":
+            analysis_mode = "scorpio"
 
     return analysis_mode
     
 def get_snakefile(thisdir,analysis_mode):
-    # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or preprocessing)
-    snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
-    if not os.path.exists(snakefile):
-        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
-        sys.exit(-1)
+    snakefile = ""
+    if analysis_mode != "scorpio":
+        # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or preprocessing)
+        snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
+        if not os.path.exists(snakefile):
+            sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
+            sys.exit(-1)
     return snakefile
 
 def check_datadir(datadir_arg):
