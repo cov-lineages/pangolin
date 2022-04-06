@@ -198,7 +198,7 @@ def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
         else:
             new_maxambig = round(1-(minlen/reflen), 3)
             print(f"Converting minimum length of {minlen} to maximum ambiguity of {new_maxambig}.")
-            if new_maxambig > config[KEY_MAXAMBIG]:
+            if new_maxambig < config[KEY_MAXAMBIG]:
                 config[KEY_MAXAMBIG] = new_maxambig
         
     print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
