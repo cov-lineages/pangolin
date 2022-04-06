@@ -2,7 +2,6 @@
 from . import _program
 from pangolin import __version__
 from pangolin.utils import data_checks
-
 try:
     import pangolin_data
 except:
@@ -238,10 +237,13 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
             if config[KEY_ALIGNMENT_OUT]:
                 print(green(f"****\nOutput alignment written to: ") + config[KEY_ALIGNMENT_FILE])
 
+            io.cleanup(args.no_temp,config[KEY_TEMPDIR])
 
             return 0
 
+        io.cleanup(no_temp,tempdir)
         return 1
+    io.cleanup(no_temp,tempdir)
     return 1
 
 if __name__ == '__main__':

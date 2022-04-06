@@ -7,6 +7,8 @@ import gzip
 import lzma
 
 import tempfile
+import shutil
+
 from pangolin.utils.config import *
 
 def find_query_file(cwd, tempdir, query_arg):
@@ -127,6 +129,9 @@ def set_up_tempdir(tempdir_arg,no_temp_arg,cwd,outdir,config):
             sys.stderr.write(cyan(f'Error: cannot write to temp directory {tempdir}.\n'))
             sys.exit(-1)
 
+def cleanup(no_temp,tempdir):
+    if not no_temp:
+        shutil.rmtree(tempdir)
 
 def parse_alignment_options(alignment_arg, outdir, tempdir,alignment_file_arg, alignment_file):
     if alignment_arg:
