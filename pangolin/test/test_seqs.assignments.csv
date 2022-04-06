@@ -2,8 +2,12 @@ taxon,lineage
 India seq,B.1.617.1
 b117,B.1.1.7
 outgroup_A,A
+issue_57_torsten_seq,Unassigned
+This_seq_has_6000_Ns_in_18000_bases,Unassigned
+This_seq_has_no_seq,Unassigned
 This_seq_is_too_short,Unassigned
 This_seq_has_lots_of_Ns,Unassigned
+This_seq_is_literally_just_N,Unassigned
 Japan_seq,B
 USA_seq,B.1.314
 Unassigned_omicron_seq,Unassigned
