@@ -283,6 +283,7 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
                         if '/' not in scorpio_lineage and scorpio_lineage!="None":
                             new_row["note"] =  f'scorpio called lineage {scorpio_lineage}'
                             new_row["lineage"] = scorpio_lineage
+                            new_row["version"] = f"SCORPIO_{config[KEY_CONSTELLATIONS_VERSION]}"
 
 
                 if config['expanded_lineage']:
