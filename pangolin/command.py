@@ -62,7 +62,12 @@ def main(sysargs = sys.argv[1:]):
 
 
     a_group = parser.add_argument_group('Analysis options')
-    a_group.add_argument('--analysis-mode', action="store",help="Specify which inference engine to use. Options: accurate (UShER), fast (pangoLEARN), pangolearn, usher. Default: UShER inference.")
+    a_group.add_argument('--analysis-mode', action="store",help="""Pangolin includes multiple analysis engines: UShER and pangoLEARN.
+Scorpio is used in conjunction with UShER/ pangoLEARN to curate variant of concern (VOC)-related lineage calls.
+UShER is the default and is selected using option "usher" or "accurate".
+pangoLEARN can alternatively be selected using "pangolearn" or "fast".
+Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio" mode, but in this case only VOC-related lineages will be assigned. 
+""")
     
     a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
     a_group.add_argument("--skip-scorpio", action='store_true', default=False, help="Developer option - do not use scorpio to check VOC/VUI lineage assignments.",dest="skip_scorpio")
@@ -181,7 +186,7 @@ def main(sysargs = sys.argv[1:]):
         data_checks.get_datafiles(config[KEY_DATADIR],pangolearn_files,config)
         if args.use_assignment_cache or args.assignment_cache:
             sys.stderr.write(cyan(f"Warning: --use-assignment-cache and --assignment-cache are ignored when --analysis-mode is 'fast' or 'pangolearn'.\n"))
-
+    
     preprocessing_snakefile = get_snakefile(thisdir,"preprocessing")
 
     if args.verbose:
@@ -197,22 +202,24 @@ def main(sysargs = sys.argv[1:]):
         status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
                                     config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
                                     )
-    if status: # translate "success" into shell exit code of 0
-       
-        if config[KEY_VERBOSE]:
-            print(green("\n**** CONFIG ****"))
-            for k in sorted(config):
-                print(green(k), config[k])
+    if status: 
+        if config[KEY_ANALYSIS_MODE] != "scorpio":
+            if config[KEY_VERBOSE]:
+                print(green("\n**** CONFIG ****"))
+                for k in sorted(config):
+                    print(green(k), config[k])
 
-            status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                            workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
+                status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
+                                                workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
+                                                )
+            else:
+                logger = custom_logger.Logger()
+                status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
+                                            config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
                                             )
         else:
-            logger = custom_logger.Logger()
-            status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
-                                        config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
-                                        )
-        
+            status = True
+            print("scorpio mode")
        
         if status: 
             
