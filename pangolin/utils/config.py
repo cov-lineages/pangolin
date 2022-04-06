@@ -15,7 +15,6 @@ KEY_NO_TEMP = "no_temp"
 
 KEY_DATADIR="datadir"
 
-KEY_MINLEN="minlen"
 KEY_MAXAMBIG="maxambig"
 KEY_TRIM_START="trim_start"
 KEY_TRIM_END="trim_end"

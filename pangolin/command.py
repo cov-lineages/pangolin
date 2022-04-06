@@ -162,7 +162,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
     io.set_up_tempdir(args.tempdir,args.no_temp,cwd,config[KEY_OUTDIR], config)
     config[KEY_ALIGNMENT_FILE],config[KEY_ALIGNMENT_OUT] = io.parse_alignment_options(args.alignment, config[KEY_OUTDIR], config[KEY_TEMPDIR],args.alignment_file, config[KEY_ALIGNMENT_FILE])
-
+    parse_qc_thresholds(args.maxambig, args.minlen, config[KEY_REFERENCE_FASTA], config)
     config[KEY_QUERY_FASTA] = io.find_query_file(cwd, config[KEY_TEMPDIR], args.query)
 
     io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])

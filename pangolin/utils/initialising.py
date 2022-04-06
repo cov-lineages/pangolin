@@ -2,6 +2,7 @@ import os
 import sys
 import itertools
 from distutils.version import LooseVersion
+from Bio import SeqIO
 
 import pangolin.utils.custom_logger as custom_logger
 from pangolin.utils.log_colours import green,cyan
@@ -33,7 +34,6 @@ def setup_config_dict(cwd):
             
             KEY_DATADIR:None,
 
-            KEY_MINLEN: 25000,
             KEY_MAXAMBIG: 0.3,
             KEY_TRIM_START:265, # where to pad to using datafunk
             KEY_TRIM_END:29674, # where to pad after using datafunk
@@ -175,6 +175,35 @@ def setup_data(datadir_arg,analysis_mode, config):
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
     config[KEY_DATADIR] = datadir
     config[KEY_CONSTELLATION_FILES] = constellation_files
+
+def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
+    
+    if maxambig:
+        maxambig = float(maxambig)
+        if maxambig <=1 and maxambig >= 0:
+            config[KEY_MAXAMBIG] = maxambig
+        else:
+            sys.stderr.write(cyan(f'Error: `--max-ambiguity` should be a float between 0 and 1.\n'))
+            sys.exit(-1)
+
+    if minlen:
+        minlen = float(minlen)
+        reflen = 0
+        for record in SeqIO.parse(reference_fasta,"fasta"):
+            reflen = len(record)
+        
+        if minlen>reflen:
+            sys.stderr.write(cyan(f'Error: `--min-length` should be less than the length of the reference: {ref_len}.\n'))
+            sys.exit(-1)
+        else:
+            new_maxambig = round(1-(minlen/reflen), 3)
+            print(f"Converting minimum length of {minlen} to maximum ambiguity of {new_maxambig}.")
+            if new_maxambig > config[KEY_MAXAMBIG]:
+                config[KEY_MAXAMBIG] = new_maxambig
+        
+    print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
+
+
 
     
 def print_alias_file_exit(alias_file):
