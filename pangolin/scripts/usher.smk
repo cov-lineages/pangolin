@@ -58,7 +58,7 @@ rule usher_cache:
                 writer.writeheader()
                 for row in reader:
                     hash = row["hash"]
-                    if hash in seqs_to_assign:
+                    if hash in seqs_to_assign and row["lineage"] != UNASSIGNED_LINEAGE_REPORTED:
                         cache_note = "Assigned from cache"
                         if not row["note"]:
                             row["note"] = cache_note
@@ -81,6 +81,7 @@ rule usher_inference:
         reference = config[KEY_REFERENCE_FASTA],
         usher_protobuf = config[KEY_USHER_PB]
     params:
+        ref_fa = os.path.join(config[KEY_TEMPDIR], "sequences.withref.fa"),
         vcf = os.path.join(config[KEY_TEMPDIR], "sequences.aln.vcf")
     threads: workflow.cores
     output:
@@ -91,7 +92,10 @@ rule usher_inference:
         """
         echo "Using UShER as inference engine."
         if [ -s {input.fasta:q} ]; then
-            faToVcf -includeNoAltN <(cat {input.reference:q} <(echo "") {input.fasta:q}) {params.vcf:q}
+            cat {input.reference:q} > {params.ref_fa:q}
+            echo >> {params.ref_fa:q}
+            cat {input.fasta:q} >> {params.ref_fa:q}
+            faToVcf -includeNoAltN {params.ref_fa:q} {params.vcf:q}
             usher -n -D -i {input.usher_protobuf:q} -v {params.vcf:q} -T {workflow.cores} -d '{config[tempdir]}' &> {log}
         else
             rm -f {output.txt:q}

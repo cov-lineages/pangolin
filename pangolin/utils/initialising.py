@@ -204,7 +204,9 @@ def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
     print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
 
 
-
+def print_ram_warning(analysis_mode):
+    if analysis_mode == "pangolearn":
+        print(cyan("Warning: pangoLEARN mode may use a significant amount of RAM, be aware that it will not suit every system."))
     
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:

@@ -145,6 +145,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     if config[KEY_ANALYSIS_MODE] == "scorpio":
         print(cyan(f"Warning: in `scorpio` mode only variants of concern (VOCs) defined in constellations can be assigned. `Version` column corresponds to constellation_version.\n"))
+
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
     config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
@@ -157,6 +158,9 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     # to enable not having to pass a query if running update
     # by allowing query to accept 0 to many arguments
     
+    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    print_ram_warning(config[KEY_ANALYSIS_MODE])
+
 #   setup outdir and outfiles
     config[KEY_OUTDIR] = io.set_up_outdir(args.outdir,cwd,config[KEY_OUTDIR])
     config[KEY_OUTFILE] = io.set_up_outfile(args.outfile, config[KEY_OUTFILE],config[KEY_OUTDIR])
