@@ -58,7 +58,7 @@ rule usher_cache:
                 writer.writeheader()
                 for row in reader:
                     hash = row["hash"]
-                    if hash in seqs_to_assign:
+                    if hash in seqs_to_assign and row["lineage"] != UNASSIGNED_LINEAGE_REPORTED:
                         cache_note = "Assigned from cache"
                         if not row["note"]:
                             row["note"] = cache_note
