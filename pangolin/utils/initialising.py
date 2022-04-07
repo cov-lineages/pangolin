@@ -2,6 +2,7 @@ import os
 import sys
 import itertools
 from distutils.version import LooseVersion
+from Bio import SeqIO
 
 import pangolin.utils.custom_logger as custom_logger
 from pangolin.utils.log_colours import green,cyan
@@ -33,7 +34,6 @@ def setup_config_dict(cwd):
             
             KEY_DATADIR:None,
 
-            KEY_MINLEN: 25000,
             KEY_MAXAMBIG: 0.3,
             KEY_TRIM_START:265, # where to pad to using datafunk
             KEY_TRIM_END:29674, # where to pad after using datafunk
@@ -69,23 +69,27 @@ def set_up_analysis_mode(analysis_arg, default_mode):
     
     analysis_mode = default_mode
     if analysis_arg:
-        if not analysis_arg in ["usher","pangolearn","fast","accurate"]:
-            sys.stderr.write(cyan(f"Invalid `--analysis-mode` option specified: please select one of `fast`,`accurate`,`pangolearn` or`usher`\n"))
+        if not analysis_arg in ["usher","pangolearn","fast","accurate","scorpio"]:
+            sys.stderr.write(cyan(f"Invalid `--analysis-mode` option specified: please select one of `fast`,`accurate`,`pangolearn`, `usher` or `scorpio`\n"))
             sys.exit(-1)
 
         if analysis_arg in ['pangolearn','fast']:
             analysis_mode = "pangolearn"
         elif analysis_arg in ['usher','accurate']:
             analysis_mode = "usher"
+        elif analysis_arg == "scorpio":
+            analysis_mode = "scorpio"
 
     return analysis_mode
     
 def get_snakefile(thisdir,analysis_mode):
-    # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or preprocessing)
-    snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
-    if not os.path.exists(snakefile):
-        sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
-        sys.exit(-1)
+    snakefile = ""
+    if analysis_mode != "scorpio":
+        # in this case now, the snakefile used should be the name of the analysis mode (i.e. pangolearn, usher or preprocessing)
+        snakefile = os.path.join(thisdir, 'scripts',f'{analysis_mode}.smk')
+        if not os.path.exists(snakefile):
+            sys.stderr.write(cyan(f'Error: cannot find Snakefile at {snakefile}. Check installation\n'))
+            sys.exit(-1)
     return snakefile
 
 def check_datadir(datadir_arg):
@@ -171,6 +175,34 @@ def setup_data(datadir_arg,analysis_mode, config):
     config[KEY_CONSTELLATIONS_VERSION] = constellations_version
     config[KEY_DATADIR] = datadir
     config[KEY_CONSTELLATION_FILES] = constellation_files
+
+def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
+    
+    if maxambig:
+        maxambig = float(maxambig)
+        if maxambig <=1 and maxambig >= 0:
+            config[KEY_MAXAMBIG] = maxambig
+        else:
+            sys.stderr.write(cyan(f'Error: `--max-ambiguity` should be a float between 0 and 1.\n'))
+            sys.exit(-1)
+
+    if minlen:
+        minlen = float(minlen)
+        reflen = 0
+        for record in SeqIO.parse(reference_fasta,"fasta"):
+            reflen = len(record)
+        
+        if minlen>reflen:
+            sys.stderr.write(cyan(f'Error: `--min-length` should be less than the length of the reference: {ref_len}.\n'))
+            sys.exit(-1)
+        else:
+            new_maxambig = round(1-(minlen/reflen), 3)
+            print(f"Converting minimum length of {minlen} to maximum ambiguity of {new_maxambig}.")
+            if new_maxambig < config[KEY_MAXAMBIG]:
+                config[KEY_MAXAMBIG] = new_maxambig
+        
+    print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
+
 
 def print_ram_warning(analysis_mode):
     if analysis_mode == "pangolearn":

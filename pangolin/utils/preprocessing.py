@@ -166,7 +166,6 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
                 if modified_name in name_dict:
                     query_record = info_dict[name_dict[modified_name]]
                     query_record["name"] = name
-                    writer.writerow(query_record)
                 else:
                     query_record = {
                         "name":name,
@@ -182,6 +181,8 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
                         "scorpio_conflict":"",
                         "scorpio_notes":""
                     }
+                    
+                writer.writerow(query_record)
 
 
 

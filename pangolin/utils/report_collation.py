@@ -176,15 +176,20 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
     # the lineage aliases
     alias_dict = get_alias_dict(alias_file)
 
-    # the output(s) of pangolearn/usher inference pipelines
-    # only pass qc records present in this file
-    inference_dict = get_inference_dict(inference_csv)
+    if analysis_mode == "scorpio":
+        inference_dict = {}
+    else:
+        # the output(s) of pangolearn/usher inference pipelines
+        # only pass qc records present in this file
+        inference_dict = get_inference_dict(inference_csv)
     cached_dict = get_cached_dict(cached_csv)
 
     if analysis_mode == "pangolearn":
         version = f"PLEARN-v{pango_version}"
     elif analysis_mode == "usher":
         version = f"PUSHER-v{pango_version}"
+    else:
+        version = f""
 
     with open(output_report, "w") as fw:
         # the output of preprocessing csv, all records present in this file
@@ -272,6 +277,15 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
 
                 else:
                     new_row["lineage"] = UNASSIGNED_LINEAGE_REPORTED
+                    if row["scorpio_constellations"]:
+                        scorpio_lineage = row["scorpio_mrca_lineage"]
+
+                        if '/' not in scorpio_lineage and scorpio_lineage!="None":
+                            new_row["note"] =  f'scorpio called lineage {scorpio_lineage}'
+                            new_row["lineage"] = scorpio_lineage
+                            new_row["version"] = f"SCORPIO_{config[KEY_CONSTELLATIONS_VERSION]}"
+
+
                 if config['expanded_lineage']:
                     if new_row["lineage"] == UNASSIGNED_LINEAGE_REPORTED:
                         new_row["expanded_lineage"] = UNASSIGNED_LINEAGE_REPORTED
