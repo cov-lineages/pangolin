@@ -71,8 +71,8 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
     a_group.add_argument("--skip-scorpio", action='store_true', default=False, help="Developer option - do not use scorpio to check VOC/VUI lineage assignments.",dest="skip_scorpio")
 
-    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    a_group.add_argument('--max-ambig', action="store", type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    a_group.add_argument('--min-length', action="store", type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
     a_group.add_argument('--usher', action='store_true', default=False, help=argparse.SUPPRESS)
 
     d_group = parser.add_argument_group('Data options')
