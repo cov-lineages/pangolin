@@ -193,7 +193,7 @@ def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
             reflen = len(record)
         
         if minlen>reflen:
-            sys.stderr.write(cyan(f'Error: `--min-length` should be less than the length of the reference: {ref_len}.\n'))
+            sys.stderr.write(cyan(f'Error: `--min-length` should be less than the length of the reference: {reflen}.\n'))
             sys.exit(-1)
         else:
             new_maxambig = round(1-(minlen/reflen), 3)
