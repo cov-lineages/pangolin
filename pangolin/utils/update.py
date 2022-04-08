@@ -3,6 +3,7 @@
 import os
 import sys
 import json
+import re
 import shutil
 import tarfile
 import subprocess
@@ -14,8 +15,10 @@ from pangolin.utils.log_colours import green,cyan,red
 
 version_dict_keys = ['pangolin', 'scorpio', 'pangolin-data', 'constellations', 'pangolin-assignment']
 
+dependency_web_dir = { 'pangolin-assignment': 'https://hgdownload-test.gi.ucsc.edu/goldenPath/wuhCor1/pangolin-assignment' }
 
-def get_latest_release(dependency):
+
+def get_latest_cov_lineages(dependency):
     """
     Using the github releases API check for the latest release of dependency and its tarball
     """
@@ -43,29 +46,56 @@ def get_latest_release(dependency):
     return latest_release, latest_release_tarball
 
 
-def git_lfs_install():
+def get_latest_web_dir(dependency, web_dir):
     """
-    'git-lfs install' must be run after installing git-lfs and before cloning a repo
-    that uses Git LFS.
+    Find the tarball url with the latest release from a web directory with versioned tarballs
+    instead of github.  An HTTP GET of the web directory must return some text that contains
+    names of files in that directory, some of which are {dependency}-{version}.tar.gz.
     """
     try:
-        subprocess.run(['git-lfs', 'install'],
-                   check=True,
-                   stdout=subprocess.DEVNULL,
-                   stderr=subprocess.DEVNULL)
-    except CalledProcessError as e:
-        sys.stderr.write(cyan(f'Error: "git-lfs install" failed: {e}'))
+        listing = request.urlopen(web_dir).read().decode('utf-8')
+    except:
+        sys.stderr.write(cyan(f"Unable to read {web_dir}"))
         sys.exit(-1)
+    tarRe = re.compile(f"{dependency}-(.*?).tar.gz")
+    matches = list(set(tarRe.findall(listing)))
+    if not matches:
+        sys.stderr.write(cyan(f"Can't find {dependency}-<version>.tar.gz files in listing of {web_dir}"))
+        sys.exit(-1)
+    versions = [LooseVersion(v) for v in matches]
+    versions.sort()
+    latest_release = str(versions[-1])
+    latest_release_tarball = f"{web_dir}/{dependency}-{latest_release}.tar.gz"
+    return latest_release, latest_release_tarball
 
-def pip_install_dep(dependency, release):
+
+def get_latest_release(dependency):
     """
-    Use pip install to install a cov-lineages repository with the specificed release
+    If dependency comes from a web directory then find latest release and tarball there, otherwise
+    query github API for cov-lineages repo
     """
-    url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
+    if dependency in dependency_web_dir:
+        return get_latest_web_dir(dependency, dependency_web_dir[dependency])
+    else:
+        return get_latest_cov_lineages(dependency)
+
+
+def pip_install_url(url):
+    """
+    Use pip install to install a package from a url.
+    """
     subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade', url],
                    check=True,
                    stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL)
+
+
+def pip_install_cov_lineages(dependency, release):
+    """
+    Use pip install to install a cov-lineages repository with the specified release
+    """
+    url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
+    pip_install_url(url)
 
 
 def install_pangolin_assignment():
@@ -77,9 +107,8 @@ def install_pangolin_assignment():
         print(f"pangolin-assignment already installed with version {pangolin_assignment.__version__}; use --update or --update-data if you wish to update it.", file=sys.stderr)
 
     except:
-        git_lfs_install()
         latest_release, tarball = get_latest_release('pangolin-assignment')
-        pip_install_dep('pangolin-assignment', latest_release)
+        pip_install_url(tarball)
         print(f"pangolin-assignment installed with latest release ({latest_release})")
 
 
@@ -99,7 +128,7 @@ def update(version_dictionary, data_dir=None):
     Using the github releases API check for the latest current release
     of the set of dependencies provided e.g., pangolin, scorpio, pangolin-data and
     constellations for complete --update and just pangolearn and constellations
-    for --update_data.  If pangolin-assignment has been added to the installation
+    for --update_data.  If pangolin-assignment has been added to version_dictionary
     then it will be included in both --update and --update-data.
 
     Dictionary keys must be one of pangolin, scorpio, pangolin-data, constellations
@@ -163,7 +192,10 @@ def update(version_dictionary, data_dir=None):
                         shutil.rmtree(destination_directory)
                     shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
             else:
-                pip_install_dep(dependency, latest_release)
+                if dependency in dependency_web_dir:
+                    pip_install_url(latest_release_tarball)
+                else:
+                    pip_install_cov_lineages(dependency, latest_release)
             print(f"{dependency} updated to {latest_release}", file=sys.stderr)
         elif version > latest_release_tidied:
             print(f"{dependency} ({version}) is newer than latest stable "
