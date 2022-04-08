@@ -142,9 +142,6 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
         
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
-    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
-    if config[KEY_ANALYSIS_MODE] == "scorpio":
-        print(cyan(f"Warning: in `scorpio` mode only variants of concern (VOCs) defined in constellations can be assigned. `Version` column corresponds to constellation_version.\n"))
 
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
@@ -159,6 +156,9 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     # by allowing query to accept 0 to many arguments
     
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    if config[KEY_ANALYSIS_MODE] == "scorpio":
+        print(cyan(f"Warning: in `scorpio` mode only variants of concern (VOCs) defined in constellations can be assigned. `Version` column corresponds to constellation_version.\n"))
+
     print_ram_warning(config[KEY_ANALYSIS_MODE])
 
 #   setup outdir and outfiles
