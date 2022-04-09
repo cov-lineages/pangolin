@@ -245,9 +245,9 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
 
             return 0
 
-        io.cleanup(args.no_temp,tempdir)
+        io.cleanup(args.no_temp,config[KEY_TEMPDIR])
         return 1
-    io.cleanup(args.no_temp,tempdir)
+    io.cleanup(args.no_temp,config[KEY_TEMPDIR])
     return 1
 
 if __name__ == '__main__':
