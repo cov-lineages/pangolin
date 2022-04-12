@@ -71,8 +71,8 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     a_group.add_argument("--skip-designation-cache", action='store_true', default=False, help="Developer option - do not use designation cache to assign lineages.",dest="skip_designation_cache")
     a_group.add_argument("--skip-scorpio", action='store_true', default=False, help="Developer option - do not use scorpio to check VOC/VUI lineage assignments.",dest="skip_scorpio")
 
-    a_group.add_argument('--max-ambig', action="store", default=0.3, type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
-    a_group.add_argument('--min-length', action="store", default=25000, type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
+    a_group.add_argument('--max-ambig', action="store", type=float,help="Maximum proportion of Ns allowed for pangolin to attempt assignment. Default: 0.3",dest="maxambig")
+    a_group.add_argument('--min-length', action="store", type=int,help="Minimum query length allowed for pangolin to attempt assignment. Default: 25000",dest="minlen")
     a_group.add_argument('--usher', action='store_true', default=False, help=argparse.SUPPRESS)
 
     d_group = parser.add_argument_group('Data options')
@@ -142,9 +142,6 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
         
     # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
-    print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
-    if config[KEY_ANALYSIS_MODE] == "scorpio":
-        print(cyan(f"Warning: in `scorpio` mode only variants of concern (VOCs) defined in constellations can be assigned. `Version` column corresponds to constellation_version.\n"))
 
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
@@ -159,6 +156,9 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     # by allowing query to accept 0 to many arguments
     
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
+    if config[KEY_ANALYSIS_MODE] == "scorpio":
+        print(cyan(f"Warning: in `scorpio` mode only variants of concern (VOCs) defined in constellations can be assigned. `Version` column corresponds to constellation_version.\n"))
+
     print_ram_warning(config[KEY_ANALYSIS_MODE])
 
 #   setup outdir and outfiles
@@ -245,9 +245,9 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
 
             return 0
 
-        io.cleanup(no_temp,tempdir)
+        io.cleanup(args.no_temp,config[KEY_TEMPDIR])
         return 1
-    io.cleanup(no_temp,tempdir)
+    io.cleanup(args.no_temp,config[KEY_TEMPDIR])
     return 1
 
 if __name__ == '__main__':
