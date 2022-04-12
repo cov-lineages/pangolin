@@ -15,7 +15,7 @@ from pangolin.utils.log_colours import green,cyan,red
 
 version_dict_keys = ['pangolin', 'scorpio', 'pangolin-data', 'constellations', 'pangolin-assignment']
 
-dependency_web_dir = { 'pangolin-assignment': 'https://hgdownload-test.gi.ucsc.edu/goldenPath/wuhCor1/pangolin-assignment' }
+dependency_web_dir = { 'pangolin-assignment': 'https://hgdownload.gi.ucsc.edu/goldenPath/wuhCor1/pangolin-assignment' }
 
 
 def get_latest_cov_lineages(dependency):
@@ -32,8 +32,8 @@ def get_latest_cov_lineages(dependency):
     # so if this is thrown and there is definitely connectivity then
     # double check the version labels
     except Exception as e:
-        sys.stderr.write(cyan("Unable to connect to reach github API "
-                               "--update/--data_update requires internet "
+        sys.stderr.write(cyan("Unable to connect to reach github API. "
+                               "--update/--update-data requires internet "
                                "connectivity so may not work on certain "
                                "systems or if your IP has exceeded the "
                               f"5,000 request per hour limit\n{e}\n"))
