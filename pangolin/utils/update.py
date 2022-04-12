@@ -37,9 +37,16 @@ def get_latest_release(dependency):
         sys.exit(-1)
 
     latest_release = json.load(latest_release)
-    latest_release_tarball = latest_release[0]['tarball_url']
+    try:
+        # Find the latest stable release
+        latest_release_dict = next(x for x in latest_release if not x['draft'] and not x['prerelease'])
+    except:
+        # All releases to date are prerelease or draft, just take the latest
+        latest_release_dict = latest_release[0]
+    latest_release_tarball = latest_release_dict['tarball_url']
     # extract and clean up latest release version
-    latest_release = latest_release[0]['tag_name']
+    latest_release = latest_release_dict['tag_name']
+    print(f"Latest for {dependency} is {latest_release}")
     return latest_release, latest_release_tarball
 
 
