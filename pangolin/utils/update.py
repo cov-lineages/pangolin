@@ -46,7 +46,6 @@ def get_latest_release(dependency):
     latest_release_tarball = latest_release_dict['tarball_url']
     # extract and clean up latest release version
     latest_release = latest_release_dict['tag_name']
-    print(f"Latest for {dependency} is {latest_release}")
     return latest_release, latest_release_tarball
 
 
