@@ -45,7 +45,7 @@ rule align_to_reference:
         
         #if input is plaintext, pipe in the contents, otherwise prepend with decompressor
         if params.compression_type == "plaintext":
-            shell_command = "< \"{input.fasta}\"" + shell_command
+            shell_command = "cat \"{input.fasta}\"" + shell_command
         elif params.compression_type == "xz":
             shell_command = "xz -c -d \"{input.fasta}\"" + shell_command
         elif params.compression_type == "gz":
