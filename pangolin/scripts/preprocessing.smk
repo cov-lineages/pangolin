@@ -18,6 +18,7 @@ rule align_to_reference:
         fasta = config[KEY_QUERY_FASTA],
         reference = config[KEY_REFERENCE_FASTA]
     params:
+        compression_type = config[KEY_INPUT_COMPRESSION_TYPE],
         trim_start = config[KEY_TRIM_START],
         trim_end = config[KEY_TRIM_END],
         sam = os.path.join(config[KEY_TEMPDIR],"mapped.sam")
@@ -25,23 +26,57 @@ rule align_to_reference:
         fasta = config[KEY_ALIGNMENT_FILE]
     log:
         os.path.join(config[KEY_TEMPDIR], "logs/minimap2_sam.log")
-    shell:
-    # the first line of this streams through the fasta and replaces '-' in sequences with empty strings
-    # this could be replaced by a python script later
-    #  {{ gsub(" ","_",$0); }} {{ gsub(",","_",$0); }}
-        """
-        awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' "{input.fasta}" | \
-        awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}'  | \
-        minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
-        gofasta sam toMultiAlign \
-            -s {params.sam:q} \
-            -t {workflow.cores} \
-            --reference {input.reference:q} \
-            --trimstart {params.trim_start} \
-            --trimend {params.trim_end} \
-            --trim \
-            --pad > '{output.fasta}'
-        """
+    run:
+        if params.compression_type == "plaintext":
+            # the first line of this streams through the fasta and replaces '-' in sequences with empty strings
+            # this could be replaced by a python script later
+            #  {{ gsub(" ","_",$0); }} {{ gsub(",","_",$0); }}
+            shell("""
+            awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' "{input.fasta}" | \
+            awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}'  | \
+            minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
+            gofasta sam toMultiAlign \
+                -s {params.sam:q} \
+                -t {workflow.cores} \
+                --reference {input.reference:q} \
+                --trimstart {params.trim_start} \
+                --trimend {params.trim_end} \
+                --trim \
+                --pad > '{output.fasta}'
+            """)
+        elif params.compression_type == "xz":
+            shell("""
+                xz -c -d -T {workflow.cores} "{input.fasta}" | \
+                awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' | \
+                awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}' | \
+                minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
+                gofasta sam toMultiAlign \
+                    -s {params.sam:q} \
+                    -t {workflow.cores} \
+                    --reference {input.reference:q} \
+                    --trimstart {params.trim_start} \
+                    --trimend {params.trim_end} \
+                    --trim \
+                    --pad > '{output.fasta}'
+            """)
+        elif params.compression_type == "gz":
+            #gzip is single threaded, could use another implementation
+            shell("""
+                gzip -c -d "{input.fasta}" | \
+                awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' | \
+                awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}'  | \
+                minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
+                gofasta sam toMultiAlign \
+                    -s {params.sam:q} \
+                    -t {workflow.cores} \
+                    --reference {input.reference:q} \
+                    --trimstart {params.trim_start} \
+                    --trimend {params.trim_end} \
+                    --trim \
+                    --pad > '{output.fasta}'
+            """)
+
+
 
 rule create_seq_hash:
     input:

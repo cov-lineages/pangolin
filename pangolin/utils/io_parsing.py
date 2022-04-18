@@ -55,12 +55,14 @@ def find_query_file(cwd, tempdir, query_arg):
 
 
 def quick_check_query_file(cwd, query_arg, query):
-
+    input_compression_type = "plaintext"
     if os.path.exists(os.path.join(cwd, query_arg[0])):
         file_ending = query.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
+            input_compression_type = "gz"
             query = gzip.open(query, 'rt')
         elif file_ending in ["xz","lzma"]:
+            input_compression_type = "xz"
             query = lzma.open(query, 'rt')
     try:
         parse= True
@@ -70,6 +72,8 @@ def quick_check_query_file(cwd, query_arg, query):
             if parse == False:
                 break
             parse = False
+
+        return input_compression_type
     except UnicodeDecodeError:
         sys.stderr.write(cyan(
             f'Error: the input query fasta could not be parsed.\n' +
