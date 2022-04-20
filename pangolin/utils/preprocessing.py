@@ -5,6 +5,7 @@ import hashlib
 from Bio import SeqIO
 import csv
 import gzip
+import lzma
 
 
 def create_seq_hash(seq_file,hash_map,hashed_seqs):
@@ -154,6 +155,8 @@ def merge_files(fasta, qc_status, scorpio_report, designated, hash_map, out_merg
         file_ending = fasta.split(".")[-1]
         if file_ending in ["gz","gzip","tgz"]:
             query = gzip.open(fasta, 'rt')
+        elif file_ending in ["xz","lzma"]:
+            query = lzma.open(fasta, 'rt')
         else:
             query = open(fasta,"r")
 
