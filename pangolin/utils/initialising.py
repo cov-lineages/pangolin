@@ -45,6 +45,8 @@ def setup_config_dict(cwd):
             KEY_EXPANDED_LINEAGE: False,
 
             KEY_CONSTELLATION_FILES: [],
+
+            KEY_INPUT_COMPRESSION_TYPE: "plaintext",
             
             KEY_PANGOLIN_VERSION: __version__,
             KEY_PANGOLIN_DATA_VERSION: pangolin_data.__version__,

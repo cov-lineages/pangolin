@@ -31,6 +31,8 @@ KEY_PLEARN_MODEL = "plearn_model"
 KEY_PLEARN_HEADER = "plearn_header"
 KEY_DESIGNATION_CACHE="designation_cache"
 KEY_ASSIGNMENT_CACHE = "assignment_cache"
+KEY_INPUT_COMPRESSION_TYPE = "compression_type"
+
 
 # Version KEYS
 

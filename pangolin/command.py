@@ -169,7 +169,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     parse_qc_thresholds(args.maxambig, args.minlen, config[KEY_REFERENCE_FASTA], config)
     config[KEY_QUERY_FASTA] = io.find_query_file(cwd, config[KEY_TEMPDIR], args.query)
 
-    io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
+    config[KEY_INPUT_COMPRESSION_TYPE] = io.quick_check_query_file(cwd, args.query, config[KEY_QUERY_FASTA])
 
     if config[KEY_ANALYSIS_MODE] == "usher":
         # Find usher protobuf file (and if specified, assignment cache file too)
