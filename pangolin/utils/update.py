@@ -59,8 +59,9 @@ def git_lfs_install():
                    check=True,
                    stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL)
-    except CalledProcessError as e:
-        sys.stderr.write(cyan(f'Error: "git-lfs install" failed: {e}'))
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode('utf-8')
+        sys.stderr.write(cyan(f"Error: {e}:\n{stderr}\n"))
         sys.exit(-1)
 
 def pip_install_dep(dependency, release):
