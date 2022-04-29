@@ -1,6 +1,8 @@
 import os
 import sys
 import itertools
+import re
+import subprocess
 from distutils.version import LooseVersion
 from Bio import SeqIO
 
@@ -217,6 +219,23 @@ def print_alias_file_exit(alias_file):
     
     sys.exit(0)
 
+def print_conda_version(pkg_list):
+    for pkg in pkg_list:
+        try:
+            result = subprocess.run(['conda', 'list', pkg],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr.decode('utf-8')
+            sys.stderr.write(cyan(f"Error: {e}:\n{stderr}\n"))
+            sys.exit(-1)
+        output = result.stdout.decode('utf-8')
+        m = re.search(f'\n{pkg} +([0-9.]+) .*\sbioconda$', output)
+        if m:
+            version = m.group(1)
+            print(f"{pkg}: {version}")
+        else:
+            sys.stderr.write(cyan(f"version not found in output of 'conda list {pkg}':\n{output}\n"))
+
 def print_versions_exit(config):
     print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
             f"pangolin-data: {config[KEY_PANGOLIN_DATA_VERSION]}\n"
@@ -228,6 +247,8 @@ def print_versions_exit(config):
         print(f"pangolin-assignment: {pangolin_assignment.__version__}")
     except:
         pass
+    # Print versions of other important tools used by pangolin
+    print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
     sys.exit(0)
 
 def set_up_verbosity(config):
