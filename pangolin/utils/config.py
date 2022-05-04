@@ -40,6 +40,8 @@ KEY_PANGOLIN_DATA_VERSION="pangolin_data_version"
 KEY_PANGOLIN_VERSION="pangolin_version"
 KEY_CONSTELLATIONS_VERSION="constellation_version"
 KEY_SCORPIO_VERSION="scorpio_version"
+KEY_PANGOLIN_ASSIGNMENT_VERSION="pangolin_assignment_version"
+KEY_PANGOLIN_ASSIGNMENT_PATH="pangolin_assignment_path"
 
 KEY_VERBOSE="verbose"
 KEY_LOG_API = "log_api"

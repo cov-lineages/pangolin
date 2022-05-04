@@ -4,17 +4,17 @@ from pangolin import __version__
 from pangolin.utils import data_checks
 try:
     import pangolin_data
-except:
+except ImportError:
     data_checks.install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
 
 try:
     import scorpio
-except:
+except ImportError:
     data_checks.install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
 
 try:
     import constellations
-except:
+except ImportError:
     data_checks.install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
 import os
@@ -110,20 +110,22 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
 
     if args.add_assignment_cache:
-        update.install_pangolin_assignment()
+        update.install_pangolin_assignment(config[KEY_PANGOLIN_ASSIGNMENT_VERSION], args.datadir)
 
     if args.update:
         version_dictionary = {'pangolin': __version__,
                               'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                               'constellations': config[KEY_CONSTELLATIONS_VERSION],
                               'scorpio': config[KEY_SCORPIO_VERSION]}
-        update.add_pangolin_assignment_if_installed(version_dictionary)
+        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
+            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
         update.update(version_dictionary)
 
     if args.update_data:
         version_dictionary = {'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                               'constellations': config[KEY_CONSTELLATIONS_VERSION]}
-        update.add_pangolin_assignment_if_installed(version_dictionary)
+        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
+            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
         update.update(version_dictionary, args.datadir)
 
     # install_pangolin_assignment doesn't exit so that --update/--update-data can be given at the

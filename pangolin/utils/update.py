@@ -104,29 +104,21 @@ def pip_install_cov_lineages(dependency, release):
     pip_install_url(url)
 
 
-def install_pangolin_assignment():
+def install_pangolin_assignment(pangolin_assignment_version, datadir):
     """
     If the pangolin-assignment repo has not been installed already then install the latest release.
     """
-    try:
-        import pangolin_assignment
-        print(f"pangolin-assignment already installed with version {pangolin_assignment.__version__}; use --update or --update-data if you wish to update it.", file=sys.stderr)
-
-    except:
+    if pangolin_assignment_version is not None:
+        print(f"pangolin-assignment already installed with version {pangolin_assignment_version}; use --update or --update-data if you wish to update it.", file=sys.stderr)
+    else:
         latest_release, tarball = get_latest_release('pangolin-assignment')
-        pip_install_url(tarball)
+        if datadir is not None and os.path.exists(datadir):
+            # install pangolin-assignment to datadir instead of using pip install
+            version_dictionary = {'pangolin-assignment': '0'}
+            update(version_dictionary, datadir)
+        else:
+            pip_install_url(tarball)
         print(f"pangolin-assignment installed with latest release ({latest_release})")
-
-
-def add_pangolin_assignment_if_installed(version_dictionary):
-    """
-    If pangolin_assignment has been installed then add it to version_dictionary, else ignore.
-    """
-    try:
-        import pangolin_assignment
-        version_dictionary["pangolin-assignment"] = pangolin_assignment.__version__
-    except:
-        pass
 
 
 def update(version_dictionary, data_dir=None):

@@ -79,9 +79,8 @@ def install_error(package, url):
 
 def get_assignment_cache(cache_file, config):
     cache = ""
-    try:
-        import pangolin_assignment
-        pangolin_assignment_dir = pangolin_assignment.__path__[0]
+    if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
+        pangolin_assignment_dir = config[KEY_PANGOLIN_ASSIGNMENT_PATH]
         for r, d, f in os.walk(pangolin_assignment_dir):
             for fn in f:
                 if fn == cache_file and cache == "":
@@ -89,7 +88,7 @@ def get_assignment_cache(cache_file, config):
         if not os.path.exists(cache):
             sys.stderr.write(cyan(f'Error: cannot find assignment cache file {cache_file} in pangolin_assignment\n'))
             sys.exit(-1)
-    except:
+    else:
         sys.stderr.write(cyan('\nError: "pangolin --add-assignment-cache" is required before '
                               '"pangolin --use-assignment-cache", in order to install optional '
                               'pangolin-assignment repository (that will make future data updates slower).\n'))
@@ -100,6 +99,7 @@ def get_assignment_cache(cache_file, config):
             line = f.readline()
     except:
         with open(cache, 'r') as f:
+            # this is legacy code from when the assignment cache was installed using pip and git-lfs
             line = f.readline()
             if "git-lfs.github.com" in line:
                 sys.stderr.write(cyan(
