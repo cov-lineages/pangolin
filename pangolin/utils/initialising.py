@@ -176,7 +176,6 @@ def setup_data(datadir_arg, analysis_mode, config):
                         pangolin_data_version = version
                         use_datadir = True
                     else:
-                        datadir_too_old = True
                         sys.stderr.write(cyan(f"Warning: Ignoring pangolin data in specified datadir {datadir} - it contains pangolin_data older ({version}) than those installed ({pangolin_data.__version__})\n"))
                 elif r.endswith('/pangolin_assignment') and fn == '__init__.py':
                     version = version_from_init(os.path.join(r, fn))
@@ -188,14 +187,8 @@ def setup_data(datadir_arg, analysis_mode, config):
                             pangolin_assignment_version = version
                             pangolin_assignment_path = r
                     else:
-                        datadir_too_old = True
-                        sys.stderr.write(cyan(f"Warning: Ignoring pangolin assignment in specified datadir {datadir} - it contains pangolin_assignment older ({version}) than those installed ({pangolin_assignment.__version__})\n"))
+\                        sys.stderr.write(cyan(f"Warning: Ignoring pangolin assignment in specified datadir {datadir} - it contains pangolin_assignment older ({version}) than those installed ({pangolin_assignment.__version__})\n"))
     if use_datadir == False:
-        # we haven't got a viable datadir from searching args.datadir
-        if datadir and not datadir_too_old:
-            sys.stderr.write(cyan(
-                f"Warning: Ignoring specified datadir {datadir} - could not find __init__.py file to check versions \n"))
-
         pangolin_data_dir = pangolin_data.__path__[0]
         datadir = os.path.join(pangolin_data_dir,"data")
 
@@ -233,11 +226,10 @@ def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
         
     print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
 
-
 def print_ram_warning(analysis_mode):
     if analysis_mode == "pangolearn":
         print(cyan("Warning: pangoLEARN mode may use a significant amount of RAM, be aware that it will not suit every system."))
-    
+
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
         for line in handle:
