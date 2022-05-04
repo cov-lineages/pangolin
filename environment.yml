@@ -11,7 +11,7 @@ dependencies:
   - snakemake-minimal<=6.8.0
   - gofasta
   - ucsc-fatovcf>=426
-  - usher>=0.3.2
+  - usher>=0.5.4
   - git-lfs
   - pip:
     - git+https://github.com/cov-lineages/pangolin-data.git
