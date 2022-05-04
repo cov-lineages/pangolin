@@ -95,13 +95,6 @@ def get_assignment_cache(cache_file, config):
                               'pangolin-assignment repository (that will make future data updates slower).\n'))
         sys.exit(-1)
 
-    # Check versions of pangolin-data and pangolin-assignment to make sure they are consistent.
-    if pangolin_assignment.__version__.lstrip('v') != config[KEY_PANGOLIN_DATA_VERSION].lstrip('v'):
-        print(cyan(f'Error: pangolin_assignment cache version {pangolin_assignment.__version__} '
-                   f'does not match pangolin_data version {config[KEY_PANGOLIN_DATA_VERSION]}. '
-                   'Run "pangolin --update-data" to fetch latest versions of both.'))
-        sys.exit(-1)
-
     try:
         with gzip.open(cache, 'rt') as f:
             line = f.readline()
