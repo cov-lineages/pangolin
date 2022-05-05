@@ -184,12 +184,16 @@ def setup_data(datadir_arg, analysis_mode, config):
                             pangolin_assignment_version = version
                             pangolin_assignment_path = r
                     else:
+<<<<<<< HEAD
                         sys.stderr.write(cyan(f"Warning: Ignoring pangolin assignment in specified datadir {datadir} - it contains pangolin_assignment older ({version}) than those installed ({pangolin_assignment_version})\n"))
 
     if constellations_version_from_datadir is not None and LooseVersion(constellations_version_from_datadir) > LooseVersion(constellations_version):
         constellation_files = constellation_files_from_datadir
         constellations_version = constellations_version_from_datadir
 
+=======
+\                        sys.stderr.write(cyan(f"Warning: Ignoring pangolin assignment in specified datadir {datadir} - it contains pangolin_assignment older ({version}) than those installed ({pangolin_assignment.__version__})\n"))
+>>>>>>> eba85c9 (Remove useless warning about datadir)
     if use_datadir == False:
         pangolin_data_dir = pangolin_data.__path__[0]
         datadir = os.path.join(pangolin_data_dir,"data")
@@ -228,11 +232,10 @@ def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
         
     print(green(f"Maximum ambiguity allowed is {config[KEY_MAXAMBIG]}.\n****"))
 
-
 def print_ram_warning(analysis_mode):
     if analysis_mode == "pangolearn":
         print(cyan("Warning: pangoLEARN mode may use a significant amount of RAM, be aware that it will not suit every system."))
-    
+
 def print_alias_file_exit(alias_file):
     with open(alias_file, 'r') as handle:
         for line in handle:
