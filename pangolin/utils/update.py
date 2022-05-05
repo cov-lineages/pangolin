@@ -64,41 +64,31 @@ def git_lfs_install():
         sys.stderr.write(cyan(f"Error: {e}:\n{stderr}\n"))
         sys.exit(-1)
 
-def pip_install_dep(dependency, release):
+def pip_install_dep(dependency, release, datadir=None):
     """
     Use pip install to install a cov-lineages repository with the specificed release
     """
+    env_vars = None
+    if datadir is not None:
+        env_vars = {'PIP_TARGET': datadir, 'PIP_UPGRADE': '1'}
     url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
     subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade', url],
                    check=True,
                    stdout=subprocess.DEVNULL,
-                   stderr=subprocess.DEVNULL)
+                   stderr=subprocess.DEVNULL,
+                   env=env_vars)
 
 
-def install_pangolin_assignment():
+def install_pangolin_assignment(pangolin_assignment_version, datadir=None):
     """
     If the pangolin-assignment repo has not been installed already then install the latest release.
     """
-    try:
-        import pangolin_assignment
-        print(f"pangolin-assignment already installed with version {pangolin_assignment.__version__}; use --update or --update-data if you wish to update it.", file=sys.stderr)
-
-    except:
+    if pangolin_assignment_version is not None:
+        print(f"pangolin-assignment already installed with version {pangolin_assignment_version}; use --update or --update-data if you wish to update it.", file=sys.stderr)
+    else:
         git_lfs_install()
         latest_release, tarball = get_latest_release('pangolin-assignment')
-        pip_install_dep('pangolin-assignment', latest_release)
-        print(f"pangolin-assignment installed with latest release ({latest_release})")
-
-
-def add_pangolin_assignment_if_installed(version_dictionary):
-    """
-    If pangolin_assignment has been installed then add it to version_dictionary, else ignore.
-    """
-    try:
-        import pangolin_assignment
-        version_dictionary["pangolin-assignment"] = pangolin_assignment.__version__
-    except:
-        pass
+        pip_install_dep('pangolin-assignment', latest_release, datadir)
 
 
 def update(version_dictionary, data_dir=None):
@@ -154,23 +144,7 @@ def update(version_dictionary, data_dir=None):
         version = LooseVersion(version)
 
         if version < latest_release_tidied:
-            if data_dir is not None:
-                # this path only gets followed when the user has --update_data and they
-                # have also specified a --datadir
-                with TemporaryDirectory() as tempdir:
-                    dependency_package = package_names.get(dependency, dependency)
-                    tarball_path = os.path.join(tempdir, 'tarball.tgz')
-                    open(tarball_path, 'wb').write(request.urlopen(latest_release_tarball).read())
-                    tf = tarfile.open(tarball_path)
-                    extracted_dir = tf.next().name
-                    tf.extractall(path=tempdir)
-                    tf.close()
-                    destination_directory = os.path.join(data_dir, dependency_package)
-                    if os.path.isdir(destination_directory):
-                        shutil.rmtree(destination_directory)
-                    shutil.move(os.path.join(tempdir, extracted_dir, dependency_package), destination_directory)
-            else:
-                pip_install_dep(dependency, latest_release)
+            pip_install_dep(dependency, latest_release, data_dir)
             print(f"{dependency} updated to {latest_release}", file=sys.stderr)
         elif version > latest_release_tidied:
             print(f"{dependency} ({version}) is newer than latest stable "
