@@ -72,7 +72,7 @@ def pip_install_dep(dependency, release, datadir=None):
     url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
     pip_command = [sys.executable, '-m', 'pip', 'install', '--upgrade']
     if datadir is not None:
-        pip_command.append('--target', datadir)
+        pip_command.extend(['--target', datadir])
     pip_command.append(url)
     subprocess.run(pip_command,
                    check=True,
