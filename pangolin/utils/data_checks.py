@@ -106,7 +106,6 @@ def get_assignment_cache(cache_file, config):
             line = f.readline()
     except:
         with open(cache, 'r') as f:
-            # this is legacy code from when the assignment cache was installed using pip and git-lfs
             line = f.readline()
             if "git-lfs.github.com" in line:
                 sys.stderr.write(cyan(

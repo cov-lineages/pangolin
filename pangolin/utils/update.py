@@ -69,10 +69,12 @@ def pip_install_dep(dependency, release, datadir=None):
     Use pip install to install a cov-lineages repository with the specificed release
     """
     env_vars = None
-    if datadir is not None:
-        env_vars = {'PIP_TARGET': datadir, 'PIP_UPGRADE': '1'}
     url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
-    subprocess.run([sys.executable, '-m', 'pip', 'install', '--upgrade', url],
+    pip_command = [sys.executable, '-m', 'pip', 'install', '--upgrade']
+    if datadir is not None:
+        pip_command.append('--target', datadir)
+    pip_command.append(url)
+    subprocess.run(pip_command,
                    check=True,
                    stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL,
