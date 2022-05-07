@@ -4,17 +4,17 @@ from pangolin import __version__
 from pangolin.utils import data_checks
 try:
     import pangolin_data
-except:
+except ImportError:
     data_checks.install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
 
 try:
     import scorpio
-except:
+except ImportError:
     data_checks.install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
 
 try:
     import constellations
-except:
+except ImportError:
     data_checks.install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
 import os
@@ -81,6 +81,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
     d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
     d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
+    d_group.add_argument('--use-old-datadir', action='store_true', default=False, help="Use the data from data directory even if older than data installed via Python packages. Default: False")
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
     d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
 
@@ -107,23 +108,25 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     if args.usher:
         sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
 
-    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config)
+    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config, args.use_old_datadir)
 
     if args.add_assignment_cache:
-        update.install_pangolin_assignment()
+        update.install_pangolin_assignment(config[KEY_PANGOLIN_ASSIGNMENT_VERSION], args.datadir)
 
     if args.update:
         version_dictionary = {'pangolin': __version__,
                               'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                               'constellations': config[KEY_CONSTELLATIONS_VERSION],
                               'scorpio': config[KEY_SCORPIO_VERSION]}
-        update.add_pangolin_assignment_if_installed(version_dictionary)
+        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
+            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
         update.update(version_dictionary)
 
     if args.update_data:
         version_dictionary = {'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                               'constellations': config[KEY_CONSTELLATIONS_VERSION]}
-        update.add_pangolin_assignment_if_installed(version_dictionary)
+        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
+            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
         update.update(version_dictionary, args.datadir)
 
     # install_pangolin_assignment doesn't exit so that --update/--update-data can be given at the
