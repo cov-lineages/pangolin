@@ -68,7 +68,6 @@ def pip_install_dep(dependency, release, datadir=None):
     """
     Use pip install to install a cov-lineages repository with the specificed release
     """
-    env_vars = None
     url = f"git+https://github.com/cov-lineages/{dependency}.git@{release}"
     pip_command = [sys.executable, '-m', 'pip', 'install', '--upgrade']
     if datadir is not None:
@@ -77,8 +76,7 @@ def pip_install_dep(dependency, release, datadir=None):
     subprocess.run(pip_command,
                    check=True,
                    stdout=subprocess.DEVNULL,
-                   stderr=subprocess.DEVNULL,
-                   env=env_vars)
+                   stderr=subprocess.DEVNULL)
 
 
 def install_pangolin_assignment(pangolin_assignment_version, datadir=None):
@@ -91,7 +89,7 @@ def install_pangolin_assignment(pangolin_assignment_version, datadir=None):
         git_lfs_install()
         latest_release, tarball = get_latest_release('pangolin-assignment')
         pip_install_dep('pangolin-assignment', latest_release, datadir)
-
+        print(f"pangolin-assignment installed with latest release ({latest_release})")
 
 def update(version_dictionary, data_dir=None):
     """

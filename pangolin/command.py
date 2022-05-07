@@ -81,7 +81,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
     d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
     d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
-    d_group.add_argument('--use_old_datadir', action='store_true', default=False, help="Use the data from data directory even if older than data installed via Python packages. Default: False")
+    d_group.add_argument('--use-old-datadir', action='store_true', default=False, help="Use the data from data directory even if older than data installed via Python packages. Default: False")
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
     d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
 
