@@ -127,12 +127,17 @@ def set_up_tempdir(tempdir_arg,no_temp_arg,cwd,outdir,config):
             sys.stderr.write(cyan(f'Error: cannot create temp directory {tempdir}.\n'))
             sys.exit(-1)
         
-        try:
-            with open(os.path.join(tempdir, "test.txt"),"w") as fw:
-                fw.write("Test")
-        except:
-            sys.stderr.write(cyan(f'Error: cannot write to temp directory {tempdir}.\n'))
-            sys.exit(-1)
+    try:
+        # write a minimal "constellations" module that scorpio will pick up
+        # and from which it will be able to discover constellation files;
+        # at the same time, this serves as a test that the tempdir is writable
+        constellations_hook = os.path.join(config[KEY_TEMPDIR], 'constellations.py')
+        with open(constellations_hook, 'w') as entry_point:
+            entry_point.write(f"__version__ = '{config[KEY_CONSTELLATIONS_VERSION]}'\n")
+            entry_point.write(f"__path__ = ['{config[KEY_CONSTELLATIONS_PATH]}']\n")
+    except:
+        sys.stderr.write(cyan(f'Error: cannot write to temp directory {tempdir}.\n'))
+        sys.exit(-1)
 
 def cleanup(no_temp,tempdir):
     if not no_temp:

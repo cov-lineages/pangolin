@@ -51,8 +51,6 @@ def setup_config_dict(cwd):
 
             KEY_TEMPDIR:None,
             KEY_NO_TEMP:False,
-            
-            KEY_DATADIR:None,
 
             KEY_MAXAMBIG: 0.3,
             KEY_TRIM_START:265, # where to pad to using datafunk
@@ -64,14 +62,14 @@ def setup_config_dict(cwd):
 
             KEY_EXPANDED_LINEAGE: False,
 
-            KEY_CONSTELLATION_FILES: [],
-
             KEY_INPUT_COMPRESSION_TYPE: "plaintext",
             
             KEY_PANGOLIN_VERSION: __version__,
             KEY_PANGOLIN_DATA_VERSION: pangolin_data.__version__,
+            KEY_DATADIR: pangolin_data.__path__[0],
             KEY_SCORPIO_VERSION: scorpio.__version__,
             KEY_CONSTELLATIONS_VERSION: constellations.__version__,
+            KEY_CONSTELLATIONS_PATH: constellations.__path__[0],
             KEY_PANGOLIN_ASSIGNMENT_VERSION: pangolin_assignment.__version__,
             KEY_PANGOLIN_ASSIGNMENT_PATH: pangolin_assignment.__path__[0],
 
@@ -140,21 +138,6 @@ def version_from_init(init_file):
 
 def setup_data(datadir_arg, config, use_old_data):
     datadir = check_datadir(datadir_arg)
-
-    if not config[KEY_SKIP_SCORPIO]:
-        if scorpio.__version__ is None:
-            install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
-        if constellations.__version__ is None:
-            # Even if constellations are found in --datadir,
-            # scorpio needs to be able to import the package directly
-            install_error("constellations", "https://github.com/cov-lineages/constellations.git")
-
-    config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data.__version__
-    config[KEY_DATADIR] = pangolin_data.__path__[0]
-    config[KEY_CONSTELLATIONS_VERSION] = constellations.__version__
-    config[KEY_CONSTELLATION_FILES] = get_constellation_files(constellations.__path__[0])
-    config[KEY_PANGOLIN_ASSIGNMENT_VERSION] = pangolin_assignment.__version__
-    config[KEY_PANGOLIN_ASSIGNMENT_PATH] = pangolin_assignment.__path__[0]
    
     if datadir:
         for module_name in ('constellations', 'pangolin_data', 'pangolin_assignment'):
@@ -173,9 +156,15 @@ def setup_data(datadir_arg, config, use_old_data):
                                 config[KEY_PANGOLIN_ASSIGNMENT_PATH] = os.path.join(datadir, r)
                             elif module_name == "constellations":
                                 config[KEY_CONSTELLATIONS_VERSION] = version
-                                config[KEY_CONSTELLATION_FILES] = get_constellation_files(r)
+                                config[KEY_CONSTELLATIONS_PATH] = os.path.join(datadir, r)
                         else:
                             sys.stderr.write(cyan(f"Warning: Ignoring {module_name} in specified datadir {datadir} - it contains {module_name} with older ({version}) than those installed ({current_version})\n"))
+
+    if not config[KEY_SKIP_SCORPIO]:
+        if scorpio.__version__ is None:
+            install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
+        if config[KEY_CONSTELLATIONS_VERSION] is None:
+            install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
 def parse_qc_thresholds(maxambig, minlen, reference_fasta, config):
     

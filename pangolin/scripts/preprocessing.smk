@@ -77,7 +77,6 @@ rule scorpio:
     input:
         fasta = rules.create_seq_hash.output.fasta,
     params:
-        constellation_files = " ".join(config[KEY_CONSTELLATION_FILES]),
         skip_scorpio = config[KEY_SKIP_SCORPIO]
     output:
         report = os.path.join(config[KEY_TEMPDIR],"VOC_report.scorpio.csv")
@@ -89,19 +88,17 @@ rule scorpio:
         if params.skip_scorpio:
             shell("touch {output.report:q}")
         else:
-            shell("scorpio classify \
+            shell("python -m scorpio classify \
                      -i {input.fasta:q} \
                      -o {output.report:q} \
                      -t {workflow.cores} \
                      --output-counts \
-                     --constellations {params.constellation_files} \
                      --pangolin \
                      --list-incompatible \
                      --long &> {log:q}")
 
 rule get_constellations:
     params:
-        constellation_files = " ".join(config[KEY_CONSTELLATION_FILES]),
         skip_scorpio = config[KEY_SKIP_SCORPIO]
     output:
         list = os.path.join(config[KEY_TEMPDIR], "get_constellations.txt")
@@ -109,8 +106,7 @@ rule get_constellations:
         if params.skip_scorpio:
             shell("touch {output.list:q}")
         else:
-            shell("scorpio list \
-                     --constellations {params.constellation_files} \
+            shell("python -m scorpio list \
                      --pangolin > {output.list:q}")
 
 rule sequence_qc:

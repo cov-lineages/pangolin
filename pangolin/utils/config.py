@@ -25,7 +25,6 @@ KEY_SKIP_SCORPIO = "skip_scorpio"
 
 KEY_EXPANDED_LINEAGE="expanded_lineage"
 
-KEY_CONSTELLATION_FILES="constellation_files"
 KEY_USHER_PB = "usher_pb"
 KEY_PLEARN_MODEL = "plearn_model"
 KEY_PLEARN_HEADER = "plearn_header"
@@ -38,7 +37,8 @@ KEY_INPUT_COMPRESSION_TYPE = "compression_type"
 
 KEY_PANGOLIN_DATA_VERSION="pangolin_data_version"
 KEY_PANGOLIN_VERSION="pangolin_version"
-KEY_CONSTELLATIONS_VERSION="constellation_version"
+KEY_CONSTELLATIONS_VERSION="constellations_version"
+KEY_CONSTELLATIONS_PATH="constellations_path"
 KEY_SCORPIO_VERSION="scorpio_version"
 KEY_PANGOLIN_ASSIGNMENT_VERSION="pangolin_assignment_version"
 KEY_PANGOLIN_ASSIGNMENT_PATH="pangolin_assignment_path"
