@@ -116,10 +116,11 @@ def get_assignment_cache(cache_file, config):
 
 def get_constellation_files(path):
     constellation_files = []
-    for r, _, f in os.walk(path):
-        for fn in f:
-            if (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
-                constellation_files.append(os.path.join(r, fn))
+    if path is not None:
+        for r, _, f in os.walk(path):
+            for fn in f:
+                if (r.endswith('/constellations') or r.endswith('/constellations/definitions')) and fn.endswith('.json'):
+                    constellation_files.append(os.path.join(r, fn))
     return constellation_files
 
 # config={}

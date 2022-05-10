@@ -126,7 +126,8 @@ def update(version_dictionary, data_dir=None):
     # flag if any element is update if everything is the latest release
     # we want to just continue running
     for dependency, version in version_dictionary.items():
-
+        if version is None:
+            continue
         latest_release, latest_release_tarball = get_latest_release(dependency)
         latest_release_tidied = latest_release.strip('data release').lstrip('v').strip()
         latest_release_tidied = LooseVersion(latest_release_tidied)

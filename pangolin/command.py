@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 from . import _program
 from pangolin import __version__
-from pangolin.utils import data_checks
-try:
-    import pangolin_data
-except ImportError:
-    data_checks.install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
-
-try:
-    import scorpio
-except ImportError:
-    data_checks.install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
-
-try:
-    import constellations
-except ImportError:
-    data_checks.install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
 import os
 import sys
@@ -29,8 +14,7 @@ except:
 
 
 from pangolin.utils.log_colours import green,cyan
-from pangolin.utils import dependency_checks
-
+from pangolin.utils import data_checks
 from pangolin.utils import update
 
 
@@ -80,15 +64,15 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file (also pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
     d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
     d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
-    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
-    d_group.add_argument('--use-old-datadir', action='store_true', default=False, help="Use the data from data directory even if older than data installed via Python packages. Default: False")
+    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory to treat as an additional source of versions of pangolin-data, constellations and pangolin-assignent. Discovered versions will take precedence over environment-installed versions unless they are older than the environment-installed ones or unconditionally if --use-old-datadir is specified. Note: --add-assignment-cache and --update-data are respecting --datadir and will perform their operations there.")
+    d_group.add_argument('--use-old-datadir', action='store_true', default=False, help="Use the data from data directory even if older than environment-installed data packages. Default: False")
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
     d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
 
     m_group = parser.add_argument_group('Misc options')
     m_group.add_argument("--aliases", action='store_true', default=False, help="Print Pango alias_key.json and exit.")
     m_group.add_argument("-v","--version", action='version', version=f"pangolin {__version__}")
-    m_group.add_argument("-pv","--pangolin-data-version", action='version', version=f"pangolin-data {pangolin_data.__version__}",help="show version number of pangolin data files (UShER tree and pangoLEARN model files) and exit.")
+    m_group.add_argument("-pv","--pangolin-data-version", action='store_true', help="show version number of pangolin data files (UShER tree and pangoLEARN model files) and exit.")
     m_group.add_argument("--all-versions", action='store_true',dest="all_versions", default=False, help="Print all tool, dependency, and data versions then exit.")
     m_group.add_argument("--verbose",action="store_true",help="Print lots of stuff to screen")
     m_group.add_argument("-t","--threads",action="store",default=1,type=int, help="Number of threads")
@@ -100,6 +84,10 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     else:
         args = parser.parse_args(sysargs)
 
+    if args.datadir and args.update:
+        sys.stderr.write(cyan(f'Error: incompatible options --datadir and --update; use --update-data to update the --datadir\n'))
+        sys.exit(-1)
+
     # Initialise config dict
     config = setup_config_dict(cwd)
     data_checks.check_install(config)
@@ -107,8 +95,16 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
 
     if args.usher:
         sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
+    # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
+    # add flag to config for whether to run scorpio
+    if args.skip_scorpio or not args.query:
+        # If scorpio analysis is disabled via command line flag or if there is
+        # no query to analyze, there is no need to fail if scorpio or
+        # constellations cannot be resolved.
+        config[KEY_SKIP_SCORPIO] = True
 
-    setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config, args.use_old_datadir)
+    setup_data(args.datadir, config, args.use_old_datadir)
 
     if args.add_assignment_cache:
         update.install_pangolin_assignment(config[KEY_PANGOLIN_ASSIGNMENT_VERSION], args.datadir)
@@ -117,46 +113,44 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
         version_dictionary = {'pangolin': __version__,
                               'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
                               'constellations': config[KEY_CONSTELLATIONS_VERSION],
-                              'scorpio': config[KEY_SCORPIO_VERSION]}
-        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
-            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
+                              'scorpio': config[KEY_SCORPIO_VERSION],
+                              'pangolin-assignment': config[KEY_PANGOLIN_ASSIGNMENT_VERSION]}
         update.update(version_dictionary)
 
     if args.update_data:
         version_dictionary = {'pangolin-data': config[KEY_PANGOLIN_DATA_VERSION],
-                              'constellations': config[KEY_CONSTELLATIONS_VERSION]}
-        if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
-            version_dictionary['pangolin-assignment'] = config[KEY_PANGOLIN_ASSIGNMENT_VERSION]
+                              'constellations': config[KEY_CONSTELLATIONS_VERSION],
+                              'pangolin-assignment': config[KEY_PANGOLIN_ASSIGNMENT_VERSION]}
         update.update(version_dictionary, args.datadir)
+
+    if args.pangolin_data_version:
+        print("pangolin-data", config[KEY_PANGOLIN_DATA_VERSION] or 'not installed')
+        sys.exit(0)
+
+    if args.all_versions:
+        print_versions_exit(config)
 
     # install_pangolin_assignment doesn't exit so that --update/--update-data can be given at the
     # same time (or a query file).  If --add-assignment-cache is the only arg, exit without error.
     if args.add_assignment_cache and not args.query:
         sys.exit(0)
 
-    # add flag to config for whether to run scorpio
-    if args.skip_scorpio:
-        print(green(f"****\nPangolin skipping scorpio steps.\n****"))
-        config[KEY_SKIP_SCORPIO] = True
-    
-    if args.expanded_lineage:
-        print(green(f"****\nAdding expanded lineage column to output.\n****"))
-        config[KEY_EXPANDED_LINEAGE] = True
-        
-    # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
-
-    snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
+    # everything below this point will require a resolved pangolin-data source
+    if config[KEY_PANGOLIN_DATA_VERSION] is None:
+        install_error("pangolin_data", "https://github.com/cov-lineages/pangolin-data.git")
 
     config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
     if args.aliases:
         print_alias_file_exit(config[KEY_ALIAS_FILE])
 
-    if args.all_versions:
-        print_versions_exit(config)
+    if args.skip_scorpio:
+        print(green(f"****\nPangolin skipping scorpio steps.\n****"))
+    
+    if args.expanded_lineage:
+        print(green(f"****\nAdding expanded lineage column to output.\n****"))
+        config[KEY_EXPANDED_LINEAGE] = True
 
-    # to enable not having to pass a query if running update
-    # by allowing query to accept 0 to many arguments
+    snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
     
     print(green(f"****\nPangolin running in {config[KEY_ANALYSIS_MODE]} mode.\n****"))
     if config[KEY_ANALYSIS_MODE] == "scorpio":

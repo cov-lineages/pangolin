@@ -12,17 +12,27 @@ from pangolin.utils.config import *
 from pangolin.utils.data_checks import *
 from pangolin import __version__
 
-import pangolin_data
-class PangolinAssignmentWrapper():
+class PangolinDependencyStub():
     __version__ = None
     __path__ = [None]
+
+try:
+    import pangolin_data
+except ImportError:
+    pangolin_data = PangolinDependencyStub()
 try:
     import pangolin_assignment
 except ImportError:
     # if we can't import the module, leave the variables we replace it with a mock with suitable attributes
-    pangolin_assignment = PangolinAssignmentWrapper()
-import scorpio
-import constellations
+    pangolin_assignment = PangolinDependencyStub()
+try:
+    import scorpio
+except ImportError:
+    scorpio = PangolinDependencyStub()
+try:
+    import constellations
+except ImportError:
+    constellations = PangolinDependencyStub()
 
 def setup_config_dict(cwd):
     default_dict = {
@@ -128,8 +138,16 @@ def version_from_init(init_file):
                 break
     return version
 
-def setup_data(datadir_arg, analysis_mode, config, use_old_data):
+def setup_data(datadir_arg, config, use_old_data):
     datadir = check_datadir(datadir_arg)
+
+    if not config[KEY_SKIP_SCORPIO]:
+        if scorpio.__version__ is None:
+            install_error("scorpio", "https://github.com/cov-lineages/scorpio.git")
+        if constellations.__version__ is None:
+            # Even if constellations are found in --datadir,
+            # scorpio needs to be able to import the package directly
+            install_error("constellations", "https://github.com/cov-lineages/constellations.git")
 
     config[KEY_PANGOLIN_DATA_VERSION] = pangolin_data.__version__
     config[KEY_DATADIR] = pangolin_data.__path__[0]
@@ -215,13 +233,10 @@ def print_conda_version(pkg_list):
             sys.stderr.write(cyan(f"version not found in output of 'conda list {pkg}':\n{output}\n"))
 
 def print_versions_exit(config):
-    print(f"pangolin: {config[KEY_PANGOLIN_VERSION]}\n"
-            f"pangolin-data: {config[KEY_PANGOLIN_DATA_VERSION]}\n"
-            f"constellations: {config[KEY_CONSTELLATIONS_VERSION]}\n"
-            f"scorpio: {config[KEY_SCORPIO_VERSION]}")
-    # Report pangolin_assignment version if it is installed, otherwise ignore
-    if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
-        print(f"pangolin-assignment: {config[KEY_PANGOLIN_ASSIGNMENT_VERSION]}")
+    packages = ["pangolin", "pangolin-data", "constellations", "scorpio", "pangolin-assignment"]
+    version_keys = [KEY_PANGOLIN_VERSION, KEY_PANGOLIN_DATA_VERSION, KEY_CONSTELLATIONS_VERSION, KEY_SCORPIO_VERSION, KEY_PANGOLIN_ASSIGNMENT_VERSION]
+    for pkg, version_key in zip(packages, version_keys):
+        print(pkg, config[version_key] or 'not installed', sep=': ')
     # Print versions of other important tools used by pangolin
     print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
     sys.exit(0)
