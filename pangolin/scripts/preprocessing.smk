@@ -3,6 +3,7 @@
 import csv
 from Bio import SeqIO
 import os
+import sys
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils.preprocessing import *
 from pangolin.utils.config import *
@@ -25,10 +26,12 @@ rule align_to_reference:
         fasta = config[KEY_ALIGNMENT_FILE]
     log:
         os.path.join(config[KEY_TEMPDIR], "logs/minimap2_sam.log")
-    shell:
+    run:
     # the first line of this streams through the fasta and replaces '-' in sequences with empty strings
     # this could be replaced by a python script later
     #  {{ gsub(" ","_",$0); }} {{ gsub(",","_",$0); }}
+    try:
+        shell(
         """
         awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}' "{input.fasta}" | \
         awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}'  | \
@@ -41,7 +44,11 @@ rule align_to_reference:
             --trimend {params.trim_end} \
             --trim \
             --pad > '{output.fasta}'
-        """
+        """)
+    except:
+        shell("touch {output.fasta:q}")
+        sys.stderr(cyan("Mapping and/or gofasta steps failed. Exiting.\n"))
+        sys.exit(-1)
 
 rule create_seq_hash:
     input:
