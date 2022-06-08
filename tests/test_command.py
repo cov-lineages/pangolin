@@ -7,7 +7,8 @@ TEST_DIR = Path(__file__).parent
 def test_cmd_line(tmp_path):
     query_file = TEST_DIR / 'test-data' / 'sequence1.fasta'
     output_file = tmp_path / 'out.csv'
-    args = ['--outfile', str(output_file), str(query_file)]
+    args = ['--outfile', str(output_file), str(query_file),
+            '--analysis-mode', 'fast']
     command.main(sysargs=args)
     results = open(output_file).read()
     assert 'Delta (B.1.617.2-like)' in results
@@ -21,7 +22,8 @@ def test_cmd_line_partial_datadir(tmp_path):
 
     output_file = tmp_path / 'out.csv'
     args = ['--outfile', str(output_file),
-            '--datadir', str(datadir), str(query_file)]
+            '--datadir', str(datadir), str(query_file),
+            '--analysis-mode', 'fast']
     command.main(sysargs=args)
     results = open(output_file).read()
     assert 'Delta (B.1.617.2-like-with-bells)' in results
