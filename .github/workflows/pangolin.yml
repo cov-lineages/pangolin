@@ -37,8 +37,6 @@ jobs:
         run: pangolin --analysis-mode usher pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_usher.log
       - name: Run pangolin accurate with test data
         run: pangolin --analysis-mode accurate pangolin/test/test_seqs.fasta 2>&1 | tee pangolin_accurate.log
-      - name: Install and run pytest
-        run: mamba install -y pytest && python -m pytest tests/
       - name: Run pangolin with outdir and outfile
         run: pangolin pangolin/test/test_seqs.fasta -o my_test --outfile pangolin_out.txt 2>&1 | tee pangolin_outdir_outfile.log
       - name: Run pangolin with out alignment
