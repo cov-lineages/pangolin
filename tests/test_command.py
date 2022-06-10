@@ -6,7 +6,7 @@ TEST_DIR = Path(__file__).parent
 
 def test_cmd_line(tmp_path):
     query_file = TEST_DIR / 'test-data' / 'sequence1.fasta'
-    output_file = tmp_path / 'out.csv'
+    output_file = TEST_DIR / 'out.csv'
     args = ['--outfile', str(output_file), 
             '--analysis-mode', 'fast',
             str(query_file)
@@ -22,7 +22,7 @@ def test_cmd_line_partial_datadir(tmp_path):
     query_file = test_data_dir / 'sequence1.fasta'
     datadir = test_data_dir / 'datadir1'
 
-    output_file = tmp_path / 'out.csv'
+    output_file = TEST_DIR / 'out.csv'
     args = ['--outfile', str(output_file),
             '--datadir', str(datadir), 
             '--analysis-mode', 'fast',
