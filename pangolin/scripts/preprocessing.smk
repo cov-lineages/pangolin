@@ -86,7 +86,7 @@ rule scorpio:
     log:
         os.path.join(config[KEY_TEMPDIR], "logs/scorpio.log")
     run:
-        if params.skip_scorpio or config[KEY_ANALYSIS_MODE] == "usher":
+        if params.skip_scorpio:
             shell("touch {output.report:q}")
         else:
             shell("scorpio classify \
@@ -106,7 +106,7 @@ rule get_constellations:
     output:
         list = os.path.join(config[KEY_TEMPDIR], "get_constellations.txt")
     run:
-        if params.skip_scorpio or config[KEY_ANALYSIS_MODE] == "usher":
+        if params.skip_scorpio:
             shell("touch {output.list:q}")
         else:
             shell("scorpio list \

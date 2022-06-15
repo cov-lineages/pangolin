@@ -247,16 +247,25 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
                             if expanded_scorpio_lineage and \
                                     not expanded_pango_lineage.startswith(expanded_scorpio_lineage) and \
                                     not (expanded_pango_lineage.startswith("X") and expanded_scorpio_lineage in recombinant_parents):
-                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
-                                new_row["lineage"] = scorpio_lineage
+                                if analysis_mode == "usher":
+                                    append_note(new_row, f'scorpio lineage {scorpio_lineage} conflicts with inference lineage {inference_lineage}')
+                                else:
+                                    append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                    new_row["lineage"] = scorpio_lineage
 
                             elif row["scorpio_incompatible_lineages"] and inference_lineage in row["scorpio_incompatible_lineages"].split("|"):
-                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
-                                new_row["lineage"] = scorpio_lineage
+                                if analysis_mode == "usher":
+                                    append_note(new_row, f'scorpio lineage {scorpio_lineage} conflicts with inference lineage {inference_lineage} (incompatible)')
+                                else:
+                                    append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                    new_row["lineage"] = scorpio_lineage
 
                             elif not expanded_scorpio_lineage:
-                                append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
-                                new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
+                                if analysis_mode == "usher":
+                                    append_note(new_row, f'scorpio found insufficient support to assign a specific lineage')
+                                else:
+                                    append_note(new_row, f'scorpio replaced lineage inference {inference_lineage}')
+                                    new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
 
                     #3. check if lineage is a voc
                     elif row["lineage"] in voc_list:
@@ -265,9 +274,10 @@ def generate_final_report(preprocessing_csv, inference_csv, cached_csv, alias_fi
                                 if expanded_pango_lineage.startswith(voc + ".") or expanded_pango_lineage == voc:
                                     # have no scorpio call but an inference voc/vui call
                                     append_note(new_row, f'Lineage inference {inference_lineage} was not supported by scorpio')
-                                    new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
-                                    new_row['conflict'] = ""
-                                    new_row['ambiguity_score'] = ""
+                                    if analysis_mode != "usher":
+                                        new_row['lineage'] = UNASSIGNED_LINEAGE_REPORTED
+                                        new_row['conflict'] = ""
+                                        new_row['ambiguity_score'] = ""
                                     break
 
                             if new_row['lineage'] == UNASSIGNED_LINEAGE_REPORTED:
