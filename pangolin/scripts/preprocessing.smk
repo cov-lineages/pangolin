@@ -32,9 +32,8 @@ rule align_to_reference:
         #  {{ gsub(" ","_",$0); }} {{ gsub(",","_",$0); }}
         shell_command =  """ | awk '{{ if ($0 !~ /^>/) {{ gsub("-", "",$0); }} print $0; }}'   | \
             awk '{{ {{ gsub(" ", "_",$0); }} {{ gsub(",", "_",$0); }} print $0; }}'  | \
-            minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - -o {params.sam:q} &> {log:q} 
+            minimap2 -a -x asm20 --sam-hit-only --secondary=no --score-N=0  -t  {workflow.cores} {input.reference:q} - 2> {log:q} | \
             gofasta sam toMultiAlign \
-                -s {params.sam:q} \
                 -t {workflow.cores} \
                 --reference {input.reference:q} \
                 --trimstart {params.trim_start} \
