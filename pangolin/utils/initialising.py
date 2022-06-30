@@ -197,11 +197,20 @@ def print_alias_file_exit(alias_file):
     
     sys.exit(0)
 
+def get_version(programs):
+    for program in programs:
+        cmd = [f"{program} --version"]
+        output = subprocess.run(cmd, shell=True, check=True,
+                                stdout=subprocess.PIPE, encoding='utf-8')
+        version = output.stdout.strip().split()[-1].strip('()v')
+        print(f"{program.split()[0]} {version}")
+
 def print_conda_version(pkg_list):
     for pkg in pkg_list:
         try:
             result = subprocess.run(['conda', 'list', pkg],
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            
         except subprocess.CalledProcessError as e:
             stderr = e.stderr.decode('utf-8')
             sys.stderr.write(cyan(f"Error: {e}:\n{stderr}\n"))
@@ -223,7 +232,8 @@ def print_versions_exit(config):
     if config[KEY_PANGOLIN_ASSIGNMENT_VERSION] is not None:
         print(f"pangolin-assignment: {config[KEY_PANGOLIN_ASSIGNMENT_VERSION]}")
     # Print versions of other important tools used by pangolin
-    print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
+    get_version(['usher', 'gofasta', 'minimap2'])
+    # print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
     sys.exit(0)
 
 def set_up_verbosity(config):
