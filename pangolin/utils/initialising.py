@@ -205,6 +205,12 @@ def get_version(programs):
         version = output.stdout.strip().split()[-1].strip('()v')
         print(f"{program.split()[0]} {version}")
 
+def print_faToVf_version():
+    output = subprocess.run("faToVcf -verbose=2 -h 2>&1 | grep '#'", shell=True, check=True,
+                                stdout=subprocess.PIPE, encoding='utf-8')
+    version = output.stdout.split(' ')[-2]
+    print(f"faToVcf: {version}")
+
 def print_conda_version(pkg_list):
     for pkg in pkg_list:
         try:
@@ -233,6 +239,7 @@ def print_versions_exit(config):
         print(f"pangolin-assignment: {config[KEY_PANGOLIN_ASSIGNMENT_VERSION]}")
     # Print versions of other important tools used by pangolin
     get_version(['usher', 'gofasta', 'minimap2'])
+    print_faToVf_version()
     # print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
     sys.exit(0)
 
