@@ -199,7 +199,7 @@ def print_alias_file_exit(alias_file):
 
 def get_version(programs):
     for program in programs:
-        cmd = [program, "--version"]
+        cmd = [f"{program} --version"]
         output = subprocess.run(cmd, shell=True, check=True,
                                 stdout=subprocess.PIPE, encoding='utf-8')
         version = output.stdout.strip().split()[-1].strip('()v')
