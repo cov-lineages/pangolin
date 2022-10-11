@@ -55,11 +55,5 @@ jobs:
         run: pangolin --verbose  pangolin/test/test_seqs.fasta  2>&1  | tee pangolin_verbose.log
       - name: Add assignment cache
         run: pangolin --add-assignment-cache
-      - name: Test use-assignment-cache
-        run: pangolin --use-assignment-cache pangolin/test/test_seqs.fasta 2>&1 | grep 'Using pangolin-assignment cache'
       - name: remove assignment cache
         run: pip uninstall -y pangolin-assignment
-      - name: Add assignment cache to datadir
-        run: mkdir ac && pangolin --add-assignment-cache --datadir ac
-      - name: Test use-assignment-cache with datadir
-        run: pangolin --use-assignment-cache --datadir ac pangolin/test/test_seqs.fasta 2>&1 | grep 'Using pangolin-assignment cache'
