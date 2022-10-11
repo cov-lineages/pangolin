@@ -19,6 +19,7 @@ setup(name='pangolin',
             'pandas>=1.0.1',
             "wheel>=0.34",
             'joblib>=0.11',
+            'tabulate==0.8.10',
             'scikit-learn>=0.23.1',
             "PuLP>=2"
         ],
