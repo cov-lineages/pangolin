@@ -101,12 +101,14 @@ rule usher_inference:
             else
                 echo ""
                 echo "*** usher-sampled is not installed -- please upgrade usher to at least v0.6.1 ***"
-                echo "*** If you used conda to install usher, run 'conda update --no-pin usher' ***"
+                echo "*** If you used conda to install usher, run 'conda update --no-pin usher'     ***"
+                echo "*** Alternatively if mamba is installed, run 'mamba update --no-pin usher'    ***"
+                echo "*** If you use Mac OS X and usher 0.6.1 or later is not yet available, then   ***"
+                echo "*** please pardon the inconvenience but watch for updates.                    ***"
                 echo ""
             fi
             cat {input.fasta:q} >> {params.ref_fa:q}
             faToVcf -includeNoAltN {params.ref_fa:q} {params.vcf:q}
-            echo usher command: $usher -n -D -i {input.usher_protobuf:q} -v {params.vcf:q} -T $threads -d '{config[tempdir]}' \&\> {log}
             $usher -n -D -i {input.usher_protobuf:q} -v {params.vcf:q} -T $threads -d '{config[tempdir]}' &> {log}
         else
             rm -f {output.txt:q}
