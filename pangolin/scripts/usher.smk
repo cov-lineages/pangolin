@@ -103,8 +103,6 @@ rule usher_inference:
                 echo "*** usher-sampled is not installed -- please upgrade usher to at least v0.6.1 ***"
                 echo "*** If you used conda to install usher, run 'conda update --no-pin usher'     ***"
                 echo "*** Alternatively if mamba is installed, run 'mamba update --no-pin usher'    ***"
-                echo "*** If you use Mac OS X and usher 0.6.1 or later is not yet available, then   ***"
-                echo "*** please pardon the inconvenience but watch for updates.                    ***"
                 echo ""
             fi
             cat {input.fasta:q} >> {params.ref_fa:q}
