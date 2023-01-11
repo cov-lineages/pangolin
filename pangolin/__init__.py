@@ -1,5 +1,5 @@
 _program = "pangolin"
-__version__ = "4.1.3"
+__version__ = "4.2"
 
 
 __all__ = ["pangolearn",
