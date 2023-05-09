@@ -150,8 +150,6 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
         print(green(f"****\nAdding expanded lineage column to output.\n****"))
         config[KEY_EXPANDED_LINEAGE] = True
 
-    print(config)
-
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
     config[KEY_DESIGNATION_CACHE],config[KEY_ALIAS_FILE] = data_checks.find_designation_cache_and_alias(config[KEY_DATADIR],DESIGNATION_CACHE_FILE,ALIAS_FILE)
