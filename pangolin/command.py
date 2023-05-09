@@ -62,9 +62,9 @@ def main(sysargs = sys.argv[1:]):
 
     a_group = parser.add_argument_group('Analysis options')
     a_group.add_argument('--analysis-mode', action="store",help="""Pangolin includes multiple analysis engines: UShER and pangoLEARN.
-Scorpio is used in conjunction with UShER/ pangoLEARN to curate variant of concern (VOC)-related lineage calls.
+Scorpio is used in conjunction with pangoLEARN to curate variant of concern (VOC)-related lineage calls.
 UShER is the default and is selected using option "usher" or "accurate".
-pangoLEARN can alternatively be selected using "pangolearn" or "fast".
+pangoLEARN has been depreciated, but older models can be run using "pangolearn" or "fast" with "--datadir" provided.
 Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio" mode, but in this case only VOC-related lineages will be assigned. 
 """)
     
@@ -80,7 +80,7 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     d_group.add_argument("--update-data", action='store_true',dest="update_data", default=False, help="Automatically updates to latest release of constellations and pangolin-data, including the pangoLEARN model, UShER tree file and alias file (also pangolin-assignment if it has been installed using --add-assignment-cache), then exits.")
     d_group.add_argument('--add-assignment-cache', action='store_true', dest="add_assignment_cache", default=False, help="Install the pangolin-assignment repository for use with --use-assignment-cache.  This makes updates slower and makes pangolin slower for small numbers of input sequences but much faster for large numbers of input sequences.")
     d_group.add_argument('--use-assignment-cache', action='store_true', dest="use_assignment_cache", default=False, help="Use assignment cache from optional pangolin-assignment repository. NOTE: the repository must be installed by --add-assignment-cache before using --use-assignment-cache.")
-    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model, header files and UShER tree. Default: Installed pangolin-data package.")
+    d_group.add_argument('-d', '--datadir', action='store',dest="datadir",help="Data directory minimally containing the pangoLEARN model and header files or UShER tree. Default: Installed pangolin-data package.")
     d_group.add_argument('--use-old-datadir', action='store_true', default=False, help="Use the data from data directory even if older than data installed via Python packages. Default: False")
     d_group.add_argument('--usher-tree', action='store', dest='usher_protobuf', help="UShER Mutation Annotated Tree protobuf file to use instead of default from pangolin-data repository or --datadir.")
     d_group.add_argument('--assignment-cache', action='store', dest='assignment_cache', help="Cached precomputed assignment file to use instead of default from pangolin-assignment repository.  Does not require installation of pangolin-assignment.")
@@ -104,9 +104,16 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     config = setup_config_dict(cwd)
     data_checks.check_install(config)
     set_up_verbosity(config)
+    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
 
     if args.usher:
         sys.stderr.write(cyan(f"--usher is a pangolin v3 option and is deprecated in pangolin v4.  UShER is now the default analysis mode.  Use --analysis-mode to explicitly set mode.\n"))
+    if config[KEY_ANALYSIS_MODE] == "pangolearn" or config[KEY_ANALYSIS_MODE] == "fast":
+        if args.datadir:
+            args.use_old_datadir = True
+        else:
+            sys.stderr.write(cyan(f"pangoLEARN is deprecated in pangolin v4.3.  UShER is now the only updated analysis mode.  Use --datadir to provide an older pangoLEARN model.\n"))
+            config[KEY_ANALYSIS_MODE] = "usher"
 
     setup_data(args.datadir,config[KEY_ANALYSIS_MODE], config, args.use_old_datadir)
 
@@ -142,9 +149,6 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     if args.expanded_lineage:
         print(green(f"****\nAdding expanded lineage column to output.\n****"))
         config[KEY_EXPANDED_LINEAGE] = True
-        
-    # Parsing analysis mode flags to return one of 'usher' or 'pangolearn'
-    config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
 
     snakefile = get_snakefile(thisdir,config[KEY_ANALYSIS_MODE])
 
