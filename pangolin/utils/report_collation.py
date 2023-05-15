@@ -25,26 +25,16 @@ def usher_parsing(usher_result,output_report):
                     histo_list = [ i for i in histogram.split(",") if i ]
                     conflict = 0.0
                     if len(histo_list) > 1:
-                        max_count = 0
-                        max_lineage = ""
                         selected_count = 0
                         total = 0
                         for lin_counts in histo_list:
                             m = re.match('([A-Z0-9.]+)\(([0-9]+)/([0-9]+)\)', lin_counts)
                             if m:
                                 lin, place_count, total = [m.group(1), int(m.group(2)), int(m.group(3))]
-                                if place_count > max_count:
-                                    max_count = place_count
-                                    max_lineage = lin
                                 if lin == lineage:
                                     selected_count = place_count
-                        if selected_count < max_count:
-                            # The selected placement was not in the lineage with the plurality
-                            # of placements; go with the plurality.
-                            lineage = max_lineage
-                            conflict = (total - max_count) / total
-                        elif total > 0:
-                            conflict = (total - selected_count) / total
+                                    break
+                        conflict = (total - selected_count) / total
                     histogram_note = "Usher placements: " + " ".join(histo_list)
                 else:
                     lineage = lineage_histogram
