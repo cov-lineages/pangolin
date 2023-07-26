@@ -18,7 +18,8 @@ jobs:
           environment-file: environment.yml
           activate-environment: pangolin
           channels: conda-forge,bioconda,defaults
-          miniforge-variant: Mambaforge
+          conda-version: "23.5.0"
+          mamba-version: "*"
       - name: Install pangolin
         run: pip install -e .
       - name: Check pangolin version
