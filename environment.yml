@@ -6,9 +6,9 @@ channels:
 dependencies:
   - biopython>=1.74
   - minimap2>=2.16
-  - pip=19.3.1
+  - pip
   - python>=3.7
-  - snakemake-minimal=7.24.0
+  - snakemake-minimal!=7.30.2
   - gofasta
   - ucsc-fatovcf>=426
   - usher>=0.5.4
