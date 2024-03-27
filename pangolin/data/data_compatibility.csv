@@ -1,4 +1,5 @@
 data_source,version,min_pangolin_version,min_scorpio_version
+pangolin-data,1.26,4.3,
 pangolin-data,1.25.1,4.3,
 pangolin-data,1.25,4.3,
 pangolin-data,1.24,4.3,
@@ -23,6 +24,7 @@ pangolin-data,1.6,4,
 pangolin-data,1.3,4,
 pangolin-data,1.2.133,4,
 pangolin-data,1.2.127,4,
+pangolin-assignment,1.26,4.3,
 pangolin-assignment,1.25.1,4.3,
 pangolin-assignment,1.25,4.3,
 pangolin-assignment,1.24,4.3,
