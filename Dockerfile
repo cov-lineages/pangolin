@@ -1,6 +1,5 @@
 FROM continuumio/miniconda3:4.9.2-alpine
-LABEL version="2.1.2" \
-      description="Docker image for Pangolin"
+LABEL description="Docker image for Pangolin"
 
 # Install git for pangolin
 RUN apk update && \
