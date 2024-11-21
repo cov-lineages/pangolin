@@ -12,14 +12,13 @@ jobs:
       matrix:
         os: ["macos-latest"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: environment.yml
           activate-environment: pangolin
           channels: conda-forge,bioconda,defaults
-          conda-version: "23.5.0"
-          mamba-version: "*"
+          miniconda-version: "latest"
       - name: Install pangolin
         run: pip install -e .
       - name: Check pangolin version
