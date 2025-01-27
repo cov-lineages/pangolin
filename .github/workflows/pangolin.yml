@@ -12,14 +12,12 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
     steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           environment-file: environment.yml
           activate-environment: pangolin
           channels: conda-forge,bioconda,defaults
-          conda-version: "23.5.0"
-          mamba-version: "*"
       - name: Install pangolin
         run: pip install -e .
       - name: Check pangolin version
