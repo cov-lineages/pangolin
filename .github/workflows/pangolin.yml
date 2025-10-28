@@ -17,7 +17,7 @@ jobs:
         with:
           environment-file: environment.yml
           activate-environment: pangolin
-          channels: conda-forge,bioconda,defaults
+          channels: conda-forge,bioconda,nodefaults
       - name: Install pangolin
         run: pip install -e .
       - name: Check pangolin version
