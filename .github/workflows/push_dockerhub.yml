@@ -20,10 +20,13 @@ jobs:
       DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Build new docker image
         run: docker build --no-cache . -t covlineages/pangolin:latest
+
+      - name: Test docker image
+        run: docker run --rm -v $(pwd):/tmp covlineages/pangolin:latest pangolin tests/test-data/sequence1.fasta
 
       - name: Push Docker image to DockerHub (dev)
         if: ${{ github.event_name == 'push' }}
