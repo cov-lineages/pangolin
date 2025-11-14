@@ -33,7 +33,7 @@ rule usher_cache:
             # Copy input.fasta to output.for_inference (all sequences need inference)
             with open(output.for_inference, "w") as fseq:
                 for record in SeqIO.parse(input.fasta, "fasta"):
-                    fseq.write(f">{record.description}\n{record.seq}\n")
+                    fseq.write(">" + record.description + "\n" + str(record.seq) + "\n")
             # Make a header-only CSV output, just like FINAL_HEADER but with hash instead of taxon:
             with open(output.cached,"w") as fw:
                 cache_header = FINAL_HEADER.copy()
@@ -72,7 +72,7 @@ rule usher_cache:
             with open(output.for_inference, "w") as fseq:
                 for record in SeqIO.parse(input.fasta, "fasta"):
                     if record.id in seqs_to_assign:
-                        fseq.write(f">{record.id}\n{record.seq}\n")
+                        fseq.write(">" + record.id + "\n" + str(record.seq) + "\n")
 
 
 rule usher_inference:
