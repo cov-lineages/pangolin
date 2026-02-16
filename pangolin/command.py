@@ -102,6 +102,8 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
 
     # Initialise config dict
     config = setup_config_dict(cwd)
+    io.set_up_threads(args.threads,config)
+
     data_checks.check_install(config)
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
 

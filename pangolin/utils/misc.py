@@ -12,6 +12,7 @@ from snakemake.api import (
     DAGSettings,
     ExecutionSettings
 )
+from pangolin.utils.config import *
 
 
 def run_snakemake(snake_config,my_snakefile,v,config):
