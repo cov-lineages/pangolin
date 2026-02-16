@@ -32,7 +32,7 @@ from pangolin.utils.log_colours import green,cyan
 from pangolin.utils import dependency_checks
 
 from pangolin.utils import update
-
+from pangolin.utils import misc
 
 from pangolin.utils.config import *
 from pangolin.utils.initialising import *
@@ -103,7 +103,6 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
     # Initialise config dict
     config = setup_config_dict(cwd)
     data_checks.check_install(config)
-    set_up_verbosity(config)
     config[KEY_ANALYSIS_MODE] = set_up_analysis_mode(args.analysis_mode, config[KEY_ANALYSIS_MODE])
 
     if args.usher:
@@ -206,14 +205,11 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
         for k in sorted(config):
             print(green(k), config[k])
 
-        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                        workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
-                                        )
+        status = misc.run_snakemake(config,preprocessing_snakefile,args.verbose,config)
+
     else:
-        logger = custom_logger.Logger()
-        status = snakemake.snakemake(preprocessing_snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
-                                    config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
-                                    )
+        status = misc.run_snakemake(config,preprocessing_snakefile,args.verbose,config)
+
     if status: 
         if config[KEY_ANALYSIS_MODE] != "scorpio":
             if config[KEY_VERBOSE]:
@@ -221,14 +217,10 @@ Finally, it is possible to skip the UShER/ pangoLEARN step by selecting "scorpio
                 for k in sorted(config):
                     print(green(k), config[k])
 
-                status = snakemake.snakemake(snakefile, printshellcmds=True, forceall=True, force_incomplete=True,
-                                                workdir=config[KEY_TEMPDIR],config=config, cores=args.threads,lock=False
-                                                )
+                status = misc.run_snakemake(config,snakefile,args.verbose,config)
+                                            
             else:
-                logger = custom_logger.Logger()
-                status = snakemake.snakemake(snakefile, printshellcmds=False, forceall=True,force_incomplete=True,workdir=config[KEY_TEMPDIR],
-                                            config=config, cores=args.threads,lock=False,quiet=True,log_handler=logger.log_handler
-                                            )
+                status = misc.run_snakemake(config,snakefile,args.verbose,config)
         else:
             status = True
        
