@@ -16,7 +16,7 @@ dependencies = [
     "PuLP",
 ]
 authors = [
-  { name="Aine OToole", email="aine.otoole@ed.ac.uk" },
+  { name="cov-lineages group", email="aine.otoole@ed.ac.uk" },
 ]
 description= "phylogenetic assignment of named global outbreak lineages"
 readme = "README.md"
