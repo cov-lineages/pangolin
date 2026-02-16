@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pangolin"
+dynamic = ["version"]
+dependencies = [
+    "biopython>=1.70",
+    'tabulate',
+    'wheel>=0.34',
+    'joblib>=0.11',
+    'pandas~=2.3.1',
+    "numpy",
+    'scikit-learn==1.7.1',
+    "PuLP",
+]
+authors = [
+  { name="Aine OToole", email="aine.otoole@ed.ac.uk" },
+]
+description= "phylogenetic assignment of named global outbreak lineages"
+readme = "README.md"
+requires-python = ">=3.10"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/cov-lineages/pangolin"
+Issues = "https://github.com/cov-lineages/pangolin/issues"
+
+[project.scripts]
+pangolin = "pangolin.command:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "pangolin.__version__"}
