@@ -5,8 +5,6 @@ import sys
 from pangolin.utils.log_colours import green,cyan,red
 import importlib
 
-import pangolin.utils.custom_logger as custom_logger
-import pangolin.utils.log_handler_handle as lh
 
 def which(dependency):
     try:
