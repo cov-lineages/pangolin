@@ -6,7 +6,6 @@ import subprocess
 from distutils.version import LooseVersion
 from Bio import SeqIO
 
-import pangolin.utils.custom_logger as custom_logger
 from pangolin.utils.log_colours import green,cyan
 from pangolin.utils.config import *
 from pangolin.utils.data_checks import *
@@ -242,13 +241,3 @@ def print_versions_exit(config):
     print_faToVf_version()
     # print_conda_version(['usher', 'ucsc-fatovcf', 'gofasta', 'minimap2'])
     sys.exit(0)
-
-def set_up_verbosity(config):
-    if config[KEY_VERBOSE]:
-        config["quiet"] = False
-        config[KEY_LOG_API] = ""
-        config["log_string"] = ""
-    else:
-        config["quiet"] = True
-        logger = custom_logger.Logger()
-        config[KEY_LOG_API] = logger.log_handler

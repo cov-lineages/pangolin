@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import pkg_resources
+import importlib.resources
 from pangolin.utils.log_colours import green,cyan,red
 import sys
 import os
@@ -10,12 +10,12 @@ from pangolin.utils.config import *
 def package_data_check(filename,directory,key,config):
     try:
         package_datafile = os.path.join(directory,filename)
-        data = pkg_resources.resource_filename('pangolin', package_datafile)
+        resource_path = importlib.resources.files('pangolin').joinpath(package_datafile)
+        data = os.path.join(resource_path)
         config[key] = data
     except:
-        sys.stderr.write(cyan(f'Error: Missing package data.')+f'\n\t- {filename}\nPlease install the latest pangolin version with `pangolin --update`.\n')
+        sys.stderr.write(cyan(f'Error: Missing package data.')+f'\n\t- {filename}\n')
         sys.exit(-1)
-
 
 def check_install(config):
     resources = [

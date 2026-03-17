@@ -11,6 +11,14 @@ import shutil
 
 from pangolin.utils.config import *
 
+def set_up_threads(threads,config):
+    if threads:
+        try:
+            tint = int(threads)
+            config[KEY_THREADS] = threads
+        except:
+            sys.stderr.write(cyan(f'Error: threads specified must be an integer'))
+            sys.exit(-1)
 
 def find_query_file(cwd, tempdir, query_arg):
     if len(query_arg) > 1:
