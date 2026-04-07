@@ -9,6 +9,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker image tag to push'
+        required: false
+        type: string
 
 jobs:
   push_dockerhub:
@@ -43,3 +48,11 @@ jobs:
           docker push covlineages/pangolin:latest
           docker tag covlineages/pangolin:latest covlineages/pangolin:${{ github.event.release.tag_name }}
           docker push covlineages/pangolin:${{ github.event.release.tag_name }}
+
+      - name: Push Docker image to DockerHub (manual)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push covlineages/pangolin:latest
+          docker tag covlineages/pangolin:latest covlineages/pangolin:${{ inputs.tag }}
+          docker push covlineages/pangolin:${{ inputs.tag }}
